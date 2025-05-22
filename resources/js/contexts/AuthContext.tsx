@@ -6,8 +6,12 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     error: string | null;
+    twoFactorRequired: boolean;
     login: (credentials: LoginCredentials) => Promise<boolean>;
     logout: () => Promise<void>;
+    getUser: () => Promise<User | null>;
+    confirmTwoFactor: (code: string) => Promise<boolean>;
+    setTwoFactorRequired: (isRequired: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

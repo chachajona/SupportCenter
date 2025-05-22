@@ -1,0 +1,54 @@
+---
+description: This document outlines the development workflow for our Laravel 12.x and React project.
+globs:
+alwaysApply: false
+---
+# Development Workflow
+
+This document outlines the development workflow for our Laravel 12.x and React project.
+
+## Setup
+
+- Laravel environment is configured in [.env](mdc:.env) file
+- Frontend build configuration is in [vite.config.ts](mdc:vite.config.ts)
+- TypeScript configuration is in [tsconfig.json](mdc:tsconfig.json)
+
+## Development Commands
+
+- `php artisan serve` - Start the Laravel development server
+- `npm run dev` - Start Vite development server for frontend with hot reloading
+- `php artisan migrate` - Run database migrations
+- `php artisan db:seed` - Seed the database with test data
+- `php artisan make:model ModelName -mc` - Create a model with migration and controller
+- `php artisan make:controller ControllerName --api` - Create an API controller
+
+## Testing
+
+- Backend tests are in [tests/](mdc:tests) directory
+  - Use `php artisan test` to run PHP tests
+- Frontend tests should use Jest and React Testing Library
+  - Use `npm test` to run JavaScript tests
+
+## Conventions
+
+### Backend (Laravel)
+
+- Follow Laravel conventions for file naming and structure
+- Use resource controllers for RESTful endpoints
+- Implement form requests for validation
+- Use repositories for database access when appropriate
+- Place business logic in dedicated service classes
+
+### Frontend (React)
+
+- Use TypeScript for all React components
+- Prefer functional components with hooks over class components
+- Use Tailwind CSS for styling (configured in [tailwind.config.js](mdc:tailwind.config.js))
+- Organize components by feature/domain in the [resources/js/components/](mdc:resources/js/components) directory
+- Use React context for global state management
+
+## API Design
+
+- RESTful API endpoints are defined in [routes/api.php](mdc:routes/api.php)
+- Use Laravel API resources for consistent JSON responses
+- API versioning should be implemented in the URL (e.g., `/api/v1/endpoint`)

@@ -1,0 +1,48 @@
+---
+description: This document outlines the authentication system used in our Laravel 12.x and React project.
+globs:
+alwaysApply: false
+---
+# Authentication System
+
+This document outlines the authentication system used in our Laravel 12.x and React project.
+
+## Backend Authentication
+
+- Laravel Sanctum is used for SPA authentication
+- Authentication controllers are in [app/Http/Controllers/Auth/](mdc:app/Http/Controllers/Auth/)
+- Authentication configuration is in [config/auth.php](mdc:config/auth.php)
+- Session configuration is in [config/session.php](mdc:config/session.php)
+
+## Frontend Authentication
+
+- React authentication context is in [resources/js/contexts/AuthContext.tsx](mdc:resources/js/contexts/AuthContext.tsx)
+- Authentication hooks are in [resources/js/hooks/useAuth.ts](mdc:resources/js/hooks/useAuth.ts)
+- Auth-related API client functions are in [resources/js/api/auth.ts](mdc:resources/js/api/auth.ts)
+
+## Authentication Flow
+
+1. User submits login credentials via the React login form
+2. Credentials are sent to the Laravel backend
+3. Laravel validates credentials and creates a session
+4. CSRF token is set in the cookies
+5. Subsequent requests include the CSRF token in the header
+
+## Protected Routes
+
+- Frontend route protection is implemented using React Router and the auth context
+- Backend route protection uses Laravel middleware
+- Use the `auth:sanctum` middleware to protect API routes
+
+## User Management
+
+- User model is defined in [app/Models/User.php](mdc:app/Models/User.php)
+- Password reset functionality is implemented through Laravel's built-in features
+- Email verification can be enabled through Laravel's verification system
+
+## Multi-Factor Authentication
+
+- Time-based One-Time Password (TOTP) is used for two-factor authentication
+- Implementation uses Laravel Fortify's TwoFactorAuthentication features
+- WebAuthn is used for secure MFA
+- Backup codes are available as an MFA fallback
