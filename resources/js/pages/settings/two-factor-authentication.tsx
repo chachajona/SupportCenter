@@ -41,7 +41,7 @@ export default function TwoFactorAuthentication() {
             await api.post('/user/two-factor-authentication');
 
             // Step 2: Fetch the styled QR Code SVG
-            const qrResponse = await api.get('/user/custom-two-factor-qr-code');
+            const qrResponse = await api.get('/user/two-factor-qr-code');
             // Sanitize the SVG markup before setting it
             const sanitizedQrCode = DOMPurify.sanitize(qrResponse.data, {
                 USE_PROFILES: { svg: true, svgFilters: true },
@@ -87,7 +87,7 @@ export default function TwoFactorAuthentication() {
                     router.visit(route('password.confirm'));
                 } else if (
                     error.response.data?.message === 'Two-factor authentication is not pending confirmation.' &&
-                    error.response.config.url?.includes('custom-two-factor-qr-code')
+                    error.response.config.url?.includes('two-factor-qr-code')
                 ) {
                     toast.error('2FA setup is already in progress or completed. Please confirm with a code, or disable and re-enable.');
                 } else {
@@ -237,14 +237,14 @@ export default function TwoFactorAuthentication() {
                         <CardContent className="space-y-6">
                             {!isTwoFactorEnabled ? (
                                 <div>
-                                    <p className="mb-4 text-sm text-gray-600">Two-factor authentication is currently disabled.</p>
+                                    <p className="text-muted-foreground mb-4 text-sm">Two-factor authentication is currently disabled.</p>
                                     {!qrCode && (
                                         <Button onClick={handleEnableTwoFactor} disabled={statusLoading}>
                                             {statusLoading ? 'Processing...' : 'Enable Two-Factor Authentication'}
                                         </Button>
                                     )}
                                     {qrCode && secretKey && (
-                                        <div className="mt-6 space-y-4 rounded-md border bg-slate-50 p-6">
+                                        <div className="bg-muted mt-6 space-y-4 rounded-md border p-6">
                                             <CardHeader className="p-0">
                                                 <CardTitle>Configure Authenticator App</CardTitle>
                                                 <CardDescription>
@@ -255,15 +255,15 @@ export default function TwoFactorAuthentication() {
                                             <div className="flex flex-col items-center space-y-4 md:flex-row md:space-y-0 md:space-x-6">
                                                 <div
                                                     dangerouslySetInnerHTML={{ __html: qrCode }}
-                                                    className="rounded-lg border p-2 shadow-sm"
+                                                    className="bg-background rounded-lg border p-2 shadow-sm"
                                                     aria-label="TOTP QR Code"
                                                 />
                                                 <div>
-                                                    <p className="text-sm font-medium">Secret Key:</p>
-                                                    <pre className="mt-1 rounded bg-gray-100 p-2 font-mono text-xs select-all">{secretKey}</pre>
+                                                    <p className="text-center text-sm font-medium md:text-left">Secret Key:</p>
+                                                    <pre className="bg-input mt-1 rounded border p-2 font-mono text-xs select-all">{secretKey}</pre>
                                                 </div>
                                             </div>
-                                            <div className="mt-4 space-y-4">
+                                            <div className="mt-4 flex flex-col space-y-2">
                                                 <Label htmlFor="confirmation-code">Verification Code</Label>
                                                 <Input
                                                     type="text"
@@ -273,22 +273,32 @@ export default function TwoFactorAuthentication() {
                                                     placeholder="Enter code from app"
                                                     inputMode="numeric"
                                                     autoComplete="one-time-code"
+                                                    className="mt-1 block w-full"
                                                     disabled={statusLoading}
-                                                    className="max-w-xs"
                                                 />
+                                                <Button
+                                                    onClick={handleConfirmTwoFactor}
+                                                    disabled={statusLoading || !confirmationCode}
+                                                    className="mt-2"
+                                                >
+                                                    {statusLoading ? 'Confirming...' : 'Confirm & Enable 2FA'}
+                                                </Button>
                                             </div>
-                                            <Button onClick={handleConfirmTwoFactor} disabled={statusLoading || !confirmationCode} className="mt-4">
-                                                {statusLoading ? 'Confirming...' : 'Confirm & Enable 2FA'}
-                                            </Button>
+
                                             {recoveryCodes && (
-                                                <Alert variant="default" className="mt-6 border-yellow-400 bg-yellow-50">
-                                                    <AlertTitle className="text-yellow-800">Save Your Recovery Codes!</AlertTitle>
-                                                    <AlertDescription className="text-yellow-700">
+                                                <Alert
+                                                    variant="default"
+                                                    className="mt-6 border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/20"
+                                                >
+                                                    <AlertTitle className="text-yellow-800 dark:text-yellow-200">
+                                                        Save Your Recovery Codes!
+                                                    </AlertTitle>
+                                                    <AlertDescription className="text-yellow-700 dark:text-yellow-300">
                                                         Store these recovery codes in a safe place. They can be used to access your account if you
                                                         lose access to your authenticator app.
                                                         <ul className="mt-2 list-disc space-y-1 pl-5">
                                                             {recoveryCodes.map((code) => (
-                                                                <li key={code} className="font-mono text-sm text-yellow-900">
+                                                                <li key={code} className="font-mono text-sm text-yellow-900 dark:text-yellow-100">
                                                                     {code}
                                                                 </li>
                                                             ))}
@@ -301,8 +311,8 @@ export default function TwoFactorAuthentication() {
                                 </div>
                             ) : (
                                 <div>
-                                    <Alert variant="default" className="mb-4 border-green-200 bg-green-50">
-                                        <AlertDescription className="text-green-700">
+                                    <Alert variant="default" className="mb-4 border-green-200 bg-green-50 dark:border-green-700 dark:bg-green-900/20">
+                                        <AlertDescription className="text-green-700 dark:text-green-300">
                                             Two-factor authentication is currently enabled on your account.
                                         </AlertDescription>
                                     </Alert>
@@ -310,8 +320,8 @@ export default function TwoFactorAuthentication() {
                                         <div>
                                             <h4 className="text-md mb-2 font-semibold">Recovery Codes</h4>
                                             {recoveryCodes ? (
-                                                <div className="space-y-2 rounded-md border border-gray-200 bg-gray-50 p-4">
-                                                    <p className="text-sm text-gray-700">
+                                                <div className="bg-muted space-y-2 rounded-md border p-4">
+                                                    <p className="text-muted-foreground text-sm">
                                                         Store these recovery codes in a safe place. Each code can only be used once.
                                                     </p>
                                                     <Separator className="my-2" />

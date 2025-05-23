@@ -21,7 +21,7 @@ export function TwoFactorChallenge() {
     };
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
+        <div className="bg-muted flex min-h-screen flex-col items-center justify-center p-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle className="text-center">Two-Factor Authentication</CardTitle>
@@ -49,7 +49,7 @@ export function TwoFactorChallenge() {
                         </div>
 
                         {error && (
-                            <p id="otp-error" className="text-center text-sm text-red-600" role="alert">
+                            <p id="otp-error" className="text-destructive text-center text-sm" role="alert">
                                 {error}
                             </p>
                         )}
