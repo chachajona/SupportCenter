@@ -64,11 +64,10 @@ export default function TwoFactorAuthentication() {
                     'id',
                     'href',
                     'clip-path',
-                    'style',
-                ], // Add common SVG attributes
+                ],
                 FORBID_ATTR: ['style', 'onload', 'onerror'],
             });
-            setQrCode(sanitizedQrCode); // Directly use response.data as it's the SVG string
+            setQrCode(sanitizedQrCode);
 
             // Step 3: Fetch the secret key for manual entry
             const secretKeyResponse = await api.get('/user/two-factor-secret-key');

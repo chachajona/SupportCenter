@@ -10,7 +10,12 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticationController;
+use Laravel\Fortify\Http\Controllers\TwoFactorSecretKeyController;
+use Laravel\Fortify\Http\Controllers\RecoveryCodeController;
+use Laravel\Fortify\Http\Controllers\ConfirmedTwoFactorAuthenticationController;
 
+// Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
@@ -35,6 +40,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+// Email Verification Routes
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
@@ -56,6 +62,7 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
 });
 
+// Two-Factor Authentication Routes
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
     ->middleware(['web', 'auth'])
     ->name('two-factor.login');
@@ -63,3 +70,32 @@ Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::cl
 Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'store'])
     ->middleware(['web', 'auth', 'throttle:two-factor'])
     ->name('two-factor.login.store');
+
+// Two-Factor Authentication Management Routes
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    // Enable 2FA
+    Route::post('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'store'])
+        ->middleware(['password.confirm'])
+        ->name('two-factor.enable');
+
+    // Disable 2FA
+    Route::delete('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'destroy'])
+        ->middleware(['password.confirm'])
+        ->name('two-factor.disable');
+
+    // Confirm 2FA setup - this doesn't need password confirmation since enabling already required it
+    Route::post('/user/confirmed-two-factor-authentication', [ConfirmedTwoFactorAuthenticationController::class, 'store'])
+        ->name('two-factor.confirm');
+
+    // Get secret key for manual entry
+    Route::get('/user/two-factor-secret-key', [TwoFactorSecretKeyController::class, 'show'])
+        ->name('two-factor.secret-key');
+
+    // Get/Generate recovery codes - these also don't need password confirmation if 2FA is already enabled
+    Route::get('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'index'])
+        ->name('two-factor.recovery-codes');
+
+    Route::post('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'store'])
+        ->middleware(['password.confirm'])
+        ->name('two-factor.recovery-codes.store');
+});
