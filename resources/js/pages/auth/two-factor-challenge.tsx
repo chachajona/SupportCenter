@@ -1,69 +1,137 @@
+import { Head, useForm } from '@inertiajs/react';
+import { LoaderCircle } from 'lucide-react';
+import { FormEventHandler } from 'react';
+
+import InputError from '@/components/input-error';
+import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/contexts/AuthContext';
-import React, { useState } from 'react';
+import AuthLayout from '@/layouts/auth-layout';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
-export function TwoFactorChallenge() {
-    const [code, setCode] = useState('');
+interface TwoFactorChallengeForm {
+    code: string;
+}
+
+export default function TwoFactorChallenge() {
+    const [isRecoveryCode, setIsRecoveryCode] = useState(false);
     const { confirmTwoFactor, error, loading, setTwoFactorRequired } = useAuthContext();
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const { data, setData, processing, errors, reset } = useForm<Required<TwoFactorChallengeForm>>({
+        code: '',
+    });
+
+    const submit: FormEventHandler = async (e) => {
         e.preventDefault();
-        if (!code.trim()) {
-            // Optionally set a local error for empty code
+
+        if (!data.code.trim()) {
+            toast.error('Please enter a code.');
             return;
         }
-        await confirmTwoFactor(code);
-        // If successful, useAuth hook handles redirect.
-        // If there's an error, it's in `error` from context and can be displayed.
+
+        try {
+            const success = await confirmTwoFactor(data.code.trim());
+            if (!success && error) {
+                // Show the error from context, but also provide specific feedback
+                if (error.toLowerCase().includes('unauthenticated')) {
+                    toast.error('Session expired', {
+                        description: 'Please log in again.',
+                    });
+                    // Reset the 2FA requirement to go back to login
+                    setTwoFactorRequired(false);
+                } else if (error.toLowerCase().includes('invalid') || error.toLowerCase().includes('incorrect')) {
+                    toast.error('Invalid code', {
+                        description: 'Please check your authenticator app and try again.',
+                    });
+                } else {
+                    toast.error('Authentication failed', {
+                        description: error,
+                    });
+                }
+            }
+
+            if (success) {
+                toast.success('Welcome back!');
+                setTwoFactorRequired(false);
+            }
+        } catch (err) {
+            console.error('2FA submission error:', err);
+            toast.error('An unexpected error occurred. Please try again.');
+        }
+    };
+
+    const handleRecoveryToggle = () => {
+        setIsRecoveryCode(!isRecoveryCode);
+        setData('code', '');
+        reset('code');
+    };
+
+    const handleCancel = () => {
+        setTwoFactorRequired(false);
+        toast.info('Login cancelled. Please sign in again.');
     };
 
     return (
-        <div className="bg-muted flex min-h-screen flex-col items-center justify-center p-4">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle className="text-center">Two-Factor Authentication</CardTitle>
-                    <CardDescription className="text-center">Enter the code from your authenticator app.</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleSubmit}>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="otp-code" className="sr-only">
-                                One-Time Password
-                            </Label>
-                            <Input
-                                id="otp-code"
-                                name="code"
-                                type="text"
-                                inputMode="numeric"
-                                autoComplete="one-time-code"
-                                required
-                                placeholder="Enter 2FA Code"
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                disabled={loading}
-                                aria-describedby={error ? 'otp-error' : undefined}
-                            />
-                        </div>
+        <AuthLayout
+            title="Two-Factor Authentication"
+            description={isRecoveryCode ? 'Enter one of your recovery codes.' : 'Enter the code from your authenticator app.'}
+        >
+            <Head title="2FA Challenge" />
 
-                        {error && (
-                            <p id="otp-error" className="text-destructive text-center text-sm" role="alert">
-                                {error}
-                            </p>
-                        )}
-                    </CardContent>
-                    <CardFooter className="flex flex-col space-y-4">
-                        <Button type="submit" disabled={loading} className="w-full">
-                            {loading ? 'Verifying...' : 'Verify Code'}
-                        </Button>
-                        <Button type="button" variant="ghost" onClick={() => setTwoFactorRequired(false)} disabled={loading}>
-                            Cancel
-                        </Button>
-                    </CardFooter>
-                </form>
-            </Card>
-        </div>
+            <form className="flex flex-col gap-6" onSubmit={submit}>
+                <div className="grid gap-6">
+                    <div className="grid gap-2">
+                        <Label htmlFor="code">{isRecoveryCode ? 'Recovery Code' : 'Authentication Code'}</Label>
+                        <Input
+                            id="code"
+                            name="code"
+                            type="text"
+                            inputMode={isRecoveryCode ? 'text' : 'numeric'}
+                            autoComplete="one-time-code"
+                            required
+                            autoFocus
+                            tabIndex={1}
+                            placeholder={isRecoveryCode ? 'Enter recovery code' : 'Enter 2FA code'}
+                            value={data.code}
+                            onChange={(e) => setData('code', e.target.value)}
+                            disabled={loading || processing}
+                            className="text-center"
+                        />
+                        <InputError message={error || errors.code} />
+                    </div>
+
+                    <Button type="submit" disabled={loading || processing || !data.code.trim()} className="w-full" tabIndex={2}>
+                        {(loading || processing) && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                        {loading || processing ? 'Verifying...' : 'Verify Code'}
+                    </Button>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                    <div className="text-center">
+                        <button
+                            type="button"
+                            onClick={handleRecoveryToggle}
+                            className="text-muted-foreground hover:text-foreground text-sm underline"
+                            disabled={loading || processing}
+                            tabIndex={3}
+                        >
+                            {isRecoveryCode ? 'Use authenticator code instead' : 'Use a recovery code instead'}
+                        </button>
+                    </div>
+
+                    <div className="text-muted-foreground text-center text-sm">
+                        <TextLink href="#" onClick={handleCancel} disabled={loading || processing} tabIndex={4}>
+                            Cancel and return to login
+                        </TextLink>
+                    </div>
+                </div>
+            </form>
+        </AuthLayout>
     );
 }

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Settings;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Auth;
-use PragmaRX\Google2FALaravel\Facade as Google2FA;
+use Illuminate\Support\Facades\Log;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -30,29 +30,50 @@ class TwoFactorQrCodeController extends Controller
             !is_null($user->two_factor_confirmed_at)
         ) {
             // 2FA not enabled or already confirmed, so no QR code to show for setup.
-            // You might want to return a specific error or redirect.
             return response()->json(['message' => 'Two-factor authentication is not pending confirmation.'], 400);
         }
 
-        $otpauthUrl = Google2FA::getQRCodeUrl(
-            config('app.name'),
-            $user->email,
-            $user->two_factor_secret
-        );
+        try {
+            // Use Laravel Fortify's TwoFactorAuthenticationProvider to generate the proper OTPAUTH URL
+            // This ensures all required parameters (algorithm, digits, period) are included
+            $otpauthUrl = app(TwoFactorAuthenticationProvider::class)->qrCodeUrl(
+                config('app.name'),
+                $user->email,
+                decrypt($user->two_factor_secret) // Properly decrypt the secret
+            );
 
-        $svg = (new Writer(
-            new ImageRenderer(
-                new RendererStyle(
-                    192, // size
-                    0,   // margin
-                    null, // SvgTarget (not needed for string output)
-                    null, // EyeFill (default)
-                    Fill::uniformColor(new Rgb(255, 255, 255), new Rgb(45, 55, 72)) // Module fill (white modules, dark-gray background)
-                ),
-                new SvgImageBackEnd()
-            )
-        ))->writeString($otpauthUrl);
+            // Validate that the secret is properly Base32 encoded
+            $decryptedSecret = decrypt($user->two_factor_secret);
+            if (!preg_match('/^[A-Z2-7]+=*$/', $decryptedSecret)) {
+                Log::warning('Invalid Base32 secret detected for user: ' . $user->id);
+                return response()->json(['message' => 'Invalid two-factor authentication secret.'], 500);
+            }
 
-        return response($svg)->header('Content-Type', 'image/svg+xml');
+            // Generate QR code with optimal settings for authenticator app compatibility
+            $svg = (new Writer(
+                new ImageRenderer(
+                    new RendererStyle(
+                        256, // Increased size for better readability (minimum 192px recommended)
+                        4,   // Small margin for better scanning
+                        null, // SvgTarget (not needed for string output)
+                        null, // EyeFill (default)
+                        Fill::uniformColor(
+                            new Rgb(255, 255, 255), // White background
+                            new Rgb(0, 0, 0)        // Black foreground for maximum contrast
+                        )
+                    ),
+                    new SvgImageBackEnd()
+                )
+            ))->writeString($otpauthUrl);
+
+            return response($svg)->header('Content-Type', 'image/svg+xml');
+
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            Log::error('Failed to decrypt two_factor_secret for user: ' . $user->id . ' - ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to generate QR code. Please try disabling and re-enabling 2FA.'], 500);
+        } catch (\Exception $e) {
+            Log::error('QR code generation failed for user: ' . $user->id . ' - ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to generate QR code.'], 500);
+        }
     }
 }

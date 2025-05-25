@@ -64,11 +64,11 @@ Route::middleware('auth')->group(function () {
 
 // Two-Factor Authentication Routes
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
-    ->middleware(['web', 'auth'])
+    ->middleware(['web'])
     ->name('two-factor.login');
 
 Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'store'])
-    ->middleware(['web', 'auth', 'throttle:two-factor'])
+    ->middleware(['web', 'throttle:two-factor'])
     ->name('two-factor.login.store');
 
 // Two-Factor Authentication Management Routes

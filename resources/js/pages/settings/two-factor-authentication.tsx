@@ -13,7 +13,7 @@ import { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { AxiosError } from 'axios';
 import DOMPurify from 'dompurify';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 
@@ -34,7 +34,21 @@ export default function TwoFactorAuthentication() {
 
     const isTwoFactorEnabled = user?.two_factor_enabled;
 
-    const handleEnableTwoFactor = async () => {
+    // Check URL parameters to resume 2FA setup after password confirmation
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const resume2fa = urlParams.get('resume_2fa');
+
+        if (resume2fa === 'setup' && !isTwoFactorEnabled && !qrCode) {
+            // Resume 2FA setup after password confirmation
+            handleEnableTwoFactor(true);
+        } else if (resume2fa === 'show_codes' && isTwoFactorEnabled && !recoveryCodes) {
+            // Resume showing recovery codes after password confirmation
+            handleShowRecoveryCodes();
+        }
+    }, [isTwoFactorEnabled, qrCode, recoveryCodes]);
+
+    const handleEnableTwoFactor = async (isResume = false) => {
         setStatusLoading(true);
         try {
             // Step 1: Enable 2FA (generates secret and recovery codes on backend)
@@ -78,13 +92,24 @@ export default function TwoFactorAuthentication() {
             const recoveryResponse = await api.get('/user/two-factor-recovery-codes');
             setRecoveryCodes(recoveryResponse.data);
 
-            toast.info('Scan the QR code or use the secret key, then enter the confirmation code.');
+            if (!isResume) {
+                toast.info('Scan the QR code or use the secret key, then enter the confirmation code.');
+            }
+
+            // Clear URL parameters after successful resume
+            if (isResume) {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('resume_2fa');
+                window.history.replaceState({}, '', url.toString());
+            }
         } catch (error) {
             console.error('Failed to start 2FA enabling process:', error);
             if (error instanceof AxiosError && error.response) {
                 if (error.response.data?.message === 'Password confirmation required.' || error.response.status === 423) {
                     toast.info('Password confirmation is required to enable 2FA.');
-                    router.visit(route('password.confirm'));
+                    // Add resume parameter to return URL
+                    const confirmUrl = route('password.confirm') + '?intended=' + encodeURIComponent(window.location.pathname + '?resume_2fa=setup');
+                    router.visit(confirmUrl);
                 } else if (
                     error.response.data?.message === 'Two-factor authentication is not pending confirmation.' &&
                     error.response.config.url?.includes('two-factor-qr-code')
@@ -127,7 +152,8 @@ export default function TwoFactorAuthentication() {
                 (error.response.data?.message === 'Password confirmation required.' || error.response.status === 423)
             ) {
                 toast.info('Password confirmation is required.');
-                router.visit(route('password.confirm'));
+                const confirmUrl = route('password.confirm') + '?intended=' + encodeURIComponent(window.location.pathname + '?resume_2fa=setup');
+                router.visit(confirmUrl);
             } else {
                 toast.error('Failed to confirm 2FA. Invalid code or an error occurred.');
             }
@@ -153,7 +179,8 @@ export default function TwoFactorAuthentication() {
                 (error.response.data?.message === 'Password confirmation required.' || error.response.status === 423)
             ) {
                 toast.info('Password confirmation is required to disable 2FA.');
-                router.visit(route('password.confirm'));
+                const confirmUrl = route('password.confirm') + '?intended=' + encodeURIComponent(window.location.pathname);
+                router.visit(confirmUrl);
             } else {
                 toast.error('Could not disable 2FA. Please try again.');
             }
@@ -170,6 +197,14 @@ export default function TwoFactorAuthentication() {
             if (!enabledJustNow) {
                 toast.info('Your recovery codes are shown below.');
             }
+
+            // Clear URL parameters after successful resume
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('resume_2fa') === 'show_codes') {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('resume_2fa');
+                window.history.replaceState({}, '', url.toString());
+            }
         } catch (error) {
             console.error('Failed to fetch recovery codes:', error);
             if (
@@ -178,7 +213,8 @@ export default function TwoFactorAuthentication() {
                 (error.response.data?.message === 'Password confirmation required.' || error.response.status === 423)
             ) {
                 toast.info('Password confirmation is required to view recovery codes.');
-                router.visit(route('password.confirm'));
+                const confirmUrl = route('password.confirm') + '?intended=' + encodeURIComponent(window.location.pathname + '?resume_2fa=show_codes');
+                router.visit(confirmUrl);
             } else {
                 toast.error('Could not fetch recovery codes.');
             }
@@ -201,7 +237,8 @@ export default function TwoFactorAuthentication() {
                 (error.response.data?.message === 'Password confirmation required.' || error.response.status === 423)
             ) {
                 toast.info('Password confirmation is required to regenerate recovery codes.');
-                router.visit(route('password.confirm'));
+                const confirmUrl = route('password.confirm') + '?intended=' + encodeURIComponent(window.location.pathname);
+                router.visit(confirmUrl);
             } else {
                 toast.error('Could not regenerate recovery codes.');
             }
@@ -239,7 +276,7 @@ export default function TwoFactorAuthentication() {
                                 <div>
                                     <p className="text-muted-foreground mb-4 text-sm">Two-factor authentication is currently disabled.</p>
                                     {!qrCode && (
-                                        <Button onClick={handleEnableTwoFactor} disabled={statusLoading}>
+                                        <Button onClick={() => handleEnableTwoFactor()} disabled={statusLoading}>
                                             {statusLoading ? 'Processing...' : 'Enable Two-Factor Authentication'}
                                         </Button>
                                     )}
