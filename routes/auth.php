@@ -14,6 +14,9 @@ use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticationController;
 use Laravel\Fortify\Http\Controllers\TwoFactorSecretKeyController;
 use Laravel\Fortify\Http\Controllers\RecoveryCodeController;
 use Laravel\Fortify\Http\Controllers\ConfirmedTwoFactorAuthenticationController;
+use App\Http\Controllers\Auth\WebAuthnLoginController;
+use App\Http\Controllers\Auth\WebAuthnRegisterController;
+use App\Http\Controllers\Auth\WebAuthnManageController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -56,7 +59,8 @@ Route::middleware('auth')->group(function () {
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
         ->name('password.confirm');
 
-    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store'])
+        ->name('password.confirm.store');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
@@ -98,4 +102,36 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'store'])
         ->middleware(['password.confirm'])
         ->name('two-factor.recovery-codes.store');
+});
+
+// WebAuthn Authentication Routes (guest users)
+Route::middleware('guest')->group(function () {
+    Route::post('/webauthn/login/options', [WebAuthnLoginController::class, 'options'])
+        ->name('webauthn.login.options');
+
+    Route::post('/webauthn/login', [WebAuthnLoginController::class, 'authenticate'])
+        ->middleware('throttle:two-factor')
+        ->name('webauthn.login');
+});
+
+// WebAuthn Registration Routes (authenticated users)
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    // WebAuthn Credential Management
+    Route::get('/user/webauthn/register', [WebAuthnRegisterController::class, 'create'])
+        ->name('webauthn.register.create');
+
+    Route::post('/user/webauthn/register/options', [WebAuthnRegisterController::class, 'options'])
+        ->name('webauthn.register.options');
+
+    Route::post('/user/webauthn/register', [WebAuthnRegisterController::class, 'store'])
+        ->middleware(['password.confirm'])
+        ->name('webauthn.register.store');
+
+    Route::delete('/user/webauthn/{credential}', [WebAuthnManageController::class, 'destroy'])
+        ->middleware(['password.confirm'])
+        ->name('webauthn.destroy');
+
+    Route::put('/user/webauthn/{credential}', [WebAuthnManageController::class, 'update'])
+        ->middleware(['password.confirm'])
+        ->name('webauthn.update');
 });

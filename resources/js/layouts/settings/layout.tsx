@@ -27,6 +27,11 @@ const sidebarNavItems: NavItem[] = [
         href: '/settings/security',
         icon: null,
     },
+    {
+        title: 'WebAuthn',
+        href: '/settings/webauthn',
+        icon: null,
+    },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {

@@ -9,11 +9,13 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
+use Laragear\WebAuthn\WebAuthnAuthentication;
 
-class User extends Authenticatable
+class User extends Authenticatable implements WebAuthnAuthenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication;
 
     /**
      * The attributes that are mass assignable.
@@ -24,6 +26,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'webauthn_enabled',
+        'preferred_mfa_method',
+        'two_factor_confirmed_at',
     ];
 
     /**
@@ -43,7 +48,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['two_factor_enabled'];
+    protected $appends = ['two_factor_enabled', 'preferred_mfa_method'];
 
     /**
      * The attributes that should be cast.
@@ -54,6 +59,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'two_factor_confirmed_at' => 'datetime',
+        'webauthn_enabled' => 'boolean',
     ];
 
     /**
@@ -83,5 +89,39 @@ class User extends Authenticatable
             Log::error('Failed to decrypt two_factor_recovery_codes for user: ' . $this->id . ' - ' . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Check if user has WebAuthn credentials registered.
+     */
+    public function hasWebAuthnCredentials(): bool
+    {
+        return $this->webAuthnCredentials()->whereEnabled()->exists();
+    }
+
+    /**
+     * Get the user's preferred MFA method.
+     */
+    public function getPreferredMfaMethodAttribute(): string
+    {
+        // Check if WebAuthn is enabled and has credentials
+        if ($this->webauthn_enabled && $this->hasWebAuthnCredentials()) {
+            return 'webauthn';
+        }
+
+        // Check if TOTP 2FA is enabled
+        if ($this->two_factor_enabled) {
+            return 'totp';
+        }
+
+        return 'none';
+    }
+
+    /**
+     * Check if user has any MFA method enabled.
+     */
+    public function hasMfaEnabled(): bool
+    {
+        return $this->two_factor_enabled || $this->hasWebAuthnCredentials();
     }
 }

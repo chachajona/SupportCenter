@@ -6,6 +6,8 @@ export interface User {
     created_at: string;
     updated_at: string;
     two_factor_enabled: boolean;
+    webauthn_enabled?: boolean;
+    preferred_mfa_method?: string;
 }
 
 export interface LoginCredentials {

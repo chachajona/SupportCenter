@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\WebAuthnSettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,4 +24,17 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('settings/two-factor-authentication');
     })->name('security');
 
+    // WebAuthn Settings Routes
+    Route::get('settings/webauthn', [WebAuthnSettingsController::class, 'show'])->name('webauthn.settings');
+
+    Route::post('/user/webauthn/enable', [WebAuthnSettingsController::class, 'enable'])
+        ->middleware(['password.confirm'])
+        ->name('webauthn.enable');
+
+    Route::delete('/user/webauthn/disable', [WebAuthnSettingsController::class, 'disable'])
+        ->middleware(['password.confirm'])
+        ->name('webauthn.disable');
+
+    Route::get('/user/webauthn/credentials', [WebAuthnSettingsController::class, 'credentials'])
+        ->name('webauthn.credentials');
 });

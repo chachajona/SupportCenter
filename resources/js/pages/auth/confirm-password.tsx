@@ -9,8 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
-export default function ConfirmPassword() {
-    const { data, setData, post, processing, errors, reset } = useForm<Required<{ password: string }>>({
+interface Props {
+    intended?: string;
+}
+
+export default function ConfirmPassword({ intended }: Props) {
+    const { data, setData, post, processing, errors, reset } = useForm<{
+        password: string;
+    }>({
         password: '',
     });
 
@@ -25,7 +31,11 @@ export default function ConfirmPassword() {
     return (
         <AuthLayout
             title="Confirm your password"
-            description="This is a secure area of the application. Please confirm your password before continuing."
+            description={
+                intended
+                    ? 'Please confirm your password to continue with your security settings.'
+                    : 'This is a secure area of the application. Please confirm your password before continuing.'
+            }
         >
             <Head title="Confirm password" />
 
