@@ -2,6 +2,10 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\IdleSessionTimeout;
+use App\Http\Middleware\SuspiciousActivityDetection;
+use App\Http\Middleware\IpAllowlistMiddleware;
+use App\Http\Middleware\RequirePasswordConfirmation;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,10 +25,13 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            IdleSessionTimeout::class,
+            SuspiciousActivityDetection::class,
         ]);
 
         $middleware->alias([
-            'password.confirm' => \App\Http\Middleware\RequirePasswordConfirmation::class,
+            'password.confirm' => RequirePasswordConfirmation::class,
+            'ip.allowlist' => IpAllowlistMiddleware::class,
         ]);
 
         $middleware->statefulApi();
