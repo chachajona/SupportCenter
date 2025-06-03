@@ -127,9 +127,9 @@ Route::middleware(['guest', 'webauthn.security'])->group(function () {
 
 // WebAuthn Registration Routes (authenticated users)
 Route::middleware(['auth', 'verified', 'webauthn.security'])->group(function () {
-    // WebAuthn Credential Management
-    Route::get('/user/webauthn/register', [WebAuthnRegisterController::class, 'create'])
-        ->name('webauthn.register.create');
+    // Remove unused GET route - registration is now handled in settings
+    // Route::get('/user/webauthn/register', [WebAuthnRegisterController::class, 'create'])
+    //     ->name('webauthn.register.create');
 
     Route::post('/user/webauthn/register/options', [WebAuthnRegisterController::class, 'options'])
         ->name('webauthn.register.options');

@@ -5,35 +5,12 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\SecurityEventType;
 use App\Http\Controllers\Controller;
 use App\Models\SecurityLog;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 use Laragear\WebAuthn\Http\Requests\AttestationRequest;
 use Laragear\WebAuthn\Http\Requests\AttestedRequest;
 
 class WebAuthnRegisterController extends Controller
 {
-    /**
-     * Show the WebAuthn registration page.
-     */
-    public function create(Request $request): Response
-    {
-        return Inertia::render('Auth/WebAuthnRegister', [
-            'user' => $request->user()->only(['id', 'name', 'email']),
-            'credentials' => $request->user()->webAuthnCredentials()
-                ->whereEnabled()
-                ->get()
-                ->map(fn($credential) => [
-                    'id' => $credential->id,
-                    'name' => $credential->alias ?? 'Unnamed Device',
-                    'type' => 'security-key', // You can enhance this based on actual device type
-                    'created_at' => $credential->created_at,
-                    'last_used_at' => $credential->updated_at,
-                ])
-        ]);
-    }
-
     /**
      * Generate WebAuthn attestation options for registration.
      */
