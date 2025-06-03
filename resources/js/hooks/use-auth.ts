@@ -9,6 +9,7 @@ interface UseAuthReturn extends AuthState {
     logout: () => Promise<void>;
     getUser: () => Promise<User | null>;
     confirmTwoFactor: (token: string) => Promise<boolean>;
+    cancelTwoFactor: () => Promise<void>;
     setTwoFactorRequired: (isRequired: boolean) => void;
 }
 
@@ -42,6 +43,10 @@ export function useAuth(): UseAuthReturn {
 
                 if (loginResponse.data?.two_factor === true) {
                     setTwoFactorRequired(true);
+                    return false;
+                } else if (loginResponse.data?.two_factor_choice === true) {
+                    // Redirect to two-factor choice page
+                    router.visit('/two-factor-choice');
                     return false;
                 } else {
                     const userData = await getUser();
@@ -101,6 +106,7 @@ export function useAuth(): UseAuthReturn {
                     : { recovery_code: token }; // fallback
                 const response = await api.post('/two-factor-challenge', payload);
 
+                // Only set twoFactorRequired to false and fetch user data if the request was successful
                 setTwoFactorRequired(false);
                 const userData = await getUser();
 
@@ -137,6 +143,13 @@ export function useAuth(): UseAuthReturn {
                         } else {
                             message = 'The provided 2FA code was invalid.';
                         }
+                    } else if (err.response.status === 401) {
+                        // Session expired or invalid, reset 2FA state and redirect to login
+                        setTwoFactorRequired(false);
+                        setUser(null);
+                        message = 'Session expired. Please log in again.';
+                        router.visit('/login');
+                        return false;
                     }
                 }
                 setError(message);
@@ -147,6 +160,26 @@ export function useAuth(): UseAuthReturn {
         },
         [getUser],
     );
+
+    const cancelTwoFactor = useCallback(async (): Promise<void> => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Explicitly logout to clear any partial authentication state
+            await api.post('/logout');
+            setUser(null);
+            setTwoFactorRequired(false);
+            router.visit('/login');
+        } catch (err) {
+            console.error('Cancel 2FA failed:', err);
+            // Even if logout fails, reset local state and redirect
+            setUser(null);
+            setTwoFactorRequired(false);
+            router.visit('/login');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     const logout = useCallback(async (): Promise<void> => {
         setLoading(true);
@@ -173,6 +206,7 @@ export function useAuth(): UseAuthReturn {
         logout,
         getUser,
         confirmTwoFactor,
+        cancelTwoFactor,
         setTwoFactorRequired,
     };
 }

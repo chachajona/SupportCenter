@@ -25,10 +25,14 @@ final class IdleSessionTimeout
         $lastActivity = $request->session()->get('last_activity_time', 0);
         $currentTime = time();
 
+        // If last_activity_time doesn't exist (new session), initialize it
+        if ($lastActivity === 0) {
+            $request->session()->put('last_activity_time', $currentTime);
+            return $next($request);
+        }
+
         if (($currentTime - $lastActivity) > $idleTimeout) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            $this->performSecureLogout($request);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -44,5 +48,27 @@ final class IdleSessionTimeout
         $request->session()->put('last_activity_time', $currentTime);
 
         return $next($request);
+    }
+
+    /**
+     * Perform a secure logout that works with different guard types.
+     */
+    private function performSecureLogout(Request $request): void
+    {
+        $guard = Auth::guard();
+
+        // Check if the guard has a logout method (session-based guards)
+        if (method_exists($guard, 'logout')) {
+            $guard->logout();
+        } else {
+            // For guards without logout method (like RequestGuard), clear the user manually
+            Auth::forgetUser();
+        }
+
+        // Always invalidate and regenerate session for security
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\SecurityEventType;
 use App\Http\Controllers\Controller;
+use App\Models\SecurityLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -55,13 +57,25 @@ class WebAuthnRegisterController extends Controller
             'alias' => $request->input('name')
         ]);
 
+        // Log successful WebAuthn credential registration
+        SecurityLog::logWebAuthnEvent(
+            SecurityEventType::WEBAUTHN_REGISTER,
+            $request->user(),
+            $request,
+            [
+                'success' => true,
+                'credential_id' => (string) $credential->id,
+                'credential_name' => (string) $credential->alias,
+            ]
+        );
+
         return response()->json([
             'success' => true,
             'credential' => [
-                'id' => $credential->id,
-                'name' => $credential->alias,
+                'id' => (string) $credential->id,
+                'name' => (string) $credential->alias,
                 'type' => 'security-key',
-                'created_at' => $credential->created_at,
+                'created_at' => $credential->created_at?->toISOString(),
             ],
             'message' => 'Passkey registered successfully!'
         ]);

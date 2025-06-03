@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\SecurityEventType;
 use App\Http\Controllers\Controller;
+use App\Models\SecurityLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Laragear\WebAuthn\Http\Requests\AssertionRequest;
@@ -32,7 +34,18 @@ class WebAuthnLoginController extends Controller
         $user = $request->login();
 
         if ($user) {
+            // Log successful WebAuthn login
+            SecurityLog::logWebAuthnEvent(
+                SecurityEventType::WEBAUTHN_LOGIN,
+                $user,
+                $request,
+                ['success' => true, 'method' => 'webauthn']
+            );
+
             session()->regenerate();
+
+            // Set last activity time to prevent immediate session timeout
+            session()->put('last_activity_time', time());
 
             return response()->json([
                 'success' => true,
@@ -40,6 +53,14 @@ class WebAuthnLoginController extends Controller
                 'message' => "Welcome back, {$user->name}!"
             ]);
         }
+
+        // Log failed WebAuthn attempt
+        SecurityLog::logWebAuthnEvent(
+            SecurityEventType::WEBAUTHN_FAILED,
+            null,
+            $request,
+            ['success' => false, 'reason' => 'authentication_failed']
+        );
 
         return response()->json([
             'success' => false,

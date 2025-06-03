@@ -61,11 +61,9 @@ final class WebAuthnSettingsTest extends TestCase
             'webauthn_enabled' => false,
         ]);
 
-        // Clear password confirmation timestamp
-        session()->forget('auth.password_confirmed_at');
-
         $response = $this
             ->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => null])
             ->post('/user/webauthn/enable');
 
         $response->assertStatus(423);
@@ -113,11 +111,9 @@ final class WebAuthnSettingsTest extends TestCase
             'webauthn_enabled' => true,
         ]);
 
-        // Clear password confirmation timestamp
-        session()->forget('auth.password_confirmed_at');
-
         $response = $this
             ->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => null])
             ->delete('/user/webauthn/disable');
 
         $response->assertStatus(423);

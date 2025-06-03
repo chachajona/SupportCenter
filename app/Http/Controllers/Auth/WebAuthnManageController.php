@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\SecurityEventType;
 use App\Http\Controllers\Controller;
+use App\Models\SecurityLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Laragear\WebAuthn\Models\WebAuthnCredential;
@@ -18,6 +20,18 @@ class WebAuthnManageController extends Controller
         if ($credential->authenticatable_id !== $request->user()->id) {
             abort(403, 'Unauthorized');
         }
+
+        // Log credential removal before deletion
+        SecurityLog::logWebAuthnEvent(
+            SecurityEventType::WEBAUTHN_REMOVE,
+            $request->user(),
+            $request,
+            [
+                'success' => true,
+                'credential_id' => $credential->id,
+                'credential_name' => $credential->alias ?? 'Unnamed Device',
+            ]
+        );
 
         $credential->delete();
 

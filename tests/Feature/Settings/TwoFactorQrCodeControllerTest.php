@@ -12,6 +12,15 @@ class TwoFactorQrCodeControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Set up the session to prevent middleware issues during testing.
+     */
+    protected function setUpSession(): void
+    {
+        // Set session activity time to prevent IdleSessionTimeout middleware from logging out the user
+        $this->session(['last_activity_time' => time()]);
+    }
+
     protected function enableTwoFactorForUser(User $user, bool $andConfirm = false): string
     {
         $google2fa = new Google2FA();
@@ -38,6 +47,8 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $user = User::factory()->create();
         $this->enableTwoFactorForUser($user, andConfirm: false);
 
+        $this->setUpSession();
+
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
 
         $response->assertStatus(200);
@@ -50,6 +61,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         /** @var \App\Models\User $user */
         $user = User::factory()->create(); // 2FA not enabled by default
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->getJson(route('two-factor.qr-code'));
 
         $response->assertStatus(400);
@@ -62,6 +74,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $user = User::factory()->create();
         $this->enableTwoFactorForUser($user, andConfirm: true);
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->getJson(route('two-factor.qr-code'));
 
         $response->assertStatus(400);
@@ -84,6 +97,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
 
         $secret = $this->enableTwoFactorForUser($user, andConfirm: false);
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
 
         $response->assertStatus(200);
@@ -121,6 +135,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $secret = $this->enableTwoFactorForUser($user, andConfirm: false);
         $appName = config('app.name');
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
         $response->assertStatus(200);
 
@@ -144,6 +159,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $user = User::factory()->create();
         $this->enableTwoFactorForUser($user, andConfirm: false);
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
         $response->assertStatus(200);
 
@@ -184,6 +200,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         // The controller now uses TwoFactorAuthenticationProvider, so we don't need to mock
         // since it will use the real provider which should work correctly with the decrypted secret
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
         $response->assertStatus(200);
     }
@@ -203,6 +220,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         // Temporarily change app name to include special characters
         config(['app.name' => 'My App & Co.']);
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
         $response->assertStatus(200);
 
@@ -227,6 +245,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         ])->save();
 
         // This test verifies that the system handles invalid secrets without crashing
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
 
         // The response should either succeed (if Google2FA handles invalid secrets)
@@ -246,6 +265,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $user = User::factory()->create();
         $this->enableTwoFactorForUser($user, andConfirm: false);
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
         $response->assertStatus(200);
 
@@ -278,6 +298,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $secret = $this->enableTwoFactorForUser($user, andConfirm: false);
         $appName = config('app.name');
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
         $response->assertStatus(200);
 
@@ -302,6 +323,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
 
         $startTime = microtime(true);
 
+        $this->setUpSession();
         $response = $this->actingAs($user)->get(route('two-factor.qr-code'));
 
         $endTime = microtime(true);
@@ -322,13 +344,17 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $user = User::factory()->create();
 
         // Step 1: User tries to enable 2FA without password confirmation
-        $enableResponse = $this->actingAs($user)->postJson(route('two-factor.enable'));
+        $this->setUpSession();
+        $enableResponse = $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => null])  // Clear password confirmation after actingAs
+            ->postJson(route('two-factor.enable'));
         $enableResponse->assertStatus(423); // Password confirmation required
 
         // Step 2: User confirms password (simulated by setting session)
         $this->session(['auth.password_confirmed_at' => time()]);
 
         // Step 3: User successfully enables 2FA
+        $this->setUpSession();
         $enableResponse = $this->actingAs($user)->postJson(route('two-factor.enable'));
         $enableResponse->assertStatus(200);
 
@@ -337,6 +363,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $this->assertNull($user->two_factor_confirmed_at, 'Two factor should not be confirmed yet');
 
         // Step 4: Verify QR code is available
+        $this->setUpSession();
         $qrResponse = $this->actingAs($user)->get(route('two-factor.qr-code'));
         $qrResponse->assertStatus(200);
         $qrResponse->assertHeader('Content-Type', 'image/svg+xml');
@@ -355,21 +382,23 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $this->session(['auth.password_confirmed_at' => null]);
 
         // Step 2: Try to regenerate recovery codes (requires password confirmation)
-        $regenerateResponse = $this->actingAs($user)->postJson(route('two-factor.recovery-codes.store'));
+        $this->setUpSession();
+        $regenerateResponse = $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => null])  // Clear password confirmation after actingAs
+            ->postJson(route('two-factor.recovery-codes.store'));
         $regenerateResponse->assertStatus(423); // Password confirmation required
 
         // Step 3: Confirm password
         $this->session(['auth.password_confirmed_at' => time()]);
 
         // Step 4: Successfully regenerate recovery codes
+        $this->setUpSession();
         $regenerateResponse = $this->actingAs($user)->postJson(route('two-factor.recovery-codes.store'));
         $regenerateResponse->assertStatus(200);
 
         // The important part is that the endpoint is accessible after password confirmation
         // The response format may vary based on implementation
     }
-
-
 
     /**
      * Test 2FA state consistency after password confirmation - Issue #1
@@ -403,7 +432,9 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $this->session(['auth.password_confirmed_at' => null]);
 
         // Step 6: Try to disable 2FA (should require password confirmation again)
-        $disableResponse = $this->actingAs($user)->deleteJson(route('two-factor.disable'));
+        $disableResponse = $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => null])  // Clear password confirmation after actingAs
+            ->deleteJson(route('two-factor.disable'));
         $disableResponse->assertStatus(423); // Should require password confirmation
 
         // Step 7: Verify 2FA state is unchanged
@@ -440,6 +471,4 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $this->assertNotNull($user->two_factor_secret, 'State should be maintained for resume');
         $this->assertNull($user->two_factor_confirmed_at, 'State should be maintained for resume');
     }
-
-
 }

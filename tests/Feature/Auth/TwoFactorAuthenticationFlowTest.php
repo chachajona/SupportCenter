@@ -291,7 +291,9 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         $this->user->forceFill(['email_verified_at' => now()])->save();
 
         // Attempt to enable 2FA without password confirmation
-        $enableResponse = $this->actingAs($this->user)->postJson(route('two-factor.enable'));
+        $enableResponse = $this->actingAs($this->user)
+            ->withSession(['auth.password_confirmed_at' => null])  // Clear password confirmation after actingAs
+            ->postJson(route('two-factor.enable'));
         $enableResponse->assertStatus(423); // Password confirmation required
 
         $this->user->refresh();

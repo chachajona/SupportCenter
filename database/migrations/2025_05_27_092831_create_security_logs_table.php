@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->ipAddress('ip_address');
             $table->text('user_agent')->nullable();
             $table->json('details')->nullable(); // Additional event-specific data
-            $table->timestamp('created_at');
+            $table->timestamps(); // This creates both created_at and updated_at
 
             // Indexes for performance
             $table->index(['user_id', 'created_at']);

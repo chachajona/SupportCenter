@@ -92,9 +92,7 @@ final class SuspiciousActivityDetection
 
             // Optionally force logout for high-risk activities
             if ($suspiciousScore >= 80) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+                $this->performSecureLogout($request);
 
                 if ($request->expectsJson()) {
                     return response()->json([
@@ -112,6 +110,13 @@ final class SuspiciousActivityDetection
         // Update tracking data
         Cache::put("last_ip_{$user->id}", $clientIp, 86400); // 24 hours
         Cache::put("last_user_agent_{$user->id}", $userAgent, 86400); // 24 hours
+
+        $request->session()->put('session_tracking', [
+            'ip' => $clientIp,
+            'user_agent' => $userAgent,
+            'login_time' => $request->session()->get('session_tracking.login_time', now()),
+            'last_activity' => now(),
+        ]);
 
         return $next($request);
     }
@@ -142,6 +147,28 @@ final class SuspiciousActivityDetection
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Perform a secure logout that works with different guard types.
+     */
+    private function performSecureLogout(Request $request): void
+    {
+        $guard = Auth::guard();
+
+        // Check if the guard has a logout method (session-based guards)
+        if (method_exists($guard, 'logout')) {
+            $guard->logout();
+        } else {
+            // For guards without logout method (like RequestGuard), clear the user manually
+            Auth::forgetUser();
+        }
+
+        // Always invalidate and regenerate session for security
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
         }
     }
 }

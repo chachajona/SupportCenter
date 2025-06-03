@@ -6,6 +6,8 @@ use App\Http\Middleware\IdleSessionTimeout;
 use App\Http\Middleware\SuspiciousActivityDetection;
 use App\Http\Middleware\IpAllowlistMiddleware;
 use App\Http\Middleware\RequirePasswordConfirmation;
+use App\Http\Middleware\WebAuthnSecurityMiddleware;
+use App\Http\Middleware\TwoFactorChallengeMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -32,6 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'password.confirm' => RequirePasswordConfirmation::class,
             'ip.allowlist' => IpAllowlistMiddleware::class,
+            'webauthn.security' => WebAuthnSecurityMiddleware::class,
+            'two-factor.challenge' => TwoFactorChallengeMiddleware::class,
         ]);
 
         $middleware->statefulApi();

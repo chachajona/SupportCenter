@@ -39,9 +39,7 @@ final class IpAllowlistMiddleware
                 'created_at' => now(),
             ]);
 
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            $this->performSecureLogout($request);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -225,5 +223,27 @@ final class IpAllowlistMiddleware
         }
 
         return true;
+    }
+
+    /**
+     * Perform a secure logout that works with different guard types.
+     */
+    private function performSecureLogout(Request $request): void
+    {
+        $guard = Auth::guard();
+
+        // Check if the guard has a logout method (session-based guards)
+        if (method_exists($guard, 'logout')) {
+            $guard->logout();
+        } else {
+            // For guards without logout method (like RequestGuard), clear the user manually
+            Auth::forgetUser();
+        }
+
+        // Always invalidate and regenerate session for security
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
     }
 }

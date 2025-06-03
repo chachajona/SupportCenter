@@ -19,7 +19,7 @@ interface TwoFactorChallengeForm {
 
 export default function TwoFactorChallenge() {
     const [isRecoveryCode, setIsRecoveryCode] = useState(false);
-    const { confirmTwoFactor, error, loading, setTwoFactorRequired } = useAuthContext();
+    const { confirmTwoFactor, cancelTwoFactor, error, loading } = useAuthContext();
 
     const { data, setData, processing, errors, reset } = useForm<Required<TwoFactorChallengeForm>>({
         code: '',
@@ -35,14 +35,13 @@ export default function TwoFactorChallenge() {
 
         try {
             const success = await confirmTwoFactor(data.code.trim());
+
             if (!success && error) {
                 // Show the error from context, but also provide specific feedback
                 if (error.toLowerCase().includes('unauthenticated')) {
                     toast.error('Session expired', {
                         description: 'Please log in again.',
                     });
-                    // Reset the 2FA requirement to go back to login
-                    setTwoFactorRequired(false);
                 } else if (error.toLowerCase().includes('invalid') || error.toLowerCase().includes('incorrect')) {
                     toast.error('Invalid code', {
                         description: 'Please check your authenticator app and try again.',
@@ -56,7 +55,6 @@ export default function TwoFactorChallenge() {
 
             if (success) {
                 toast.success('Welcome back!');
-                setTwoFactorRequired(false);
             }
         } catch (err) {
             console.error('2FA submission error:', err);
@@ -70,9 +68,14 @@ export default function TwoFactorChallenge() {
         reset('code');
     };
 
-    const handleCancel = () => {
-        setTwoFactorRequired(false);
-        toast.info('Login cancelled. Please sign in again.');
+    const handleCancel = async () => {
+        try {
+            await cancelTwoFactor();
+            toast.info('Login cancelled. Please sign in again.');
+        } catch (err) {
+            console.error('Cancel 2FA error:', err);
+            toast.error('Failed to cancel. Please try again.');
+        }
     };
 
     return (

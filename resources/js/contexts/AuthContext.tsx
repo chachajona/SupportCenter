@@ -11,6 +11,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     getUser: () => Promise<User | null>;
     confirmTwoFactor: (code: string) => Promise<boolean>;
+    cancelTwoFactor: () => Promise<void>;
     setTwoFactorRequired: (isRequired: boolean) => void;
 }
 

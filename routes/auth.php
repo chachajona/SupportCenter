@@ -9,7 +9,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+use App\Http\Controllers\Auth\CustomTwoFactorAuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticationController;
 use Laravel\Fortify\Http\Controllers\TwoFactorSecretKeyController;
 use Laravel\Fortify\Http\Controllers\RecoveryCodeController;
@@ -17,6 +17,8 @@ use Laravel\Fortify\Http\Controllers\ConfirmedTwoFactorAuthenticationController;
 use App\Http\Controllers\Auth\WebAuthnLoginController;
 use App\Http\Controllers\Auth\WebAuthnRegisterController;
 use App\Http\Controllers\Auth\WebAuthnManageController;
+use App\Http\Controllers\Auth\TwoFactorChoiceController;
+use App\Http\Controllers\Auth\EmergencyAccessController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -67,16 +69,25 @@ Route::middleware('auth')->group(function () {
 });
 
 // Two-Factor Authentication Routes
-Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
-    ->middleware(['web'])
+Route::get('/two-factor-challenge', [CustomTwoFactorAuthenticatedSessionController::class, 'create'])
+    ->middleware(['web', 'two-factor.challenge'])
     ->name('two-factor.login');
 
-Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'store'])
-    ->middleware(['web', 'throttle:two-factor'])
+Route::post('/two-factor-challenge', [CustomTwoFactorAuthenticatedSessionController::class, 'store'])
+    ->middleware(['web', 'two-factor.challenge', 'throttle:two-factor'])
     ->name('two-factor.login.store');
 
+// Two-Factor Method Choice
+Route::get('/two-factor-choice', [TwoFactorChoiceController::class, 'show'])
+    ->middleware(['web'])
+    ->name('two-factor.choice');
+
+Route::post('/two-factor-choice', [TwoFactorChoiceController::class, 'select'])
+    ->middleware(['web'])
+    ->name('two-factor.choice.select');
+
 // Two-Factor Authentication Management Routes
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // Enable 2FA
     Route::post('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'store'])
         ->middleware(['password.confirm'])
@@ -105,7 +116,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 });
 
 // WebAuthn Authentication Routes (guest users)
-Route::middleware('guest')->group(function () {
+Route::middleware(['guest', 'webauthn.security'])->group(function () {
     Route::post('/webauthn/login/options', [WebAuthnLoginController::class, 'options'])
         ->name('webauthn.login.options');
 
@@ -115,7 +126,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // WebAuthn Registration Routes (authenticated users)
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'webauthn.security'])->group(function () {
     // WebAuthn Credential Management
     Route::get('/user/webauthn/register', [WebAuthnRegisterController::class, 'create'])
         ->name('webauthn.register.create');
@@ -134,4 +145,18 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/user/webauthn/{credential}', [WebAuthnManageController::class, 'update'])
         ->middleware(['password.confirm'])
         ->name('webauthn.update');
+});
+
+// Emergency Access Routes
+Route::middleware('guest')->group(function () {
+    Route::get('/emergency-access', [EmergencyAccessController::class, 'show'])
+        ->name('emergency.access');
+
+    Route::post('/emergency-access', [EmergencyAccessController::class, 'initiate'])
+        ->middleware('throttle:3,60')
+        ->name('emergency.access.initiate');
+
+    Route::get('/emergency-access/{token}', [EmergencyAccessController::class, 'process'])
+        ->middleware('throttle:5,60')
+        ->name('emergency.access.process');
 });

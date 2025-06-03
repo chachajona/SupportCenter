@@ -63,6 +63,26 @@ enum SecurityEventType: string
     case TEST_EVENT = 'test_event';
 
     /**
+     * WebAuthn credential registration event.
+     */
+    case WEBAUTHN_REGISTER = 'webauthn_register';
+
+    /**
+     * WebAuthn authentication event.
+     */
+    case WEBAUTHN_LOGIN = 'webauthn_login';
+
+    /**
+     * WebAuthn credential removal event.
+     */
+    case WEBAUTHN_REMOVE = 'webauthn_remove';
+
+    /**
+     * WebAuthn authentication failure.
+     */
+    case WEBAUTHN_FAILED = 'webauthn_failed';
+
+    /**
      * Get all available event types as an array.
      *
      * @return array<string>
@@ -88,6 +108,10 @@ enum SecurityEventType: string
             self::DATA_ACCESS => 'Data access or modification',
             self::SECURITY_CONFIG_CHANGE => 'Security configuration change',
             self::TEST_EVENT => 'Test event for development',
+            self::WEBAUTHN_REGISTER => 'WebAuthn credential registration',
+            self::WEBAUTHN_LOGIN => 'WebAuthn authentication',
+            self::WEBAUTHN_REMOVE => 'WebAuthn credential removal',
+            self::WEBAUTHN_FAILED => 'WebAuthn authentication failure',
         };
     }
 
@@ -99,7 +123,8 @@ enum SecurityEventType: string
         return match ($this) {
             self::IP_BLOCKED,
             self::SUSPICIOUS_ACTIVITY,
-            self::AUTH_FAILURE => true,
+            self::AUTH_FAILURE,
+            self::WEBAUTHN_FAILED => true,
             default => false,
         };
     }
@@ -111,9 +136,9 @@ enum SecurityEventType: string
     {
         return match ($this) {
             self::SUSPICIOUS_ACTIVITY => 5,
-            self::IP_BLOCKED, self::AUTH_FAILURE => 4,
-            self::AUTH_ATTEMPT, self::AUTHORIZATION_EVENT => 3,
-            self::SESSION_EVENT, self::DATA_ACCESS => 2,
+            self::IP_BLOCKED, self::AUTH_FAILURE, self::WEBAUTHN_FAILED => 4,
+            self::AUTH_ATTEMPT, self::AUTHORIZATION_EVENT, self::WEBAUTHN_LOGIN => 3,
+            self::SESSION_EVENT, self::DATA_ACCESS, self::WEBAUTHN_REGISTER, self::WEBAUTHN_REMOVE => 2,
             self::ACCESS_GRANTED, self::SECURITY_CONFIG_CHANGE => 1,
             self::TEST_EVENT => 0,
         };

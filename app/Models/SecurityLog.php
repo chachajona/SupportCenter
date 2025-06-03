@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\SecurityEventType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Http\Request;
 use InvalidArgumentException;
 
 class SecurityLog extends Model
@@ -32,6 +33,7 @@ class SecurityLog extends Model
     protected $casts = [
         'details' => 'json',
         'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'event_type' => SecurityEventType::class,
     ];
 
@@ -40,20 +42,17 @@ class SecurityLog extends Model
      *
      * @var bool
      */
-    public $timestamps = false;
+    public $timestamps = true;
 
     /**
-     * The model's boot method to handle automatic created_at setting.
+     * The model's boot method.
      */
     protected static function boot(): void
     {
         parent::boot();
 
-        static::creating(function (SecurityLog $securityLog) {
-            if (empty($securityLog->created_at)) {
-                $securityLog->created_at = now();
-            }
-        });
+        // Laravel will automatically handle created_at and updated_at timestamps
+        // No manual intervention needed
     }
 
     /**
@@ -82,5 +81,22 @@ class SecurityLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Log a WebAuthn-related security event.
+     */
+    public static function logWebAuthnEvent(SecurityEventType $eventType, ?User $user, Request $request, array $details = []): void
+    {
+        self::create([
+            'user_id' => $user?->id,
+            'event_type' => $eventType,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'details' => array_merge([
+                'request_path' => $request->path(),
+                'timestamp' => now()->toISOString(),
+            ], $details),
+        ]);
     }
 }

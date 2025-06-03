@@ -59,15 +59,33 @@ class AuthenticatedSessionController extends Controller
             $request->session()->put([
                 'login.id' => $user->getKey(),
                 'login.remember' => $request->boolean('remember'),
+                'last_activity_time' => time(),
             ]);
 
             RateLimiter::clear($request->throttleKey());
+
+            // Check for multiple MFA methods
+            $availableMethods = [];
+            if ($user->two_factor_enabled) {
+                $availableMethods[] = 'totp';
+            }
+            if ($user->hasWebAuthnCredentials()) {
+                $availableMethods[] = 'webauthn';
+            }
+
+            // If multiple methods available, redirect to choice page
+            if (count($availableMethods) > 1) {
+                return response()->json(['two_factor_choice' => true]);
+            }
 
             return response()->json(['two_factor' => true]);
         }
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
+
+        // Set last activity time to prevent immediate session timeout
+        $request->session()->put('last_activity_time', time());
 
         RateLimiter::clear($request->throttleKey());
 

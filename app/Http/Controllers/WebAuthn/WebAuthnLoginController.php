@@ -24,6 +24,13 @@ class WebAuthnLoginController
      */
     public function login(AssertedRequest $request): Response
     {
-        return response()->noContent($request->login() ? 204 : 422);
+        $success = $request->login();
+
+        if ($success) {
+            // Set last activity time to prevent immediate session timeout
+            $request->session()->put('last_activity_time', time());
+        }
+
+        return response()->noContent($success ? 204 : 422);
     }
 }

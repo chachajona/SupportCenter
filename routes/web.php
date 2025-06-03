@@ -15,9 +15,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
-});
 
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    // Two-Factor QR Code route - using standard auth middleware for consistency
     Route::get('/user/two-factor-qr-code', [TwoFactorQrCodeController::class, 'show'])
         ->name('two-factor.qr-code');
 });
