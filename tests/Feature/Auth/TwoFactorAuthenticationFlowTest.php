@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\SetupStatus;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use PragmaRX\Google2FA\Google2FA as Google2FAService;
 use Tests\TestCase;
@@ -16,7 +17,7 @@ use Illuminate\Support\Collection;
 
 class TwoFactorAuthenticationFlowTest extends TestCase
 {
-    use DatabaseMigrations;
+    use RefreshDatabase;
 
     protected User $user;
     protected Google2FAService $google2fa;
@@ -24,6 +25,24 @@ class TwoFactorAuthenticationFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Configure mail to use array driver for testing (prevents actual email sending)
+        config(['mail.default' => 'array']);
+
+        // Mark setup as completed for testing
+        SetupStatus::markCompleted('database_migration');
+        SetupStatus::markCompleted('roles_seeded');
+        SetupStatus::markCompleted('admin_created');
+        SetupStatus::markCompleted('setup_completed');
+
+        // Create setup lock file to skip middleware checks
+        $setupLockFile = storage_path('app/setup.lock');
+        $lockData = [
+            'completed_at' => now()->toISOString(),
+            'completed_by' => 'test_environment',
+            'version' => config('app.version', '1.0.0'),
+        ];
+        file_put_contents($setupLockFile, json_encode($lockData));
 
         $this->user = User::factory()->create();
         $this->google2fa = new Google2FAService();
@@ -777,5 +796,16 @@ class TwoFactorAuthenticationFlowTest extends TestCase
             $challengeResponseFallback->getContent(),
             'Rate limiter should work with IP fallback when session login.id is missing'
         );
+    }
+
+    protected function tearDown(): void
+    {
+        // Clean up setup lock file after test
+        $setupLockFile = storage_path('app/setup.lock');
+        if (file_exists($setupLockFile)) {
+            unlink($setupLockFile);
+        }
+
+        parent::tearDown();
     }
 }

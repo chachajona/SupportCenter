@@ -8,6 +8,9 @@ use App\Http\Middleware\IpAllowlistMiddleware;
 use App\Http\Middleware\RequirePasswordConfirmation;
 use App\Http\Middleware\WebAuthnSecurityMiddleware;
 use App\Http\Middleware\TwoFactorChallengeMiddleware;
+use App\Http\Middleware\RolePermissionMiddleware;
+use App\Http\Middleware\SetupMiddleware;
+use App\Http\Middleware\PreventSetupAccess;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -36,6 +39,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'ip.allowlist' => IpAllowlistMiddleware::class,
             'webauthn.security' => WebAuthnSecurityMiddleware::class,
             'two-factor.challenge' => TwoFactorChallengeMiddleware::class,
+            'permission' => RolePermissionMiddleware::class,
+            'setup.completed' => SetupMiddleware::class,
+            'prevent.setup.access' => PreventSetupAccess::class,
         ]);
 
         $middleware->statefulApi();

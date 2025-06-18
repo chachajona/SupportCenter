@@ -27,10 +27,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
-        const isLoginPage = window.location.pathname === '/login';
+        const currentPath = window.location.pathname;
+        const isLoginPage = currentPath === '/login';
+        const isSetupPage = currentPath.startsWith('/setup');
 
         if (!initialized) {
-            if (!isLoginPage) {
+            if (!isLoginPage && !isSetupPage) {
                 getUser().finally(() => {
                     setInitialized(true);
                 });

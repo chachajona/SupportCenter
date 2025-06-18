@@ -7,6 +7,8 @@ use Illuminate\Database\Seeder;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Models\Department;
+use App\Models\SetupStatus;
+use Illuminate\Support\Facades\DB;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -15,19 +17,16 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create departments first
-        $this->createDepartments();
+        DB::transaction(function () {
+            $this->createDepartments();
+            $this->createPermissions();
+            $this->createRoles();
+            $this->assignPermissionsToRoles();
 
-        // Create permissions
-        $permissions = $this->createPermissions();
-
-        // Create roles
-        $roles = $this->createRoles();
-
-        // Assign permissions to roles
-        $this->assignPermissionsToRoles($roles, $permissions);
-
-        $this->command->info('RBAC roles and permissions seeded successfully!');
+            // Mark seeding as completed
+            SetupStatus::markCompleted('roles_seeded');
+            SetupStatus::markCompleted('permissions_seeded');
+        });
     }
 
     /**
@@ -49,228 +48,314 @@ class RolePermissionSeeder extends Seeder
     }
 
     /**
-     * Create all permissions.
+     * Create comprehensive permission structure
      */
-    private function createPermissions(): array
+    private function createPermissions(): void
     {
         $permissions = [
-            // Ticket permissions
-            ['name' => 'tickets.view_own', 'display_name' => 'View Own Tickets', 'resource' => 'tickets', 'action' => 'view_own'],
-            ['name' => 'tickets.view_department', 'display_name' => 'View Department Tickets', 'resource' => 'tickets', 'action' => 'view_department'],
-            ['name' => 'tickets.view_all', 'display_name' => 'View All Tickets', 'resource' => 'tickets', 'action' => 'view_all'],
-            ['name' => 'tickets.create', 'display_name' => 'Create Tickets', 'resource' => 'tickets', 'action' => 'create'],
-            ['name' => 'tickets.edit_own', 'display_name' => 'Edit Own Tickets', 'resource' => 'tickets', 'action' => 'edit_own'],
-            ['name' => 'tickets.edit_department', 'display_name' => 'Edit Department Tickets', 'resource' => 'tickets', 'action' => 'edit_department'],
-            ['name' => 'tickets.edit_all', 'display_name' => 'Edit All Tickets', 'resource' => 'tickets', 'action' => 'edit_all'],
-            ['name' => 'tickets.delete_own', 'display_name' => 'Delete Own Tickets', 'resource' => 'tickets', 'action' => 'delete_own'],
-            ['name' => 'tickets.delete_department', 'display_name' => 'Delete Department Tickets', 'resource' => 'tickets', 'action' => 'delete_department'],
-            ['name' => 'tickets.delete_all', 'display_name' => 'Delete All Tickets', 'resource' => 'tickets', 'action' => 'delete_all'],
-            ['name' => 'tickets.assign', 'display_name' => 'Assign Tickets', 'resource' => 'tickets', 'action' => 'assign'],
-            ['name' => 'tickets.escalate', 'display_name' => 'Escalate Tickets', 'resource' => 'tickets', 'action' => 'escalate'],
-            ['name' => 'tickets.close', 'display_name' => 'Close Tickets', 'resource' => 'tickets', 'action' => 'close'],
+            // Ticket Management
+            'tickets' => [
+                'create',
+                'view_own',
+                'view_department',
+                'view_all',
+                'edit_own',
+                'edit_department',
+                'edit_all',
+                'delete_own',
+                'delete_department',
+                'delete_all',
+                'assign',
+                'transfer',
+                'close',
+                'reopen'
+            ],
 
-            // User management permissions
-            ['name' => 'users.view_own', 'display_name' => 'View Own Profile', 'resource' => 'users', 'action' => 'view_own'],
-            ['name' => 'users.view_department', 'display_name' => 'View Department Users', 'resource' => 'users', 'action' => 'view_department'],
-            ['name' => 'users.view_all', 'display_name' => 'View All Users', 'resource' => 'users', 'action' => 'view_all'],
-            ['name' => 'users.create', 'display_name' => 'Create Users', 'resource' => 'users', 'action' => 'create'],
-            ['name' => 'users.edit_own', 'display_name' => 'Edit Own Profile', 'resource' => 'users', 'action' => 'edit_own'],
-            ['name' => 'users.edit_department', 'display_name' => 'Edit Department Users', 'resource' => 'users', 'action' => 'edit_department'],
-            ['name' => 'users.edit_all', 'display_name' => 'Edit All Users', 'resource' => 'users', 'action' => 'edit_all'],
-            ['name' => 'users.delete', 'display_name' => 'Delete Users', 'resource' => 'users', 'action' => 'delete'],
+            // User Management
+            'users' => [
+                'view_own',
+                'view_department',
+                'view_all',
+                'create',
+                'edit_own',
+                'edit_department',
+                'edit_all',
+                'delete',
+                'manage_roles',
+                'impersonate'
+            ],
 
-            // Role and permission management
-            ['name' => 'roles.view', 'display_name' => 'View Roles', 'resource' => 'roles', 'action' => 'view'],
-            ['name' => 'roles.create', 'display_name' => 'Create Roles', 'resource' => 'roles', 'action' => 'create'],
-            ['name' => 'roles.edit', 'display_name' => 'Edit Roles', 'resource' => 'roles', 'action' => 'edit'],
-            ['name' => 'roles.delete', 'display_name' => 'Delete Roles', 'resource' => 'roles', 'action' => 'delete'],
-            ['name' => 'roles.assign', 'display_name' => 'Assign Roles', 'resource' => 'roles', 'action' => 'assign'],
+            // Role Management
+            'roles' => [
+                'view',
+                'create',
+                'edit',
+                'delete',
+                'assign',
+                'revoke',
+                'view_matrix'
+            ],
 
-            // Reports and analytics
-            ['name' => 'reports.view_basic', 'display_name' => 'View Basic Reports', 'resource' => 'reports', 'action' => 'view_basic'],
-            ['name' => 'reports.view_department', 'display_name' => 'View Department Reports', 'resource' => 'reports', 'action' => 'view_department'],
-            ['name' => 'reports.view_all', 'display_name' => 'View All Reports', 'resource' => 'reports', 'action' => 'view_all'],
-            ['name' => 'reports.create_custom', 'display_name' => 'Create Custom Reports', 'resource' => 'reports', 'action' => 'create_custom'],
-            ['name' => 'reports.export', 'display_name' => 'Export Reports', 'resource' => 'reports', 'action' => 'export'],
+            // Department Management
+            'departments' => [
+                'view_own',
+                'view_all',
+                'create',
+                'edit',
+                'delete',
+                'manage_hierarchy'
+            ],
 
-            // Knowledge base management
-            ['name' => 'knowledge.view', 'display_name' => 'View Knowledge Base', 'resource' => 'knowledge', 'action' => 'view'],
-            ['name' => 'knowledge.create', 'display_name' => 'Create Articles', 'resource' => 'knowledge', 'action' => 'create'],
-            ['name' => 'knowledge.edit', 'display_name' => 'Edit Articles', 'resource' => 'knowledge', 'action' => 'edit'],
-            ['name' => 'knowledge.approve', 'display_name' => 'Approve Articles', 'resource' => 'knowledge', 'action' => 'approve'],
-            ['name' => 'knowledge.delete', 'display_name' => 'Delete Articles', 'resource' => 'knowledge', 'action' => 'delete'],
+            // System Administration
+            'system' => [
+                'configuration',
+                'maintenance',
+                'backup',
+                'logs_view',
+                'plugins_manage',
+                'manage'
+            ],
 
-            // System administration
-            ['name' => 'system.configuration', 'display_name' => 'System Configuration', 'resource' => 'system', 'action' => 'configuration'],
-            ['name' => 'system.maintenance', 'display_name' => 'System Maintenance', 'resource' => 'system', 'action' => 'maintenance'],
-            ['name' => 'system.plugins', 'display_name' => 'Plugin Management', 'resource' => 'system', 'action' => 'plugins'],
-            ['name' => 'system.backup', 'display_name' => 'System Backup', 'resource' => 'system', 'action' => 'backup'],
+            // Audit and Compliance
+            'audit' => [
+                'view_logs',
+                'export_data',
+                'compliance_reports',
+                'view'
+            ],
 
-            // Audit and compliance
-            ['name' => 'audit.view_logs', 'display_name' => 'View Audit Logs', 'resource' => 'audit', 'action' => 'view_logs'],
-            ['name' => 'audit.export_data', 'display_name' => 'Export Audit Data', 'resource' => 'audit', 'action' => 'export_data'],
-            ['name' => 'audit.compliance_reports', 'display_name' => 'Compliance Reports', 'resource' => 'audit', 'action' => 'compliance_reports'],
+            // Knowledge Management
+            'knowledge' => [
+                'create_articles',
+                'edit_articles',
+                'approve_articles',
+                'manage_categories',
+                'version_control'
+            ],
 
-            // SLA management
-            ['name' => 'sla.view', 'display_name' => 'View SLA Policies', 'resource' => 'sla', 'action' => 'view'],
-            ['name' => 'sla.manage', 'display_name' => 'Manage SLA Policies', 'resource' => 'sla', 'action' => 'manage'],
-            ['name' => 'sla.enforce', 'display_name' => 'Enforce SLA Policies', 'resource' => 'sla', 'action' => 'enforce'],
+            // SLA Management
+            'sla' => [
+                'view',
+                'create',
+                'edit',
+                'enforce',
+                'escalate'
+            ],
+
+            // Reports and Analytics
+            'reports' => [
+                'view_own',
+                'view_department',
+                'view_all',
+                'create_custom',
+                'export',
+                'schedule'
+            ],
+
+            // Monitoring
+            'monitoring' => [
+                'view',
+                'export'
+            ],
+
+            // Permissions
+            'permissions' => [
+                'view',
+                'create',
+                'edit',
+                'delete'
+            ]
         ];
 
-        $createdPermissions = [];
-        foreach ($permissions as $permission) {
-            $createdPermissions[$permission['name']] = Permission::firstOrCreate(
-                ['name' => $permission['name']],
-                $permission
-            );
+        foreach ($permissions as $resource => $actions) {
+            foreach ($actions as $action) {
+                Permission::firstOrCreate([
+                    'name' => "{$resource}.{$action}",
+                    'guard_name' => 'web',
+                ], [
+                    'display_name' => ucwords(str_replace('_', ' ', "{$resource} {$action}")),
+                    'description' => "Permission to {$action} {$resource}",
+                    'resource' => $resource,
+                    'action' => $action,
+                ]);
+            }
         }
-
-        return $createdPermissions;
     }
 
     /**
-     * Create the 6 default roles.
+     * Create the six default roles with hierarchy
      */
-    private function createRoles(): array
+    private function createRoles(): void
     {
         $roles = [
-            [
-                'name' => 'support_agent',
+            'support_agent' => [
                 'display_name' => 'Support Agent',
-                'description' => 'Front-line support staff handling ticket resolution',
+                'description' => 'Basic support staff with limited access to assigned tickets',
                 'hierarchy_level' => 1,
-                'is_active' => true,
             ],
-            [
-                'name' => 'department_manager',
+            'department_manager' => [
                 'display_name' => 'Department Manager',
-                'description' => 'Manages team operations and departmental oversight',
+                'description' => 'Manages department operations and team performance',
                 'hierarchy_level' => 2,
-                'is_active' => true,
             ],
-            [
-                'name' => 'regional_manager',
+            'regional_manager' => [
                 'display_name' => 'Regional Manager',
                 'description' => 'Oversees multiple departments and regional operations',
                 'hierarchy_level' => 3,
-                'is_active' => true,
             ],
-            [
-                'name' => 'system_administrator',
+            'system_administrator' => [
                 'display_name' => 'System Administrator',
                 'description' => 'Full system access and configuration management',
                 'hierarchy_level' => 4,
-                'is_active' => true,
             ],
-            [
-                'name' => 'compliance_auditor',
+            'compliance_auditor' => [
                 'display_name' => 'Compliance Auditor',
                 'description' => 'Read-only access for compliance and audit purposes',
-                'hierarchy_level' => 2,
-                'is_active' => true,
+                'hierarchy_level' => 3,
             ],
-            [
-                'name' => 'knowledge_curator',
+            'knowledge_curator' => [
                 'display_name' => 'Knowledge Curator',
-                'description' => 'Manages knowledge base and content approval',
+                'description' => 'Manages knowledge base and content',
                 'hierarchy_level' => 2,
-                'is_active' => true,
-            ],
+            ]
         ];
 
-        $createdRoles = [];
-        foreach ($roles as $role) {
-            $createdRoles[$role['name']] = Role::firstOrCreate(
-                ['name' => $role['name']],
-                $role
-            );
+        foreach ($roles as $roleName => $roleData) {
+            Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web',
+            ], [
+                'display_name' => $roleData['display_name'],
+                'description' => $roleData['description'],
+                'hierarchy_level' => $roleData['hierarchy_level'],
+                'is_active' => true,
+            ]);
         }
-
-        return $createdRoles;
     }
 
     /**
-     * Assign permissions to roles based on role hierarchy.
+     * Assign permissions to roles with inheritance
      */
-    private function assignPermissionsToRoles(array $roles, array $permissions): void
+    private function assignPermissionsToRoles(): void
     {
-        // Support Agent permissions
-        $roles['support_agent']->syncPermissions([
-            $permissions['tickets.view_own'],
-            $permissions['tickets.create'],
-            $permissions['tickets.edit_own'],
-            $permissions['tickets.close'],
-            $permissions['users.view_own'],
-            $permissions['users.edit_own'],
-            $permissions['knowledge.view'],
-            $permissions['reports.view_basic'],
-        ]);
+        $rolePermissions = [
+            'support_agent' => [
+                'tickets.create',
+                'tickets.view_own',
+                'tickets.edit_own',
+                'tickets.assign',
+                'tickets.transfer',
+                'tickets.close',
+                'users.view_own',
+                'users.edit_own',
+                'departments.view_own',
+                'knowledge.create_articles',
+                'reports.view_own'
+            ],
 
-        // Department Manager permissions (inherits Support Agent + additional)
-        $departmentManagerPermissions = [
-            // Support Agent permissions
-            $permissions['tickets.view_own'],
-            $permissions['tickets.create'],
-            $permissions['tickets.edit_own'],
-            $permissions['tickets.close'],
-            $permissions['users.view_own'],
-            $permissions['users.edit_own'],
-            $permissions['knowledge.view'],
-            $permissions['reports.view_basic'],
-            // Additional permissions
-            $permissions['tickets.view_department'],
-            $permissions['tickets.edit_department'],
-            $permissions['tickets.assign'],
-            $permissions['tickets.escalate'],
-            $permissions['users.view_department'],
-            $permissions['users.edit_department'],
-            $permissions['reports.view_department'],
-            $permissions['sla.view'],
-            $permissions['sla.enforce'],
+            'department_manager' => [
+                // Inherits all support_agent permissions plus:
+                'tickets.view_department',
+                'tickets.edit_department',
+                'tickets.delete_department',
+                'tickets.reopen',
+                'users.view_department',
+                'users.edit_department',
+                'users.create',
+                'users.manage_roles',
+                'departments.view_all',
+                'departments.edit',
+                'sla.view',
+                'sla.enforce',
+                'sla.escalate',
+                'reports.view_department',
+                'reports.create_custom',
+                'knowledge.edit_articles',
+                'knowledge.approve_articles'
+            ],
+
+            'regional_manager' => [
+                // Inherits department_manager permissions plus:
+                'tickets.view_all',
+                'tickets.edit_all',
+                'users.view_all',
+                'users.edit_all',
+                'departments.create',
+                'departments.manage_hierarchy',
+                'sla.create',
+                'sla.edit',
+                'reports.view_all',
+                'reports.export',
+                'reports.schedule'
+            ],
+
+            'system_administrator' => [
+                // All permissions - handled specially
+            ],
+
+            'compliance_auditor' => [
+                'tickets.view_all',
+                'users.view_all',
+                'departments.view_all',
+                'roles.view',
+                'audit.view_logs',
+                'audit.export_data',
+                'audit.compliance_reports',
+                'reports.view_all',
+                'reports.export'
+            ],
+
+            'knowledge_curator' => [
+                'tickets.view_department',
+                'users.view_department',
+                'knowledge.create_articles',
+                'knowledge.edit_articles',
+                'knowledge.approve_articles',
+                'knowledge.manage_categories',
+                'knowledge.version_control',
+                'reports.view_department'
+            ]
         ];
-        $roles['department_manager']->syncPermissions($departmentManagerPermissions);
 
-        // Regional Manager permissions
-        $regionalManagerPermissions = array_merge($departmentManagerPermissions, [
-            $permissions['tickets.view_all'],
-            $permissions['tickets.edit_all'],
-            $permissions['users.view_all'],
-            $permissions['users.create'],
-            $permissions['reports.view_all'],
-            $permissions['reports.create_custom'],
-            $permissions['reports.export'],
-            $permissions['roles.view'],
-            $permissions['roles.assign'],
-        ]);
-        $roles['regional_manager']->syncPermissions($regionalManagerPermissions);
+        foreach ($rolePermissions as $roleName => $permissions) {
+            $role = Role::where('name', $roleName)->first();
+            if (!$role)
+                continue;
 
-        // System Administrator permissions (all permissions)
-        $roles['system_administrator']->syncPermissions(array_values($permissions));
+            // Handle system administrator special case
+            if ($roleName === 'system_administrator') {
+                $role->syncPermissions(Permission::all());
+            } else {
+                // Handle permission inheritance
+                $allPermissions = $this->getInheritedPermissions($roleName, $permissions, $rolePermissions);
+                $role->syncPermissions($allPermissions);
+            }
+        }
+    }
 
-        // Compliance Auditor permissions (read-only)
-        $roles['compliance_auditor']->syncPermissions([
-            $permissions['tickets.view_all'],
-            $permissions['users.view_all'],
-            $permissions['audit.view_logs'],
-            $permissions['audit.export_data'],
-            $permissions['audit.compliance_reports'],
-            $permissions['reports.view_all'],
-            $permissions['reports.export'],
-            $permissions['knowledge.view'],
-            $permissions['roles.view'],
-        ]);
+    /**
+     * Get inherited permissions based on role hierarchy
+     */
+    private function getInheritedPermissions(string $roleName, array $permissions, array $allRolePermissions): array
+    {
+        $inherited = [];
 
-        // Knowledge Curator permissions
-        $roles['knowledge_curator']->syncPermissions([
-            $permissions['tickets.view_own'],
-            $permissions['users.view_own'],
-            $permissions['users.edit_own'],
-            $permissions['knowledge.view'],
-            $permissions['knowledge.create'],
-            $permissions['knowledge.edit'],
-            $permissions['knowledge.approve'],
-            $permissions['knowledge.delete'],
-            $permissions['reports.view_basic'],
-        ]);
+        // Define inheritance hierarchy
+        $inheritance = [
+            'department_manager' => ['support_agent'],
+            'regional_manager' => ['department_manager', 'support_agent'],
+        ];
+
+        // Add inherited permissions
+        if (isset($inheritance[$roleName])) {
+            foreach ($inheritance[$roleName] as $parentRole) {
+                if (isset($allRolePermissions[$parentRole])) {
+                    $inherited = array_merge($inherited, $allRolePermissions[$parentRole]);
+                }
+            }
+        }
+
+        // Merge with role-specific permissions
+        return array_unique(array_merge($inherited, $permissions));
     }
 }
