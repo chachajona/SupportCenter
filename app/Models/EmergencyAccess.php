@@ -27,6 +27,7 @@ class EmergencyAccess extends Model
         'permissions',
         'reason',
         'expires_at',
+        'granted_by',
     ];
 
     /**
@@ -35,7 +36,6 @@ class EmergencyAccess extends Model
      * @var array<int, string>
      */
     protected $guarded = [
-        'granted_by',
         'granted_at',
         'used_at',
         'is_active',
@@ -98,6 +98,14 @@ class EmergencyAccess extends Model
     }
 
     /**
+     * Scope to recent emergency access grants within given days.
+     */
+    public function scopeRecent($query, int $days = 30)
+    {
+        return $query->where('granted_at', '>=', now()->subDays($days));
+    }
+
+    /**
      * Mark emergency access as used.
      */
     public function markAsUsed(): bool
@@ -154,6 +162,9 @@ class EmergencyAccess extends Model
         static::creating(function ($emergencyAccess) {
             if (!$emergencyAccess->granted_at) {
                 $emergencyAccess->granted_at = now();
+            }
+            if (!isset($emergencyAccess->is_active)) {
+                $emergencyAccess->is_active = true;
             }
         });
     }

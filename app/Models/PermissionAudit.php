@@ -23,7 +23,21 @@ class PermissionAudit extends Model
      *
      * @var bool
      */
-    public $timestamps = true;
+    public $timestamps = false;
+
+    /**
+     * The name of the "created at" column.
+     *
+     * @var string
+     */
+    const CREATED_AT = 'created_at';
+
+    /**
+     * The name of the "updated at" column.
+     *
+     * @var string|null
+     */
+    const UPDATED_AT = null;
 
     /**
      * The attributes that are mass assignable.
@@ -41,6 +55,7 @@ class PermissionAudit extends Model
         'user_agent',
         'performed_by',
         'reason',
+        'created_at',
     ];
 
     /**
@@ -193,6 +208,7 @@ class PermissionAudit extends Model
             'user_agent' => request()?->userAgent(),
             'performed_by' => $performedBy ?? Auth::id(),
             'reason' => $reason,
+            'created_at' => now(),
         ]);
     }
 }

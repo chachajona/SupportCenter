@@ -98,9 +98,13 @@ class Department extends Model
         // Cast all elements to integers to prevent SQL injection
         $sanitizedPaths = array_map('intval', $paths);
 
-        return static::whereIn('id', $sanitizedPaths)
-            ->orderByRaw("FIELD(id, " . implode(',', $sanitizedPaths) . ")")
-            ->get();
+        // Fetch ancestors without database-specific ordering
+        $ancestors = static::whereIn('id', $sanitizedPaths)->get();
+
+        // Sort in PHP to maintain correct hierarchy order (database-agnostic)
+        return $ancestors->sortBy(function ($ancestor) use ($sanitizedPaths) {
+            return array_search($ancestor->id, $sanitizedPaths);
+        })->values();
     }
 
     /**
@@ -189,6 +193,9 @@ class Department extends Model
                 $parent = static::find($department->parent_id);
                 if ($parent) {
                     $department->path = $parent->path . $parent->id . '/';
+                } else {
+                    // If parent doesn't exist, set path to empty to maintain consistency
+                    $department->path = '/';
                 }
             } else {
                 $department->path = '/';
@@ -197,10 +204,23 @@ class Department extends Model
 
         static::updating(function ($department) {
             if ($department->isDirty('parent_id')) {
+                // Prevent circular references: check if new parent is a descendant
                 if ($department->parent_id) {
-                    $parent = static::find($department->parent_id);
-                    if ($parent) {
-                        $department->path = $parent->path . $parent->id . '/';
+                    $newParent = static::find($department->parent_id);
+
+                    if (!$newParent) {
+                        // Parent doesn't exist, set to root
+                        $department->path = '/';
+                    } else {
+                        // Check for circular reference
+                        if ($department->exists && $newParent->isDescendantOf($department)) {
+                            throw new \InvalidArgumentException(
+                                "Cannot set department '{$newParent->name}' as parent: it would create a circular reference. " .
+                                "The selected parent is a descendant of the current department."
+                            );
+                        }
+
+                        $department->path = $newParent->path . $newParent->id . '/';
                     }
                 } else {
                     $department->path = '/';

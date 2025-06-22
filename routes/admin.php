@@ -1,13 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminSetupController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\EmergencyAccessController;
 use App\Http\Controllers\Admin\MonitoringController;
-// Temporarily commented out missing controllers
-// use App\Http\Controllers\Admin\RoleController;
-// use App\Http\Controllers\Admin\PermissionController;
-// use App\Http\Controllers\Admin\UserRoleController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserRoleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,18 +49,32 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Emergency Access Management (Week 21 Focus)
     Route::middleware('permission:emergency.view')->group(function () {
         Route::get('/emergency', [EmergencyAccessController::class, 'index'])->name('emergency.index');
-        Route::post('/emergency/grant', [EmergencyAccessController::class, 'grant'])
+        Route::post('/emergency', [EmergencyAccessController::class, 'store'])
             ->middleware('permission:emergency.grant')
-            ->name('emergency.grant');
+            ->name('emergency.store');
+        Route::get('/emergency/{emergency}', [EmergencyAccessController::class, 'show'])
+            ->name('emergency.show');
         Route::patch('/emergency/{emergency}/revoke', [EmergencyAccessController::class, 'revoke'])
             ->middleware('permission:emergency.revoke')
             ->name('emergency.revoke');
-        Route::get('/emergency/{emergency}', [EmergencyAccessController::class, 'show'])
-            ->name('emergency.show');
+        Route::patch('/emergency/{emergency}/use', [EmergencyAccessController::class, 'markUsed'])
+            ->middleware('permission:emergency.manage')
+            ->name('emergency.use');
+        Route::post('/emergency/cleanup', [EmergencyAccessController::class, 'cleanup'])
+            ->middleware('permission:emergency.manage')
+            ->name('emergency.cleanup');
     });
 
-    // TODO: Implement these controllers
-    /*
+    // Analytics Dashboard (Week 21 Focus)
+    Route::middleware('permission:analytics.view')->group(function () {
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/analytics/refresh', [AnalyticsController::class, 'refresh'])->name('analytics.refresh');
+        Route::get('/analytics/metrics', [AnalyticsController::class, 'metrics'])->name('analytics.metrics');
+        Route::get('/analytics/export', [AnalyticsController::class, 'export'])
+            ->middleware('permission:analytics.export')
+            ->name('analytics.export');
+    });
+
     // Role Management
     Route::middleware('permission:roles.view')->group(function () {
         Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
@@ -75,37 +88,41 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::delete('/roles/{role}', [RoleController::class, 'destroy'])
             ->middleware('permission:roles.delete')
             ->name('roles.destroy');
-    });
-
-    // Permission Management
-    Route::middleware('permission:permissions.view')->group(function () {
-        Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-        Route::post('/permissions', [PermissionController::class, 'store'])
-            ->middleware('permission:permissions.create')
-            ->name('permissions.store');
-        Route::patch('/permissions/{permission}', [PermissionController::class, 'update'])
-            ->middleware('permission:permissions.edit')
-            ->name('permissions.update');
-        Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])
-            ->middleware('permission:permissions.delete')
-            ->name('permissions.destroy');
+        Route::get('/roles/matrix/view', [RoleController::class, 'matrix'])
+            ->middleware('permission:roles.view_matrix')
+            ->name('roles.matrix');
+        Route::patch('/roles/matrix/update', [RoleController::class, 'updateMatrix'])
+            ->middleware('permission:roles.edit_matrix')
+            ->name('roles.matrix.update');
     });
 
     // User Role Management
     Route::middleware('permission:users.view')->group(function () {
         Route::get('/users', [UserRoleController::class, 'index'])->name('users.index');
-        Route::get('/users/{user}/roles', [UserRoleController::class, 'show'])->name('users.roles.show');
+        Route::get('/users/{user}', [UserRoleController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}/permissions', [UserRoleController::class, 'getUserPermissions'])->name('users.permissions');
+
         Route::post('/users/{user}/roles', [UserRoleController::class, 'assign'])
             ->middleware('permission:roles.assign')
             ->name('users.roles.assign');
         Route::delete('/users/{user}/roles/{role}', [UserRoleController::class, 'revoke'])
             ->middleware('permission:roles.revoke')
             ->name('users.roles.revoke');
-        Route::post('/users/{user}/roles/temporary', [UserRoleController::class, 'assignTemporary'])
+        Route::post('/users/{user}/temporal-access', [UserRoleController::class, 'assignTemporary'])
             ->middleware('permission:roles.assign_temporal')
-            ->name('users.roles.temporary');
+            ->name('users.temporal.assign');
+        Route::delete('/users/{user}/temporal-access/{role}', [UserRoleController::class, 'revokeTemporary'])
+            ->middleware('permission:roles.revoke_temporal')
+            ->name('users.temporal.revoke');
+
+        // Bulk operations
+        Route::post('/users/bulk/assign', [UserRoleController::class, 'bulkAssign'])
+            ->middleware('permission:roles.bulk_assign')
+            ->name('users.bulk.assign');
+        Route::post('/users/bulk/revoke', [UserRoleController::class, 'bulkRevoke'])
+            ->middleware('permission:roles.bulk_revoke')
+            ->name('users.bulk.revoke');
     });
-    */
 });
 
 // Setup Management Routes (System Administrators Only)

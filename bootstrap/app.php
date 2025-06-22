@@ -32,6 +32,9 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
             IdleSessionTimeout::class,
             SuspiciousActivityDetection::class,
+            \App\Http\Middleware\GeoRestrictionMiddleware::class,
+            \App\Http\Middleware\DeviceRegistrationMiddleware::class,
+            \App\Http\Middleware\AdvancedRateLimiter::class,
         ]);
 
         $middleware->alias([
@@ -40,6 +43,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'webauthn.security' => WebAuthnSecurityMiddleware::class,
             'two-factor.challenge' => TwoFactorChallengeMiddleware::class,
             'permission' => RolePermissionMiddleware::class,
+            'geo.restrict' => \App\Http\Middleware\GeoRestrictionMiddleware::class,
+            'device.register' => \App\Http\Middleware\DeviceRegistrationMiddleware::class,
+            'rate.limit.operations' => \App\Http\Middleware\AdvancedRateLimiter::class,
             'setup.completed' => SetupMiddleware::class,
             'prevent.setup.access' => PreventSetupAccess::class,
         ]);

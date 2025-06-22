@@ -221,12 +221,7 @@ interface WebAuthnRegisterFormProps {
 function WebAuthnRegisterForm({ isRegistering, isLoading, deviceName, onDeviceNameChange, onRegister, onCancel }: WebAuthnRegisterFormProps) {
     if (!isRegistering) {
         return (
-            <Button
-                onClick={() => onCancel()}
-                variant="outline"
-                className="flex items-center gap-2"
-                disabled={isLoading}
-            >
+            <Button onClick={() => onCancel()} variant="outline" className="flex items-center gap-2" disabled={isLoading}>
                 <Plus className="h-4 w-4" />
                 Add New Passkey
             </Button>
@@ -309,6 +304,7 @@ export default function WebAuthn() {
         } else if (resumeWebauthn === 'register') {
             setIsRegistering(true);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isWebAuthnEnabled]);
 
     // Fetch credentials when component mounts or when WebAuthn is enabled

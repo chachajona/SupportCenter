@@ -93,7 +93,8 @@ class RolePermissionSeeder extends Seeder
                 'delete',
                 'assign',
                 'revoke',
-                'view_matrix'
+                'view_matrix',
+                'edit_matrix'
             ],
 
             // Department Management
@@ -152,10 +153,27 @@ class RolePermissionSeeder extends Seeder
                 'schedule'
             ],
 
+            // Analytics (RBAC Dashboard)
+            'analytics' => [
+                'view',
+                'view_own',
+                'view_department',
+                'view_all',
+                'export'
+            ],
+
             // Monitoring
             'monitoring' => [
                 'view',
                 'export'
+            ],
+
+            // Emergency Access Management
+            'emergency' => [
+                'view',
+                'grant',
+                'revoke',
+                'manage'
             ],
 
             // Permissions
@@ -271,7 +289,9 @@ class RolePermissionSeeder extends Seeder
                 'reports.view_department',
                 'reports.create_custom',
                 'knowledge.edit_articles',
-                'knowledge.approve_articles'
+                'knowledge.approve_articles',
+                // NEW: Analytics
+                'analytics.view_department'
             ],
 
             'regional_manager' => [
@@ -286,7 +306,10 @@ class RolePermissionSeeder extends Seeder
                 'sla.edit',
                 'reports.view_all',
                 'reports.export',
-                'reports.schedule'
+                'reports.schedule',
+                // NEW: Analytics
+                'analytics.view_all',
+                'analytics.export'
             ],
 
             'system_administrator' => [

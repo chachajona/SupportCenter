@@ -7,10 +7,19 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Artisan;
+use App\Models\SetupStatus;
 
 class TwoFactorQrCodeControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Artisan::call('migrate');
+        SetupStatus::markCompleted('setup_completed');
+    }
 
     /**
      * Set up the session to prevent middleware issues during testing.
@@ -348,6 +357,8 @@ class TwoFactorQrCodeControllerTest extends TestCase
         $enableResponse = $this->actingAs($user)
             ->withSession(['auth.password_confirmed_at' => null])  // Clear password confirmation after actingAs
             ->postJson(route('two-factor.enable'));
+        // For JSON requests, the password.confirm middleware returns HTTP 423 (Locked)
+        // instead of a redirect. Assert the status code accordingly.
         $enableResponse->assertStatus(423); // Password confirmation required
 
         // Step 2: User confirms password (simulated by setting session)

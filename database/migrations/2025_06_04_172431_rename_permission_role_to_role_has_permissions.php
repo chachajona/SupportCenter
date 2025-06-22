@@ -45,10 +45,12 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        // Check if role_has_permissions table exists and permission_role doesn't
-        if (Schema::hasTable('role_has_permissions') && !Schema::hasTable('permission_role')) {
-            // Rename back to the old name
-            Schema::rename('role_has_permissions', 'permission_role');
+        // During rollback, we need to ensure the table exists as 'role_has_permissions'
+        // so that the Spatie migration can drop it properly
+        if (Schema::hasTable('permission_role') && !Schema::hasTable('role_has_permissions')) {
+            // Rename back to role_has_permissions so Spatie migration can drop it
+            Schema::rename('permission_role', 'role_has_permissions');
         }
+        // If role_has_permissions already exists, leave it as is for Spatie to drop
     }
 };

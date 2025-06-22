@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
     /**
@@ -10,11 +11,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        // Add department_id to users table if it doesn't exist
+        // Add department_id to users table if it doesn't exist (without foreign key for now)
         if (!Schema::hasColumn('users', 'department_id')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->unsignedBigInteger('department_id')->nullable()->after('email_verified_at');
-                $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
                 $table->index('department_id');
             });
         }
@@ -71,7 +71,7 @@ return new class extends Migration {
         // Add missing columns to permissions table if they don't exist
         Schema::table('permissions', function (Blueprint $table) {
             if (!Schema::hasColumn('permissions', 'resource')) {
-                $table->string('resource', 100)->nullable()->after('description');
+                $table->string('resource', 100)->nullable()->after('guard_name');
             }
             if (!Schema::hasColumn('permissions', 'action')) {
                 $table->string('action', 50)->nullable()->after('resource');
@@ -110,15 +110,39 @@ return new class extends Migration {
         Schema::dropIfExists('emergency_access');
         Schema::dropIfExists('permission_audits');
 
+        // Handle SQLite limitations with dropping columns
         if (Schema::hasColumn('users', 'department_id')) {
+            $driver = DB::getDriverName();
+
+            if ($driver === 'sqlite') {
+                // For SQLite, we need to drop the index first, then the column
+                try {
+                    DB::statement('DROP INDEX IF EXISTS users_department_id_index');
+                } catch (\Exception $e) {
+                    // Index might not exist, ignore
+                }
+            }
+
             Schema::table('users', function (Blueprint $table) {
-                $table->dropForeign(['department_id']);
                 $table->dropColumn('department_id');
             });
         }
 
         // Drop added columns from permissions table
         Schema::table('permissions', function (Blueprint $table) {
+            $driver = DB::getDriverName();
+
+            if ($driver === 'sqlite') {
+                // For SQLite, drop indexes first
+                try {
+                    DB::statement('DROP INDEX IF EXISTS idx_permissions_resource');
+                    DB::statement('DROP INDEX IF EXISTS idx_permissions_action');
+                    DB::statement('DROP INDEX IF EXISTS idx_permissions_active');
+                } catch (\Exception $e) {
+                    // Indexes might not exist, ignore
+                }
+            }
+
             $columns = ['resource', 'action', 'is_active'];
             foreach ($columns as $column) {
                 if (Schema::hasColumn('permissions', $column)) {

@@ -9,19 +9,12 @@ import { AlertTriangle, LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { toast } from 'sonner';
 
-interface EmergencyAccessForm {
-    email: string;
-    password: string;
-    reason: string;
-    [key: string]: any;
-}
-
 interface Props {
     status?: string;
 }
 
 export default function EmergencyAccess({ status }: Props) {
-    const { data, setData, post, processing, errors, reset } = useForm<EmergencyAccessForm>({
+    const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
         reason: '',

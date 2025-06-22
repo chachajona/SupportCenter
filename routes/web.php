@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Http\Controllers\Settings\TwoFactorQrCodeController;
 use App\Http\Controllers\SetupController;
@@ -32,7 +33,17 @@ Route::middleware(['setup.completed'])->group(function () {
 
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('dashboard', function () {
-            return Inertia::render('dashboard');
+            /** @var \App\Models\User|null $user */
+            $user = Auth::user();
+            if ($user) {
+                $user->load(['roles.permissions', 'department']);
+            }
+
+            return Inertia::render('dashboard', [
+                'auth' => [
+                    'user' => $user
+                ]
+            ]);
         })->name('dashboard');
 
         // Two-Factor QR Code route - using standard auth middleware for consistency

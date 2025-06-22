@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Enums\SecurityEventType;
 use App\Models\SecurityLog;
+use App\Models\SetupStatus;
 use App\Models\User;
 use App\Notifications\EmergencyAccessAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,6 +24,24 @@ class WebAuthnIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Configure mail to use array driver for testing (prevents actual email sending)
+        config(['mail.default' => 'array']);
+
+        // Mark setup as completed for testing
+        SetupStatus::markCompleted('database_migration');
+        SetupStatus::markCompleted('roles_seeded');
+        SetupStatus::markCompleted('admin_created');
+        SetupStatus::markCompleted('setup_completed');
+
+        // Create setup lock file to skip middleware checks
+        $setupLockFile = storage_path('app/setup.lock');
+        $lockData = [
+            'completed_at' => now()->toISOString(),
+            'completed_by' => 'test_environment',
+            'version' => config('app.version', '1.0.0'),
+        ];
+        file_put_contents($setupLockFile, json_encode($lockData));
 
         $this->user = User::factory()->create([
             'email' => 'test@example.com',
@@ -358,6 +377,12 @@ class WebAuthnIntegrationTest extends TestCase
 
     protected function tearDown(): void
     {
+        // Clean up setup lock file after test
+        $setupLockFile = storage_path('app/setup.lock');
+        if (file_exists($setupLockFile)) {
+            unlink($setupLockFile);
+        }
+
         // Clear rate limiter
         RateLimiter::clear('webauthn:' . request()->ip());
 

@@ -14,6 +14,7 @@ use Laragear\WebAuthn\WebAuthnAuthentication;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerifyEmail
 {
@@ -67,6 +68,26 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
     ];
 
     /**
+     * Override the roles relationship from HasRoles trait to use direct pivot table.
+     * This replaces the morphable relationship with a direct many-to-many relationship.
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            config('permission.models.role'),
+            config('permission.table_names.model_has_roles'),
+            'user_id',
+            'role_id'
+        )->withPivot([
+                    'granted_by',
+                    'granted_at',
+                    'expires_at',
+                    'is_active',
+                    'delegation_reason'
+                ])->withTimestamps();
+    }
+
+    /**
      * Get the department that the user belongs to.
      */
     public function department(): BelongsTo
@@ -84,18 +105,11 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
 
     /**
      * Get the roles assigned to this user with temporal access data.
+     * This is now an alias for the main roles relationship.
      */
     public function rolesWithPivot()
     {
-        return $this->belongsToMany(Role::class, 'role_user')
-            ->withPivot([
-                'granted_by',
-                'granted_at',
-                'expires_at',
-                'is_active',
-                'delegation_reason'
-            ])
-            ->withTimestamps();
+        return $this->roles();
     }
 
     /**
@@ -103,7 +117,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
      */
     public function activeRoles()
     {
-        return $this->rolesWithPivot()
+        return $this->roles()
             ->wherePivot('is_active', true)
             ->where(function ($query) {
                 $query->whereNull('role_user.expires_at')
@@ -252,5 +266,91 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
     public function hasMfaEnabled(): bool
     {
         return $this->two_factor_enabled || $this->hasWebAuthnCredentials();
+    }
+
+    /**
+     * Override hasPermissionTo to respect is_active fields.
+     */
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        $permissionClass = $this->getPermissionClass();
+
+        if (is_string($permission)) {
+            $permission = $permissionClass::where('name', $permission)
+                ->where('is_active', true)
+                ->first();
+        }
+
+        if (!$permission || !$permission->is_active) {
+            return false;
+        }
+
+        // Check direct permissions
+        if ($this->permissions()->where('permissions.is_active', true)->where('permissions.id', $permission->id)->exists()) {
+            return true;
+        }
+
+        // Check permissions through active roles
+        return $this->hasPermissionViaRole($permission, $guardName);
+    }
+
+    /**
+     * Check if user has permission through active roles.
+     */
+    protected function hasPermissionViaRole($permission, $guardName = null): bool
+    {
+        return $this->roles()
+            ->where('roles.is_active', true)
+            ->wherePivot('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('role_user.expires_at')
+                    ->orWhere('role_user.expires_at', '>', now());
+            })
+            ->whereHas('permissions', function ($query) use ($permission) {
+                $query->where('permissions.id', $permission->id)
+                    ->where('permissions.is_active', true);
+            })
+            ->exists();
+    }
+
+    /**
+     * Override hasAnyRole to respect is_active fields.
+     */
+    public function hasAnyRole($roles, string $guard = null): bool
+    {
+        if (is_string($roles)) {
+            $roles = [$roles];
+        }
+
+        return $this->roles()
+            ->where('roles.is_active', true)
+            ->wherePivot('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('role_user.expires_at')
+                    ->orWhere('role_user.expires_at', '>', now());
+            })
+            ->whereIn('roles.name', $roles)
+            ->exists();
+    }
+
+    /**
+     * Override hasRole to respect is_active fields.
+     */
+    public function hasRole($roles, string $guard = null): bool
+    {
+        if (is_string($roles)) {
+            return $this->hasAnyRole([$roles], $guard);
+        }
+
+        if (is_array($roles)) {
+            foreach ($roles as $role) {
+                if (!$this->hasAnyRole([$role], $guard)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 }
