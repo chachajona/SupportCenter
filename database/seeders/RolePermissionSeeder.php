@@ -93,6 +93,11 @@ class RolePermissionSeeder extends Seeder
                 'delete',
                 'assign',
                 'revoke',
+                'assign_temporal',
+                'revoke_temporal',
+                'request_temporal',
+                'approve_temporal',
+                'deny_temporal',
                 'view_matrix',
                 'edit_matrix'
             ],

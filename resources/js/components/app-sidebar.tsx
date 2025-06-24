@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Activity, AlertTriangle, BarChart, BookOpen, Folder, LayoutGrid, Shield, Users } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart, BookOpen, Clock, Folder, LayoutGrid, Shield, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -32,6 +32,11 @@ const mainNavItems: NavItem[] = [
         title: 'Emergency',
         href: '/admin/emergency',
         icon: AlertTriangle,
+    },
+    {
+        title: 'Temporal Access',
+        href: '/admin/temporal',
+        icon: Clock,
     },
     {
         title: 'Roles',

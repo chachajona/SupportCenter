@@ -59,4 +59,29 @@ All notable changes to this project will be documented in this file. The format 
 3. Existing databases: run `php artisan migrate --force && php artisan db:seed --class=RolePermissionSeeder` then `php artisan rbac:warm-cache`.
 4. Ensure Redis is available for optimal caching; fallback to database/array cache supported but slower.
 
+## [1.1.0] - 2025-06-23
+
+### Added
+
+- **Temporal Access Workflows**: Time-bound role assignments with automatic expiry via `TemporalAccessService::cleanupExpiredPermissions()`, dual-path grant/request flow, full approval UI, and new permissions (`roles.assign_temporal`, `roles.revoke_temporal`, `roles.request_temporal`, `roles.approve_temporal`, `roles.deny_temporal`).
+- **TemporalAccessController**: Endpoints for listing, requesting, approving and denying temporal access (`/admin/temporal`, `/admin/users/{user}/temporal-access`, etc.).
+- **Frontend Management UI**: `TemporalAccessForm`, `TemporalAccessRequests` component, new Admin sidebar link and dashboard list with approve/deny dialogs.
+
+### Changed
+
+- **UserRoleController**: Added `approveTemporal` and `denyTemporal` methods and extended audit logging.
+- **RolePermissionSeeder**: Seeded new temporal permissions.
+- **Routes**: Added user-level and admin-level temporal access routes secured with new permissions.
+
+### Fixed
+
+- TypeScript type safety improvements in new components (removed `any`, added `ErrorsObject`, etc.).
+- ESLint clean-up across new frontend code.
+
+### Migration Notes
+
+1. Re-run `php artisan db:seed --class=RolePermissionSeeder` to populate temporal access permissions.
+2. Deploy new migrations and clear permission cache (`php artisan rbac:warm-cache`).
+
 [1.0.0]: https://github.com/your-org/support-center/releases/tag/v1.0.0
+[1.1.0]: https://github.com/your-org/support-center/releases/tag/v1.1.0

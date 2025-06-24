@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\EmergencyAccessController;
 use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserRoleController;
+use App\Http\Controllers\Admin\TemporalAccessController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -114,6 +115,15 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::delete('/users/{user}/temporal-access/{role}', [UserRoleController::class, 'revokeTemporary'])
             ->middleware('permission:roles.revoke_temporal')
             ->name('users.temporal.revoke');
+        Route::post('/users/{user}/temporal-access/approve', [UserRoleController::class, 'approveTemporal'])
+            ->middleware('permission:roles.approve_temporal')
+            ->name('users.temporal.approve');
+        Route::delete('/users/{user}/temporal-access/{role}/deny', [UserRoleController::class, 'denyTemporal'])
+            ->middleware('permission:roles.deny_temporal')
+            ->name('users.temporal.deny');
+        Route::post('/users/{user}/temporal-access/request', [TemporalAccessController::class, 'requestAccess'])
+            ->middleware('permission:roles.request_temporal')
+            ->name('users.temporal.request');
 
         // Bulk operations
         Route::post('/users/bulk/assign', [UserRoleController::class, 'bulkAssign'])
@@ -123,6 +133,17 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
             ->middleware('permission:roles.bulk_revoke')
             ->name('users.bulk.revoke');
     });
+
+    // Temporal Access Management
+    Route::get('/temporal', [TemporalAccessController::class, 'index'])
+        ->middleware(['permission:roles.approve_temporal,roles.deny_temporal'])
+        ->name('temporal.index');
+    Route::post('/temporal/{user}/approve', [TemporalAccessController::class, 'approveRequest'])
+        ->middleware('permission:roles.approve_temporal')
+        ->name('temporal.approve');
+    Route::post('/temporal/{user}/{role}/deny', [TemporalAccessController::class, 'denyRequest'])
+        ->middleware('permission:roles.deny_temporal')
+        ->name('temporal.deny');
 });
 
 // Setup Management Routes (System Administrators Only)

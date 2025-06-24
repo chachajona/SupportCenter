@@ -7,10 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useRBAC } from '@/contexts/RBACContext';
 import { Role, User } from '@/types/rbac';
 import { router } from '@inertiajs/react';
-import { AlertTriangle, Clock, Search, Shield } from 'lucide-react';
+import { AlertTriangle, Clock, Search, Shield, UserCheck, UserPlus } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+
+type ErrorsObject = Record<string, string[]>;
 
 interface TemporalAccessFormProps {
     user: User;
@@ -20,6 +24,7 @@ interface TemporalAccessFormProps {
 }
 
 export function TemporalAccessForm({ user, availableRoles, open, onClose }: TemporalAccessFormProps) {
+    const { hasPermission } = useRBAC();
     const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
     const [duration, setDuration] = useState<string>('60');
     const [durationUnit, setDurationUnit] = useState<string>('minutes');
@@ -27,7 +32,11 @@ export function TemporalAccessForm({ user, availableRoles, open, onClose }: Temp
     const [emergency, setEmergency] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string[]>>({});
+    const [errors, setErrors] = useState<ErrorsObject>({});
+
+    // Check user's temporal access permissions
+    const canDirectGrant = hasPermission('roles.assign_temporal');
+    const canRequestApproval = hasPermission('roles.request_temporal') || hasPermission('roles.view'); // Fallback to basic role viewing
 
     // Filter roles based on search
     const filteredRoles = useMemo(() => {
@@ -129,8 +138,17 @@ export function TemporalAccessForm({ user, availableRoles, open, onClose }: Temp
             emergency,
         };
 
-        router.post(`/admin/users/${user.id}/temporal-access`, formData, {
+        // Determine endpoint based on permissions
+        const endpoint = canDirectGrant ? `/admin/users/${user.id}/temporal-access` : `/admin/users/${user.id}/temporal-access/request`;
+
+        router.post(endpoint, formData, {
             onSuccess: () => {
+                const action = canDirectGrant ? 'granted' : 'submitted for approval';
+                toast.success(`Temporal access ${action}`, {
+                    description: canDirectGrant
+                        ? `${selectedRoles.length} role(s) granted to ${user.name} for ${duration} ${durationUnit}`
+                        : `Request submitted for approval. You will be notified when it's reviewed.`,
+                });
                 onClose();
                 // Reset form
                 setSelectedRoles([]);
@@ -141,7 +159,10 @@ export function TemporalAccessForm({ user, availableRoles, open, onClose }: Temp
                 setSearchTerm('');
             },
             onError: (errors) => {
-                setErrors(errors);
+                setErrors(errors as unknown as ErrorsObject);
+                toast.error('Failed to process temporal access request', {
+                    description: 'Please check the form and try again.',
+                });
             },
             onFinish: () => {
                 setLoading(false);
@@ -185,55 +206,89 @@ export function TemporalAccessForm({ user, availableRoles, open, onClose }: Temp
         }, 0);
     };
 
+    // Show access denied if user has no permissions
+    if (!canDirectGrant && !canRequestApproval) {
+        return (
+            <Dialog open={open} onOpenChange={onClose}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-red-500" />
+                            Access Denied
+                        </DialogTitle>
+                        <DialogDescription>You don't have permission to grant or request temporal access.</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end">
+                        <Button onClick={onClose}>Close</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Clock className="h-5 w-5" />
-                        Grant Temporal Access to {user.name}
+                        {canDirectGrant ? 'Grant' : 'Request'} Temporal Access to {user.name}
                     </DialogTitle>
                     <DialogDescription>
-                        Grant temporary role access for emergency situations or specific tasks. This will be logged and monitored.
+                        {canDirectGrant
+                            ? 'Grant temporary role access for emergency situations or specific tasks. This will be logged and monitored.'
+                            : 'Submit a request for temporary role access. This will be sent to administrators for approval.'}
                     </DialogDescription>
+                    {!canDirectGrant && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                            <div className="flex items-center gap-2">
+                                <UserCheck className="h-4 w-4 text-amber-600" />
+                                <span className="text-sm font-medium text-amber-800">Approval Required</span>
+                            </div>
+                            <p className="mt-1 text-xs text-amber-700">Your request will be reviewed by an administrator before access is granted.</p>
+                        </div>
+                    )}
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="flex h-full flex-col">
                     <div className="flex-1 space-y-6 overflow-y-auto">
                         {/* Quick Presets */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-sm">Quick Presets</CardTitle>
-                                <CardDescription>Pre-configured temporal access scenarios</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid gap-3 md:grid-cols-3">
-                                    {quickPresets.map((preset, index) => (
-                                        <Button
-                                            key={index}
-                                            type="button"
-                                            variant="outline"
-                                            className="h-auto justify-start p-3 text-left"
-                                            onClick={() => applyPreset(preset)}
-                                        >
-                                            <div className="w-full">
-                                                <div className="mb-1 flex items-center gap-2">
-                                                    <span className="text-sm font-medium">{preset.name}</span>
-                                                    {preset.emergency && (
-                                                        <Badge variant="destructive" className="text-xs">
-                                                            Emergency
-                                                        </Badge>
-                                                    )}
+                        {canDirectGrant && (
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-sm">Quick Presets</CardTitle>
+                                    <CardDescription>Pre-configured temporal access scenarios</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid gap-3 md:grid-cols-3">
+                                        {quickPresets.map((preset, index) => (
+                                            <Button
+                                                key={index}
+                                                type="button"
+                                                variant="outline"
+                                                className="h-auto justify-start p-3 text-left"
+                                                onClick={() => applyPreset(preset)}
+                                            >
+                                                <div className="w-full">
+                                                    <div className="mb-1 flex items-center gap-2">
+                                                        <span className="text-sm font-medium">{preset.name}</span>
+                                                        {preset.emergency && (
+                                                            <Badge variant="destructive" className="text-xs">
+                                                                Emergency
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-muted-foreground text-xs">
+                                                        {preset.duration} {preset.unit} • {preset.roles.length} role
+                                                        {preset.roles.length !== 1 ? 's' : ''}
+                                                    </p>
                                                 </div>
-                                                <p className="text-muted-foreground text-xs">
-                                                    {preset.duration} {preset.unit} • {preset.roles.length} role{preset.roles.length !== 1 ? 's' : ''}
-                                                </p>
-                                            </div>
-                                        </Button>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Access Configuration */}
                         <Card>
@@ -423,8 +478,17 @@ export function TemporalAccessForm({ user, availableRoles, open, onClose }: Temp
                             disabled={loading || selectedRoles.length === 0 || !reason.trim()}
                             className={`gap-2 ${emergency ? 'bg-red-600 hover:bg-red-700' : ''}`}
                         >
-                            <Clock className="h-4 w-4" />
-                            {loading ? 'Granting...' : emergency ? 'Grant Emergency Access' : 'Grant Temporal Access'}
+                            {canDirectGrant ? (
+                                <>
+                                    <Clock className="h-4 w-4" />
+                                    {loading ? 'Granting...' : emergency ? 'Grant Emergency Access' : 'Grant Temporal Access'}
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus className="h-4 w-4" />
+                                    {loading ? 'Submitting...' : 'Submit Request'}
+                                </>
+                            )}
                         </Button>
                     </div>
                 </form>

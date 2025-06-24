@@ -471,4 +471,70 @@ class UserRoleController extends Controller
             ], 422);
         }
     }
+
+    public function approveTemporal(Request $request, User $user)
+    {
+        $request->validate([
+            'role_id' => 'required|integer|exists:roles,id',
+            'duration' => 'required|integer|min:1|max:1440',
+            'duration_unit' => 'required|in:minutes,hours,days',
+            'reason' => 'required|string|min:10|max:500',
+            'requested_by' => 'sometimes|integer|exists:users,id',
+        ]);
+
+        $durationMinutes = match ($request->duration_unit) {
+            'minutes' => (int) $request->duration,
+            'hours' => (int) $request->duration * 60,
+            'days' => (int) $request->duration * 1440,
+            default => 0,
+        };
+
+        if ($durationMinutes < 1) {
+            return response()->json([
+                'message' => 'Invalid duration',
+            ], 422);
+        }
+
+        $success = $this->temporalAccessService->grantTemporaryRole(
+            $user->id,
+            (int) $request->role_id,
+            $durationMinutes,
+            $request->reason,
+            Auth::id()
+        );
+
+        if ($success) {
+            return response()->json([
+                'message' => 'Temporal access approved and granted',
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Failed to approve temporal access',
+        ], 422);
+    }
+
+    public function denyTemporal(Request $request, User $user, Role $role)
+    {
+        $request->validate([
+            'reason' => 'required|string|min:10|max:500',
+        ]);
+
+        // Audit the denial for traceability
+        PermissionAudit::create([
+            'user_id' => $user->id,
+            'role_id' => $role->id,
+            'action' => 'denied',
+            'old_values' => null,
+            'new_values' => null,
+            'performed_by' => Auth::id(),
+            'reason' => $request->reason,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
+        return response()->json([
+            'message' => 'Temporal access request denied',
+        ]);
+    }
 }

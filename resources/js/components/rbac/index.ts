@@ -28,3 +28,4 @@ export { default as PermissionPresets } from './permission-presets';
 export { RoleAssignmentDialog } from './role-assignment-dialog';
 export { RouteGuard } from './route-guard';
 export { TemporalAccessForm } from './temporal-access-form';
+export { TemporalAccessRequests } from './temporal-access-requests';
