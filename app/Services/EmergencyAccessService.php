@@ -8,6 +8,7 @@ use App\Models\EmergencyAccess;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Models\SecurityLog;
 
 final class EmergencyAccessService
 {
@@ -241,6 +242,42 @@ final class EmergencyAccessService
             'used_at' => $emergencyAccess->used_at,
             'is_active' => $emergencyAccess->is_active,
             'remaining_time' => $emergencyAccess->remaining_time,
+        ];
+    }
+
+    /**
+     * Generate break-glass emergency access with one-time token
+     */
+    public function generateBreakGlass(User $user, array $permissions, string $reason, int $durationMinutes = 10): array
+    {
+        $emergencyAccess = EmergencyAccess::create([
+            'user_id' => $user->id,
+            'permissions' => $permissions,
+            'reason' => $reason,
+            'granted_by' => auth()->id(),
+            'expires_at' => now()->addMinutes($durationMinutes),
+        ]);
+
+        $token = $emergencyAccess->generateBreakGlassToken();
+
+        // Fire security event for audit
+        SecurityLog::create([
+            'user_id' => $user->id,
+            'event_type' => \App\Enums\SecurityEventType::EMERGENCY_ACCESS,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'details' => [
+                'type' => 'break_glass_generated',
+                'granted_by' => auth()->id(),
+                'permissions' => $permissions,
+                'expires_at' => $emergencyAccess->expires_at,
+            ],
+        ]);
+
+        return [
+            'token' => $token,
+            'expires_at' => $emergencyAccess->expires_at,
+            'emergency_access_id' => $emergencyAccess->id,
         ];
     }
 }

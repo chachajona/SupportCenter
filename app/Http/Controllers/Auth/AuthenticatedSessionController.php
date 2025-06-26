@@ -15,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use App\Models\EmergencyAccess;
+use App\Models\SecurityLog;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -107,5 +109,53 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    /**
+     * Login using break-glass emergency token
+     */
+    public function breakGlass(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|uuid',
+        ]);
+
+        $emergencyAccess = EmergencyAccess::where('token', $request->token)
+            ->where('is_active', true)
+            ->where('expires_at', '>', now())
+            ->whereNull('used_at')
+            ->first();
+
+        if (!$emergencyAccess) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired break-glass token',
+            ], 422);
+        }
+
+        // Mark token as used
+        $emergencyAccess->markTokenUsed();
+
+        // Log the user in
+        Auth::login($emergencyAccess->user);
+
+        // Log security event
+        SecurityLog::create([
+            'user_id' => $emergencyAccess->user_id,
+            'event_type' => \App\Enums\SecurityEventType::AUTH_SUCCESS,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'details' => [
+                'type' => 'break_glass_login',
+                'emergency_access_id' => $emergencyAccess->id,
+                'permissions' => $emergencyAccess->permissions,
+            ],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Break-glass login successful',
+            'redirect' => route('dashboard'),
+        ]);
     }
 }

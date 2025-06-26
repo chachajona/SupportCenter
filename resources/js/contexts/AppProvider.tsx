@@ -1,14 +1,7 @@
-import { User } from '@/types/auth';
-import { Department, Role } from '@/types/rbac';
+import { User as RBACUser } from '@/types/rbac';
 import { ReactNode } from 'react';
 import { AuthProvider, useAuthContext } from './AuthContext';
 import { RBACProvider } from './RBACContext';
-
-type RBACUser = Omit<User, 'department' | 'is_active' | 'roles'> & {
-    department: Department;
-    is_active: boolean;
-    roles?: Role[];
-};
 
 interface AppProviderProps {
     children: ReactNode;
@@ -25,7 +18,7 @@ function RBACWrapper({ children }: { children: ReactNode }) {
     const rbacUser = user
         ? {
               ...user,
-              department_id: user.department_id,
+              department_id: user.department?.id,
               department: user.department
                   ? {
                         ...user.department,

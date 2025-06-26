@@ -344,11 +344,9 @@ class RoleController extends Controller
 
         $matrix = [];
         foreach ($roles as $role) {
-            $rolePermissions = $role->permissions->pluck('id')->toArray();
-            foreach ($permissions as $resource => $resourcePermissions) {
-                foreach ($resourcePermissions as $permission) {
-                    $matrix[$role->id][$permission->id] = in_array($permission->id, $rolePermissions);
-                }
+            $rolePermissionIds = $role->permissions->pluck('id')->toArray();
+            foreach ($permissions as $permission) {
+                $matrix[$role->id][$permission->id] = in_array($permission->id, $rolePermissionIds, true);
             }
         }
 

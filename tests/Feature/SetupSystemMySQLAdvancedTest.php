@@ -30,7 +30,7 @@ class SetupSystemMySQLAdvancedTest extends TestCase
         // The RefreshDatabase trait now handles all database setup and cleanup.
         // We only need to ensure we're running on a MySQL connection.
         if (!$this->isMySql()) {
-            $this->markTestSkipped('These tests require a MySQL database connection.');
+            $this->markTestSkipped('MySQL tests skipped - SQLite in use (normal for CI/local testing)');
         }
     }
 
@@ -117,7 +117,7 @@ class SetupSystemMySQLAdvancedTest extends TestCase
     #[Test]
     public function mysql_transaction_isolation_during_setup(): void
     {
-        $this->markTestSkipped('This test requires a specific MySQL transaction environment and is complex to reliably test.');
+        $this->markTestSkipped('Transaction isolation test disabled - requires specific MySQL configuration');
 
         // Test transaction isolation levels during setup
         $version = $this->getMySQLVersion();

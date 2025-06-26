@@ -83,6 +83,31 @@ enum SecurityEventType: string
     case WEBAUTHN_FAILED = 'webauthn_failed';
 
     /**
+     * Two-factor authentication enabled event.
+     */
+    case TWO_FACTOR_ENABLED = 'two_factor_enabled';
+
+    /**
+     * Two-factor authentication disabled event.
+     */
+    case TWO_FACTOR_DISABLED = 'two_factor_disabled';
+
+    /**
+     * Two-factor authentication recovery used event.
+     */
+    case TWO_FACTOR_RECOVERY_USED = 'two_factor_recovery_used';
+
+    /**
+     * Emergency access event.
+     */
+    case EMERGENCY_ACCESS = 'emergency_access';
+
+    /**
+     * Authentication success event.
+     */
+    case AUTH_SUCCESS = 'auth_success';
+
+    /**
      * Get all available event types as an array.
      *
      * @return array<string>
@@ -112,6 +137,11 @@ enum SecurityEventType: string
             self::WEBAUTHN_LOGIN => 'WebAuthn authentication',
             self::WEBAUTHN_REMOVE => 'WebAuthn credential removal',
             self::WEBAUTHN_FAILED => 'WebAuthn authentication failure',
+            self::TWO_FACTOR_ENABLED => 'Two-factor authentication enabled',
+            self::TWO_FACTOR_DISABLED => 'Two-factor authentication disabled',
+            self::TWO_FACTOR_RECOVERY_USED => 'Two-factor authentication recovery used',
+            self::EMERGENCY_ACCESS => 'Emergency access',
+            self::AUTH_SUCCESS => 'Authentication success',
         };
     }
 

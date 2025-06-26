@@ -66,6 +66,11 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
             ->name('emergency.cleanup');
     });
 
+    // Break-glass generation (System Administrators Only)
+    Route::post('/emergency/break-glass', [EmergencyAccessController::class, 'generateBreakGlass'])
+        ->middleware('permission:emergency.grant')
+        ->name('emergency.break-glass');
+
     // Analytics Dashboard (Week 21 Focus)
     Route::middleware('permission:analytics.view')->group(function () {
         Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
@@ -151,7 +156,14 @@ Route::middleware(['auth', 'verified', 'permission:system.manage'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::get('/setup-status', [\App\Http\Controllers\Admin\AdminSetupController::class, 'status'])->name('setup.status');
-        Route::get('/setup-info', [\App\Http\Controllers\Admin\AdminSetupController::class, 'getSetupInfo'])->name('setup.info');
-        Route::post('/reset-setup', [\App\Http\Controllers\Admin\AdminSetupController::class, 'resetSetup'])->name('setup.reset');
+        Route::get('/setup-status', [AdminSetupController::class, 'status'])->name('setup.status');
+        Route::get('/setup-info', [AdminSetupController::class, 'getSetupInfo'])->name('setup.info');
+        Route::post('/reset-setup', [AdminSetupController::class, 'resetSetup'])->name('setup.reset');
+    });
+
+Route::middleware(['auth:sanctum', 'verified', 'role:system_administrator'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/security', [\App\Http\Controllers\Admin\SecurityController::class, 'index'])->name('security.index');
     });

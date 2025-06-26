@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Services\EmergencyAccessService;
 
 class EmergencyAccessController extends Controller
 {
@@ -201,47 +202,13 @@ class EmergencyAccessController extends Controller
         ]);
     }
 
-    public function revoke($id, Request $request)
+    public function revoke(EmergencyAccess $emergencyAccess)
     {
-        $request->validate([
-            'reason' => ['required', 'string', 'min:5', 'max:255'],
-        ]);
+        $this->authorize('revoke', $emergencyAccess);
 
-        try {
-            DB::transaction(function () use ($id, $request) {
-                $emergencyAccess = EmergencyAccess::findOrFail($id);
+        $emergencyAccess->update(['is_active' => false]);
 
-                // Deactivate emergency access
-                $emergencyAccess->deactivate();
-
-                // Deactivating the EmergencyAccess record is sufficient
-                // Middleware will check for active records when validating permissions
-
-                // Create audit log
-                PermissionAudit::create([
-                    'user_id' => $emergencyAccess->user_id,
-                    'action' => 'revoked',
-                    'old_values' => [
-                        'emergency_access_id' => $emergencyAccess->id,
-                        'permissions' => $emergencyAccess->permissions,
-                    ],
-                    'ip_address' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                    'performed_by' => Auth::id(),
-                    'reason' => "Emergency access revoked: {$request->reason}",
-                ]);
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Emergency access revoked successfully'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to revoke emergency access: ' . $e->getMessage()
-            ], 500);
-        }
+        return back()->with('success', 'Emergency access revoked successfully');
     }
 
     public function markUsed($id, Request $request)
@@ -361,5 +328,35 @@ class EmergencyAccessController extends Controller
             ->orderBy('display_name')
             ->get()
             ->toArray();
+    }
+
+    /**
+     * Generate break-glass token (system admins only)
+     */
+    public function generateBreakGlass(Request $request)
+    {
+        $this->authorize('create', EmergencyAccess::class);
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'permissions' => 'required|array|min:1',
+            'permissions.*' => 'string',
+            'reason' => 'required|string|min:10|max:500',
+            'duration' => 'integer|min:5|max:60',
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+        $result = app(EmergencyAccessService::class)->generateBreakGlass(
+            $user,
+            $request->permissions,
+            $request->reason,
+            $request->duration ?? 10
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Break-glass token generated successfully',
+            'data' => $result,
+        ]);
     }
 }

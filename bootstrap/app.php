@@ -43,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'webauthn.security' => WebAuthnSecurityMiddleware::class,
             'two-factor.challenge' => TwoFactorChallengeMiddleware::class,
             'permission' => RolePermissionMiddleware::class,
+            'role' => RolePermissionMiddleware::class,
             'geo.restrict' => \App\Http\Middleware\GeoRestrictionMiddleware::class,
             'device.register' => \App\Http\Middleware\DeviceRegistrationMiddleware::class,
             'rate.limit.operations' => \App\Http\Middleware\AdvancedRateLimiter::class,

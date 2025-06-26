@@ -51,8 +51,13 @@ class SecurityLog extends Model
     {
         parent::boot();
 
-        // Laravel will automatically handle created_at and updated_at timestamps
-        // No manual intervention needed
+        static::created(function (self $log): void {
+            try {
+                event(new \App\Events\SecurityEvent($log));
+            } catch (\Throwable $e) {
+                // Silently ignore broadcasting failures to avoid impacting primary flow
+            }
+        });
     }
 
     /**

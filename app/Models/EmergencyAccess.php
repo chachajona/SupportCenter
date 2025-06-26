@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class EmergencyAccess extends Model
 {
@@ -26,8 +27,12 @@ class EmergencyAccess extends Model
         'user_id',
         'permissions',
         'reason',
-        'expires_at',
         'granted_by',
+        'granted_at',
+        'expires_at',
+        'used_at',
+        'is_active',
+        'token',
     ];
 
     /**
@@ -167,5 +172,36 @@ class EmergencyAccess extends Model
                 $emergencyAccess->is_active = true;
             }
         });
+    }
+
+    /**
+     * Generate a break-glass token for emergency access
+     */
+    public function generateBreakGlassToken(): string
+    {
+        $this->token = Str::uuid();
+        $this->save();
+
+        return $this->token;
+    }
+
+    /**
+     * Check if this emergency access can be used for break-glass
+     */
+    public function canUseForBreakGlass(): bool
+    {
+        return $this->is_active &&
+            $this->expires_at > now() &&
+            !is_null($this->token) &&
+            is_null($this->used_at);
+    }
+
+    /**
+     * Mark break-glass token as used
+     */
+    public function markTokenUsed(): void
+    {
+        $this->used_at = now();
+        $this->save();
     }
 }

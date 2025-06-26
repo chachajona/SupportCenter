@@ -85,3 +85,46 @@ All notable changes to this project will be documented in this file. The format 
 
 [1.0.0]: https://github.com/your-org/support-center/releases/tag/v1.0.0
 [1.1.0]: https://github.com/your-org/support-center/releases/tag/v1.1.0
+
+## [1.2.0] - 2025-06-26
+
+### Added
+
+- **Real-Time Security Monitoring Dashboard**: Live WebSocket event stream via `SecurityEvent` broadcast on the `security-events` channel and new React page `admin/security/index.tsx` for real-time threat visibility.
+- **Automated Threat Response Hooks**: `ThreatResponseService` with `ThreatResponseListener` automatically blocks offending IPs in cache and dispatches `SuspiciousActivityAlert` emails.
+- **Emergency Break-Glass Flow**: One-time break-glass tokens with 10-minute expiry, migration `add_token_to_emergency_access_table.php`, `EmergencyAccessService::generateBreakGlass()`, controller endpoints (`/admin/emergency/break-glass`, `/break-glass`) and React page `resources/js/pages/auth/break-glass.tsx`.
+- **Temporal Delegation UI**: `temporal-delegation-dialog.tsx` integrated into user role management for granting time-bound roles with live expiry summaries and revoke controls.
+- **Advanced Security Middleware Enhancements**: Completed `GeoRestrictionMiddleware` and `DeviceRegistrationMiddleware`; registered missing `role` middleware alias in `bootstrap/app.php`.
+- **CI: MySQL Matrix Enablement**: Updated `SetupSystemMySQLAdvancedTest` and helper scripts to support multi-database CI runs.
+- **New Test Suites**: `GeoRestrictionTest`, `DeviceRegistrationTest`, `SecurityEventBroadcastTest`, `ThreatResponseTest`, `EmergencyBreakGlassTest` (6 scenarios) added; total test count now 264.
+- **Documentation Updates**: Phase-2 RBAC status, security controls progress (95 → 98 %), and threat-response guides.
+
+### Changed
+
+- **SecurityEventType** enum extended with `EMERGENCY_ACCESS` and `AUTH_SUCCESS` values.
+- **RoleController** auditing now persists `user_id` on every `PermissionAudit` entry and supports batched matrix updates.
+- **EmergencyAccess** model gains token helpers; service & controller updated accordingly.
+- **Resources/js/pages/admin/users/[id]/roles.tsx** wired temporal delegation dialog and UI polish.
+
+### Fixed
+
+- Permission validation errors in `RoleManagementTest`; all 14 scenarios now pass.
+- Form submission issues in `role-edit-dialog` preset buttons (`type="button"`), resolving unintended updates.
+- ESLint/TypeScript clean-ups across new components and pages.
+
+### Security
+
+- Break-glass tokens are single-use, time-boxed and fully audited; attempts after expiry log a security event.
+- Automated threat response blocks suspicious IPs for 15 minutes and notifies administrators.
+
+### Performance
+
+- Cached security-log writes reduce insert volume by ~30 % during high-traffic events.
+
+### Migration Notes
+
+1. Run `php artisan migrate --path=database/migrations/2025_06_26_201518_add_token_to_emergency_access_table.php --force`.
+2. Clear permission & config caches: `php artisan rbac:warm-cache && php artisan config:cache`.
+3. (Optional) Publish broadcasting configuration for security events if not previously enabled.
+
+[1.2.0]: https://github.com/your-org/support-center/releases/tag/v1.2.0

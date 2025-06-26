@@ -1,13 +1,16 @@
 import { PermissionGate } from '@/components/rbac/permission-gate';
 import { RoleAssignmentDialog } from '@/components/rbac/role-assignment-dialog';
 import { TemporalAccessForm } from '@/components/rbac/temporal-access-form';
+import { TemporalDelegationDialog } from '@/components/rbac/temporal-delegation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Role, User, UserRole } from '@/types/rbac';
 import { Head, router } from '@inertiajs/react';
-import { AlertTriangle, Calendar, Clock, History, Plus, Shield, Users, X } from 'lucide-react';
+import { AlertTriangle, Calendar, CalendarDays, Clock, History, Plus, Shield, Users, X } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface UserRoleManagementProps {
     user: User;
@@ -22,24 +25,60 @@ interface UserRoleManagementProps {
         expires_at?: string;
         reason?: string;
     }>;
+    permanentRoles: Array<{
+        id: number;
+        name: string;
+        display_name: string;
+        description: string;
+        pivot: {
+            granted_at: string;
+            granted_by?: number;
+        };
+    }>;
+    temporalRoles: Array<{
+        id: number;
+        name: string;
+        display_name: string;
+        description: string;
+        pivot: {
+            granted_at: string;
+            expires_at: string;
+            granted_by?: number;
+            delegation_reason?: string;
+        };
+    }>;
+    canManageRoles: boolean;
 }
 
-export default function UserRoleManagement({ user, userRoles, availableRoles, roleHistory }: UserRoleManagementProps) {
+export default function UserRoleManagement({
+    user,
+    userRoles,
+    availableRoles,
+    roleHistory,
+    permanentRoles,
+    temporalRoles,
+    canManageRoles,
+}: UserRoleManagementProps) {
     const [showAssignDialog, setShowAssignDialog] = useState(false);
     const [showTemporalForm, setShowTemporalForm] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [delegationDialogOpen, setDelegationDialogOpen] = useState(false);
 
-    const handleRevokeRole = (userRoleId: number) => {
-        if (confirm('Are you sure you want to revoke this role? This action cannot be undone.')) {
-            router.delete(`/admin/users/${user.id}/roles/${userRoleId}`, {
-                onSuccess: () => {
-                    // Success notification would be handled by the backend
-                },
-                onError: (errors) => {
-                    console.error('Failed to revoke role:', errors);
-                },
-            });
+    const handleRevokeRole = (roleId: number, roleName: string, isTemporal: boolean = false) => {
+        if (!confirm(`Are you sure you want to revoke the "${roleName}" role from ${user.name}?`)) {
+            return;
         }
+
+        const endpoint = isTemporal ? `/admin/users/${user.id}/temporal-access/${roleId}` : `/admin/users/${user.id}/roles/${roleId}`;
+
+        router.delete(endpoint, {
+            onSuccess: () => {
+                toast.success(`Role "${roleName}" revoked from ${user.name}`);
+            },
+            onError: () => {
+                toast.error('Failed to revoke role');
+            },
+        });
     };
 
     const getTimeBadgeVariant = (expiresAt?: string) => {
@@ -80,11 +119,26 @@ export default function UserRoleManagement({ user, userRoles, availableRoles, ro
     const activeRoles = userRoles.filter((ur) => ur.is_active && !isExpired(ur.expires_at));
     const expiredRoles = userRoles.filter((ur) => !ur.is_active || isExpired(ur.expires_at));
 
+    const getTimeUntilExpiry = (expiresAt: string) => {
+        const now = new Date();
+        const expiry = new Date(expiresAt);
+        const diffMs = expiry.getTime() - now.getTime();
+
+        if (diffMs <= 0) return 'Expired';
+
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (diffHours > 0) {
+            return `${diffHours}h ${diffMinutes}m`;
+        }
+        return `${diffMinutes}m`;
+    };
+
     return (
         <>
             <Head title={`Manage Roles - ${user.name}`} />
 
-            
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -112,6 +166,13 @@ export default function UserRoleManagement({ user, userRoles, availableRoles, ro
                                 Assign Role
                             </Button>
                         </PermissionGate>
+
+                        {canManageRoles && (
+                            <Button onClick={() => setDelegationDialogOpen(true)} className="flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                Grant Temporal Access
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -272,7 +333,7 @@ export default function UserRoleManagement({ user, userRoles, availableRoles, ro
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => handleRevokeRole(userRole.id)}
+                                                    onClick={() => handleRevokeRole(userRole.id, userRole.role.display_name)}
                                                     className="text-destructive hover:text-destructive gap-2"
                                                 >
                                                     <X className="h-4 w-4" />
@@ -358,6 +419,145 @@ export default function UserRoleManagement({ user, userRoles, availableRoles, ro
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Permanent Roles */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-green-600" />
+                            Permanent Roles
+                        </CardTitle>
+                        <CardDescription>Long-term role assignments that don't expire automatically</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {permanentRoles.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead>Granted</TableHead>
+                                        {canManageRoles && <TableHead>Actions</TableHead>}
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {permanentRoles.map((role) => (
+                                        <TableRow key={role.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium">{role.display_name}</span>
+                                                    <Badge variant="secondary">Permanent</Badge>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-gray-600">{role.description}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1 text-sm text-gray-500">
+                                                    <CalendarDays className="h-3 w-3" />
+                                                    {new Date(role.pivot.granted_at).toLocaleDateString()}
+                                                </div>
+                                            </TableCell>
+                                            {canManageRoles && (
+                                                <TableCell>
+                                                    <Button variant="outline" size="sm" onClick={() => handleRevokeRole(role.id, role.display_name)}>
+                                                        Revoke
+                                                    </Button>
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <div className="py-8 text-center text-gray-500">
+                                <Shield className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                                <p>No permanent roles assigned</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Temporal Roles */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Clock className="h-5 w-5 text-blue-600" />
+                            Temporal Access
+                        </CardTitle>
+                        <CardDescription>Temporary role assignments with automatic expiration</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {temporalRoles.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Reason</TableHead>
+                                        <TableHead>Expires</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        {canManageRoles && <TableHead>Actions</TableHead>}
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {temporalRoles.map((role) => {
+                                        const expired = isExpired(role.pivot.expires_at);
+                                        const timeLeft = getTimeUntilExpiry(role.pivot.expires_at);
+
+                                        return (
+                                            <TableRow key={role.id}>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium">{role.display_name}</span>
+                                                        <Badge variant={expired ? 'destructive' : 'default'}>Temporal</Badge>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-gray-600">
+                                                    {role.pivot.delegation_reason || 'No reason provided'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-1 text-sm">
+                                                        <CalendarDays className="h-3 w-3" />
+                                                        {new Date(role.pivot.expires_at).toLocaleString()}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {expired ? (
+                                                        <Badge variant="destructive" className="flex items-center gap-1">
+                                                            <AlertTriangle className="h-3 w-3" />
+                                                            Expired
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="default" className="flex items-center gap-1">
+                                                            <Clock className="h-3 w-3" />
+                                                            {timeLeft} left
+                                                        </Badge>
+                                                    )}
+                                                </TableCell>
+                                                {canManageRoles && (
+                                                    <TableCell>
+                                                        {!expired && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleRevokeRole(role.id, role.display_name, true)}
+                                                            >
+                                                                Revoke
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
+                                                )}
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <div className="py-8 text-center text-gray-500">
+                                <Clock className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                                <p>No temporal access granted</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Dialogs */}
@@ -370,6 +570,8 @@ export default function UserRoleManagement({ user, userRoles, availableRoles, ro
             />
 
             <TemporalAccessForm user={user} availableRoles={availableRoles} open={showTemporalForm} onClose={() => setShowTemporalForm(false)} />
+
+            <TemporalDelegationDialog open={delegationDialogOpen} onOpenChange={setDelegationDialogOpen} user={user} roles={availableRoles} />
         </>
     );
 }
