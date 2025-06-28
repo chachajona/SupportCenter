@@ -122,7 +122,8 @@ class SessionSecuritySimpleTest extends TestCase
         // No IP allowlist entries for user
         $this->actingAs($this->user);
 
-        $middleware = new \App\Http\Middleware\IpAllowlistMiddleware();
+        $threatResponseService = app(\App\Services\ThreatResponseService::class);
+        $middleware = new \App\Http\Middleware\IpAllowlistMiddleware($threatResponseService);
         $request = \Illuminate\Http\Request::create('/dashboard', 'GET');
         $request->setUserResolver(function () {
             return $this->user;

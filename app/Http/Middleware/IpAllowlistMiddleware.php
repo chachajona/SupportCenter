@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Enums\SecurityEventType;
 use App\Models\IpAllowlist;
 use App\Models\SecurityLog;
+use App\Services\ThreatResponseService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class IpAllowlistMiddleware
 {
+    public function __construct(
+        private readonly ThreatResponseService $threatResponseService
+    ) {
+    }
+
     /**
      * Handle an incoming request.
      */
@@ -23,6 +29,35 @@ final class IpAllowlistMiddleware
         $clientIp = $request->ip();
         $userAgent = $request->userAgent();
         $user = Auth::user();
+
+        // First check if IP is blocked by threat response system
+        if ($this->threatResponseService->isIpBlocked($clientIp)) {
+            $blockInfo = $this->threatResponseService->getBlockedIpInfo($clientIp);
+
+            // Log blocked access attempt
+            SecurityLog::create([
+                'user_id' => $user?->id,
+                'event_type' => SecurityEventType::IP_BLOCKED,
+                'ip_address' => $clientIp,
+                'user_agent' => $userAgent,
+                'details' => json_encode([
+                    'blocked_ip' => $clientIp,
+                    'reason' => 'IP blocked by threat response system',
+                    'block_info' => $blockInfo,
+                ]),
+                'created_at' => now(),
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Access denied: IP address temporarily blocked due to security concerns.',
+                ], 403);
+            }
+
+            return redirect('/login')->withErrors([
+                'ip' => 'Access denied: Your IP address has been temporarily blocked due to security concerns. Please try again later or contact support.'
+            ]);
+        }
 
         // Check if IP is in allowlist (only for authenticated users)
         if ($user && !$this->isIpAllowed($clientIp, $user->id)) {

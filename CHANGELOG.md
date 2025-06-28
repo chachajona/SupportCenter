@@ -127,4 +127,58 @@ All notable changes to this project will be documented in this file. The format 
 2. Clear permission & config caches: `php artisan rbac:warm-cache && php artisan config:cache`.
 3. (Optional) Publish broadcasting configuration for security events if not previously enabled.
 
+## [1.2.1] - 2025-06-28
+
+### Added
+
+- **Automated Threat Response Hardening**: Complete backend security enhancement with configurable IP block TTL, comprehensive audit logging, and robust error handling.
+- **Security Configuration System**: New `config/security.php` with environment variable overrides for IP block duration, audit logging, and notification settings.
+- **Enhanced ThreatResponseService**: Configurable TTL (default 30 minutes), rate-limited notifications, manual IP unblock functionality, and graceful error handling.
+- **Comprehensive Audit Trail**: All IP blocks/unblocks automatically logged to `permission_audits` with detailed metadata including block duration, trigger events, and administrator actions.
+- **Integration Test Suite**: 11 comprehensive test scenarios covering threat detection, IP blocking, duplicate prevention, manual unblocking, and error scenarios.
+
+### Changed
+
+- **IpAllowlistMiddleware**: Enhanced to check for blocked IPs from threat response system before processing allowlist rules.
+- **PermissionAudit**: Extended enum to support IP blocking actions (`ip_block_auto`, `ip_unblock_manual`, `ip_unblock_auto`) with database migration for MySQL compatibility.
+- **ThreatResponseService**: Refactored to use configurable settings from `config/security.php` instead of hardcoded values.
+
+### Fixed
+
+- **Database Compatibility**: Migration handles SQLite (tests) vs MySQL (production) differences for enum modifications.
+- **Audit Entry Creation**: Resolved constraint violations by using appropriate enum values and bypassing model validation for IP block audits.
+- **Test Dependencies**: Fixed `IpAllowlistMiddleware` constructor injection in feature tests.
+
+### Security
+
+- **Configurable Threat Response**: IP block TTL can be adjusted via `IP_BLOCK_TTL` environment variable for different security requirements.
+- **Complete Audit Trail**: All automated and manual IP blocking actions are logged with full context for compliance and investigation.
+- **Rate Limited Notifications**: Prevents notification spam while maintaining security alerting capabilities.
+- **Graceful Degradation**: Audit logging failures don't break IP blocking functionality, ensuring security measures remain active.
+
+### Configuration
+
+New environment variables available:
+
+```env
+# IP Block Configuration
+IP_BLOCK_TTL=1800                    # 30 minutes default
+LOG_IP_BLOCKS=true                   # Enable audit logging
+ENABLE_SECURITY_ALERTS=true          # Enable email notifications
+SECURITY_ALERT_RATE_LIMIT=3600       # 1 hour rate limit window
+```
+
+### Testing
+
+- **Complete Test Coverage**: 11/11 threat response tests passing
+- **Integration Testing**: Covers threat detection, blocking, duplicate prevention, manual unblocking, and error scenarios
+- **Cross-Database Support**: Tests work with both SQLite (development) and MySQL (production)
+
+### Migration Notes
+
+1. Run `php artisan migrate` to update permission_audits enum (MySQL only, SQLite handled automatically)
+2. Optionally configure threat response settings in `.env` using new variables
+3. Clear config cache: `php artisan config:cache`
+
 [1.2.0]: https://github.com/your-org/support-center/releases/tag/v1.2.0
+[1.2.1]: https://github.com/your-org/support-center/releases/tag/v1.2.1
