@@ -8,8 +8,8 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
-import { Save, Search, Shield, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CheckSquare, HelpCircle, Keyboard, RotateCcw, Save, Search, Shield, Square, Users } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface Permission {
@@ -49,6 +49,10 @@ export default function Matrix({ roles, permissions, matrix }: Props) {
     const [changes, setChanges] = useState<Record<string, boolean>>({});
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
+    // New state for enhanced UX
+    const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
+    const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+    const tableRef = useRef<HTMLTableElement>(null);
 
     // Initialize loading state
     useEffect(() => {
@@ -68,24 +72,142 @@ export default function Matrix({ roles, permissions, matrix }: Props) {
         return matchesSearch && matchesResource;
     });
 
+    // Get active roles for display
+    const activeRoles = roles.filter((role) => role.is_active);
+
     // Helper function to check if role has permission
-    const hasPermission = (roleId: number, permissionId: number): boolean => {
-        const key = `${roleId}-${permissionId}`;
-        if (Object.hasOwn(changes, key)) {
-            return changes[key];
-        }
-        return matrix.some((entry) => entry.role_id === roleId && entry.permission_id === permissionId && entry.granted);
-    };
+    const hasPermission = useCallback(
+        (roleId: number, permissionId: number): boolean => {
+            const key = `${roleId}-${permissionId}`;
+            if (Object.hasOwn(changes, key)) {
+                return changes[key];
+            }
+            return matrix.some((entry) => entry.role_id === roleId && entry.permission_id === permissionId && entry.granted);
+        },
+        [changes, matrix],
+    );
 
     // Handle permission toggle
-    const togglePermission = (roleId: number, permissionId: number) => {
-        const key = `${roleId}-${permissionId}`;
-        const currentValue = hasPermission(roleId, permissionId);
-        setChanges((prev) => ({
-            ...prev,
-            [key]: !currentValue,
-        }));
+    const togglePermission = useCallback(
+        (roleId: number, permissionId: number) => {
+            const key = `${roleId}-${permissionId}`;
+            const currentValue = hasPermission(roleId, permissionId);
+            setChanges((prev) => ({
+                ...prev,
+                [key]: !currentValue,
+            }));
+        },
+        [hasPermission],
+    );
+
+    // Batch operations
+    const toggleAllPermissionsForRole = (roleId: number) => {
+        const role = activeRoles.find((r) => r.id === roleId);
+        if (role?.is_system && role.name === 'system_administrator') {
+            toast.error('Cannot modify system administrator permissions');
+            return;
+        }
+
+        const permissionCount = filteredPermissions.filter((p) => hasPermission(roleId, p.id)).length;
+        const shouldGrantAll = permissionCount < filteredPermissions.length / 2;
+
+        filteredPermissions.forEach((permission) => {
+            const key = `${roleId}-${permission.id}`;
+            setChanges((prev) => ({
+                ...prev,
+                [key]: shouldGrantAll,
+            }));
+        });
+
+        toast.success(`${shouldGrantAll ? 'Granted' : 'Revoked'} all permissions for ${role?.display_name}`);
     };
+
+    const togglePermissionForAllRoles = (permissionId: number) => {
+        const permission = filteredPermissions.find((p) => p.id === permissionId);
+        const roleCount = activeRoles.filter((r) => hasPermission(r.id, permissionId)).length;
+        const shouldGrantAll = roleCount < activeRoles.length / 2;
+
+        activeRoles.forEach((role) => {
+            if (role.is_system && role.name === 'system_administrator') return;
+
+            const key = `${role.id}-${permissionId}`;
+            setChanges((prev) => ({
+                ...prev,
+                [key]: shouldGrantAll,
+            }));
+        });
+
+        toast.success(`${shouldGrantAll ? 'Granted' : 'Revoked'} "${permission?.display_name}" for all roles`);
+    };
+
+    const clearAllChanges = () => {
+        setChanges({});
+        toast.success('All pending changes cleared');
+    };
+
+    // Keyboard navigation
+    const handleKeyDown = useCallback(
+        (e: KeyboardEvent) => {
+            if (!focusedCell) return;
+
+            const { row, col } = focusedCell;
+            const maxRow = filteredPermissions.length - 1;
+            const maxCol = activeRoles.length - 1;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (row > 0) {
+                        setFocusedCell({ row: row - 1, col });
+                    }
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (row < maxRow) {
+                        setFocusedCell({ row: row + 1, col });
+                    }
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (col > 0) {
+                        setFocusedCell({ row, col: col - 1 });
+                    }
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (col < maxCol) {
+                        setFocusedCell({ row, col: col + 1 });
+                    }
+                    break;
+                case 'Enter':
+                case ' ': {
+                    e.preventDefault();
+                    const permission = filteredPermissions[row];
+                    const role = activeRoles[col];
+                    if (permission && role) {
+                        togglePermission(role.id, permission.id);
+                    }
+                    break;
+                }
+                case 'Escape':
+                    setFocusedCell(null);
+                    break;
+                case '?':
+                    if (e.shiftKey) {
+                        setShowKeyboardHelp(!showKeyboardHelp);
+                    }
+                    break;
+            }
+        },
+        [focusedCell, filteredPermissions, activeRoles, togglePermission, showKeyboardHelp, setShowKeyboardHelp],
+    );
+
+    useEffect(() => {
+        if (focusedCell) {
+            document.addEventListener('keydown', handleKeyDown);
+            return () => document.removeEventListener('keydown', handleKeyDown);
+        }
+    }, [handleKeyDown, focusedCell]);
 
     // Save changes
     const saveChanges = async () => {
@@ -161,15 +283,60 @@ export default function Matrix({ roles, permissions, matrix }: Props) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight">Permission Matrix</h1>
-                                <p className="text-muted-foreground">Manage role permissions across your system</p>
+                                <p className="text-muted-foreground">
+                                    Manage role permissions across your system. Use keyboard navigation or batch operations for efficiency.
+                                </p>
                             </div>
-                            {hasChanges && (
-                                <Button onClick={saveChanges} disabled={saving}>
-                                    <Save className="mr-2 h-4 w-4" />
-                                    {saving ? 'Updating...' : `Update (${Object.keys(changes).length})`}
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowKeyboardHelp(!showKeyboardHelp)}
+                                    title="Show keyboard shortcuts"
+                                >
+                                    <Keyboard className="mr-2 h-4 w-4" />
+                                    Shortcuts
                                 </Button>
-                            )}
+                                {hasChanges && (
+                                    <>
+                                        <Button variant="outline" onClick={clearAllChanges} size="sm">
+                                            <RotateCcw className="mr-2 h-4 w-4" />
+                                            Clear ({Object.keys(changes).length})
+                                        </Button>
+                                        <Button onClick={saveChanges} disabled={saving}>
+                                            <Save className="mr-2 h-4 w-4" />
+                                            {saving ? 'Updating...' : `Update (${Object.keys(changes).length})`}
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Keyboard Help */}
+                        {showKeyboardHelp && (
+                            <Card className="border-blue-200 bg-blue-50">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-blue-900">
+                                        <HelpCircle className="h-5 w-5" />
+                                        Keyboard Shortcuts
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="grid gap-2 text-sm text-blue-800 md:grid-cols-2">
+                                    <div>
+                                        <kbd className="rounded bg-blue-100 px-1.5 py-0.5">↑ ↓ ← →</kbd> Navigate cells
+                                    </div>
+                                    <div>
+                                        <kbd className="rounded bg-blue-100 px-1.5 py-0.5">Enter / Space</kbd> Toggle permission
+                                    </div>
+                                    <div>
+                                        <kbd className="rounded bg-blue-100 px-1.5 py-0.5">Escape</kbd> Exit cell focus
+                                    </div>
+                                    <div>
+                                        <kbd className="rounded bg-blue-100 px-1.5 py-0.5">Shift + ?</kbd> Toggle this help
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         <div className="flex items-center gap-4">
                             <div className="relative flex-1">
@@ -179,12 +346,14 @@ export default function Matrix({ roles, permissions, matrix }: Props) {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10"
+                                    aria-label="Search permissions"
                                 />
                             </div>
                             <select
                                 value={selectedResource}
                                 onChange={(e) => setSelectedResource(e.target.value)}
                                 className="border-input bg-background rounded-md border px-3 py-2 text-sm"
+                                aria-label="Filter by resource"
                             >
                                 {resources.map((resource) => (
                                     <option key={resource} value={resource}>
@@ -199,58 +368,101 @@ export default function Matrix({ roles, permissions, matrix }: Props) {
                                 <CardTitle className="flex items-center gap-2">
                                     <Shield className="h-5 w-5" />
                                     Permission Matrix
+                                    <span className="text-muted-foreground text-sm font-normal">
+                                        ({filteredPermissions.length} permissions × {activeRoles.length} roles)
+                                    </span>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="overflow-x-auto">
-                                    <Table>
+                                    <Table ref={tableRef} role="grid" aria-label="Permission matrix">
                                         <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="w-[300px]">Permission</TableHead>
-                                                {roles
-                                                    .filter((role) => role.is_active)
-                                                    .map((role) => (
-                                                        <TableHead key={role.id} className="min-w-[120px] text-center">
-                                                            <div className="space-y-1">
-                                                                <div className="font-medium">{role.display_name}</div>
-                                                                <div className="flex items-center justify-center gap-1">
-                                                                    <Badge variant="outline" className="text-xs">
-                                                                        Level {role.hierarchy_level}
+                                            <TableRow role="row">
+                                                <TableHead className="w-[300px]" role="columnheader">
+                                                    Permission
+                                                </TableHead>
+                                                {activeRoles.map((role) => (
+                                                    <TableHead key={role.id} className="min-w-[120px] text-center" role="columnheader">
+                                                        <div className="space-y-1">
+                                                            <div className="font-medium">{role.display_name}</div>
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    Level {role.hierarchy_level}
+                                                                </Badge>
+                                                                {role.is_system && (
+                                                                    <Badge variant="secondary" className="text-xs">
+                                                                        System
                                                                     </Badge>
-                                                                    {role.is_system && (
-                                                                        <Badge variant="secondary" className="text-xs">
-                                                                            System
-                                                                        </Badge>
-                                                                    )}
-                                                                </div>
+                                                                )}
                                                             </div>
-                                                        </TableHead>
-                                                    ))}
+                                                            {/* Batch operation button for role */}
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 text-xs"
+                                                                onClick={() => toggleAllPermissionsForRole(role.id)}
+                                                                disabled={role.is_system && role.name === 'system_administrator'}
+                                                                title={`Toggle all permissions for ${role.display_name}`}
+                                                                aria-label={`Toggle all permissions for ${role.display_name}`}
+                                                            >
+                                                                <CheckSquare className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableHead>
+                                                ))}
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {filteredPermissions.map((permission) => (
-                                                <TableRow key={permission.id}>
-                                                    <TableCell>
-                                                        <div className="space-y-1">
-                                                            <div className="font-medium">{permission.display_name}</div>
-                                                            <div className="text-muted-foreground text-sm">{permission.name}</div>
-                                                            <Badge variant="outline" className="text-xs">
-                                                                {permission.resource}
-                                                            </Badge>
+                                            {filteredPermissions.map((permission, rowIndex) => (
+                                                <TableRow key={permission.id} role="row">
+                                                    <TableCell role="gridcell">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="space-y-1">
+                                                                <div className="font-medium">{permission.display_name}</div>
+                                                                <div className="text-muted-foreground text-sm">{permission.name}</div>
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    {permission.resource}
+                                                                </Badge>
+                                                            </div>
+                                                            {/* Batch operation button for permission */}
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="ml-2 h-6 text-xs"
+                                                                onClick={() => togglePermissionForAllRoles(permission.id)}
+                                                                title={`Grant/revoke "${permission.display_name}" for all roles`}
+                                                                aria-label={`Grant or revoke ${permission.display_name} for all roles`}
+                                                            >
+                                                                <Square className="h-3 w-3" />
+                                                            </Button>
                                                         </div>
                                                     </TableCell>
-                                                    {roles
-                                                        .filter((role) => role.is_active)
-                                                        .map((role) => (
-                                                            <TableCell key={role.id} className="text-center">
+                                                    {activeRoles.map((role, colIndex) => {
+                                                        const isDisabled = role.is_system && role.name === 'system_administrator';
+                                                        const isFocused = focusedCell?.row === rowIndex && focusedCell?.col === colIndex;
+                                                        const hasPermissionValue = hasPermission(role.id, permission.id);
+
+                                                        return (
+                                                            <TableCell
+                                                                key={role.id}
+                                                                role="gridcell"
+                                                                tabIndex={isFocused ? 0 : -1}
+                                                                onFocus={() => setFocusedCell({ row: rowIndex, col: colIndex })}
+                                                                onBlur={() => setFocusedCell(null)}
+                                                                aria-label={`${hasPermissionValue ? 'Granted' : 'Not granted'}: ${permission.display_name} for ${role.display_name}`}
+                                                                className={`text-center transition-colors ${
+                                                                    isFocused ? 'bg-blue-50 ring-2 ring-blue-500' : ''
+                                                                }`}
+                                                            >
                                                                 <Switch
-                                                                    checked={hasPermission(role.id, permission.id)}
+                                                                    checked={hasPermissionValue}
                                                                     onCheckedChange={() => togglePermission(role.id, permission.id)}
-                                                                    disabled={role.is_system && role.name === 'system_administrator'}
+                                                                    disabled={isDisabled}
+                                                                    aria-label={`${hasPermissionValue ? 'Revoke' : 'Grant'} ${permission.display_name} for ${role.display_name}`}
                                                                 />
                                                             </TableCell>
-                                                        ))}
+                                                        );
+                                                    })}
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -271,7 +483,7 @@ export default function Matrix({ roles, permissions, matrix }: Props) {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium">Total Roles</p>
-                                            <p className="text-2xl font-bold">{roles.filter((r) => r.is_active).length}</p>
+                                            <p className="text-2xl font-bold">{activeRoles.length}</p>
                                         </div>
                                         <Users className="text-muted-foreground h-8 w-8" />
                                     </div>
@@ -294,10 +506,10 @@ export default function Matrix({ roles, permissions, matrix }: Props) {
                                 <CardContent className="pt-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium">Resources</p>
-                                            <p className="text-2xl font-bold">{resources.length - 1}</p>
+                                            <p className="text-sm font-medium">Pending Changes</p>
+                                            <p className="text-2xl font-bold">{Object.keys(changes).length}</p>
                                         </div>
-                                        <Badge className="h-8 w-8" />
+                                        <Save className="text-muted-foreground h-8 w-8" />
                                     </div>
                                 </CardContent>
                             </Card>

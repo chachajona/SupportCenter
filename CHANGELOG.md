@@ -180,5 +180,57 @@ SECURITY_ALERT_RATE_LIMIT=3600       # 1 hour rate limit window
 2. Optionally configure threat response settings in `.env` using new variables
 3. Clear config cache: `php artisan config:cache`
 
+## [1.2.2] - 2025-06-29
+
+### Added
+
+- **Real-Time Security Dashboard**: Comprehensive security monitoring with live WebSocket connections, auto-refresh (30s intervals), and connection status indicators.
+- **Security Metrics API**: New `/admin/security/metrics` endpoint providing real-time threat counts (24h and 1h), IP blocking statistics, authentication events, security breakdown by type, timeline data for charts, top threat sources, and system health indicators.
+- **Interactive Security Charts**: Timeline charts and pie charts using Recharts library showing threat patterns, event distribution, and security trends with 24-hour hourly data buckets.
+- **Advanced Security Alerts**: Threshold-based alerts for high threat activity (>10 threats/hour), excessive authentication failures (>20 failures/hour), and system health warnings.
+- **Permission Matrix UX Enhancements**:
+    - **Batch Operations**: "Select All" buttons for roles and "Grant to All" buttons for permissions with smart toggle logic
+    - **Keyboard Navigation**: Arrow key navigation, Enter/Space to toggle, Escape to exit focus, Shift+? for help
+    - **Accessibility Features**: Comprehensive ARIA labels, screen reader support, focus indicators, and keyboard shortcuts help panel
+- **Enhanced Matrix Interface**: Visual focus indicators, keyboard shortcuts panel, batch operation tooltips, and pending changes counter in statistics cards.
+
+### Changed
+
+- **Security Dashboard Layout**: Professional design with real-time connection status, manual refresh capability, error handling with alerts display, and comprehensive metrics cards showing threats blocked, IP blocks, authentication events, and system health.
+- **Permission Matrix Navigation**: Enhanced table with role="grid" for screen readers, proper ARIA labels for all interactive elements, tabindex management for keyboard navigation, and batch operation buttons integrated into column headers.
+- **Security Controller**: Extended with comprehensive metrics calculation including threat analysis, IP blocking statistics, authentication metrics, and system health monitoring.
+
+### Fixed
+
+- **WebSocket Error Handling**: Auto-reconnect functionality with exponential backoff, connection status indicators, and graceful degradation when WebSocket unavailable.
+- **TypeScript Safety**: Resolved all linter errors in security dashboard components with proper type definitions and null safety checks.
+- **Permission Matrix Focus**: Fixed keyboard navigation focus management and visual indicators for cell selection.
+
+### Security
+
+- **Real-Time Threat Monitoring**: Live security event stream provides immediate visibility into system threats and attack patterns.
+- **Enhanced Access Controls**: Batch permission operations maintain existing security constraints for system administrator role protection.
+- **Audit Trail Integrity**: All batch permission changes maintain individual audit log entries for full traceability.
+
+### Performance
+
+- **Optimized Metrics Queries**: Efficient database queries for security statistics with proper indexing and caching considerations.
+- **Smart WebSocket Management**: Connection pooling and automatic cleanup prevent resource leaks during extended monitoring sessions.
+- **Batch Operation Efficiency**: Single transaction processing for multiple permission changes reduces database load.
+
+### Accessibility
+
+- **WCAG Compliance**: Permission matrix now fully navigable via keyboard with proper ARIA roles, labels, and live regions.
+- **Screen Reader Support**: Comprehensive labeling for all security dashboard elements and interactive components.
+- **Keyboard Shortcuts**: Intuitive navigation patterns with help panel for users requiring keyboard-only access.
+
+### Migration Notes
+
+1. No database migrations required - all changes are frontend and API enhancements
+2. Clear application cache: `php artisan config:cache && php artisan route:cache`
+3. Restart queue workers to ensure WebSocket broadcasting works properly
+4. Verify Recharts dependency is available: `npm install` (already in package.json)
+
 [1.2.0]: https://github.com/your-org/support-center/releases/tag/v1.2.0
 [1.2.1]: https://github.com/your-org/support-center/releases/tag/v1.2.1
+[1.2.2]: https://github.com/your-org/support-center/releases/tag/v1.2.2

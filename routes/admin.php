@@ -71,6 +71,14 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         ->middleware('permission:emergency.grant')
         ->name('emergency.break-glass');
 
+    // Emergency Recovery (System Administrators Only)
+    Route::post('/emergency/{emergency}/recover', [EmergencyAccessController::class, 'performRecovery'])
+        ->middleware('permission:emergency.manage')
+        ->name('emergency.recover');
+    Route::get('/emergency/recovery/stats', [EmergencyAccessController::class, 'getRecoveryStats'])
+        ->middleware('permission:emergency.view')
+        ->name('emergency.recovery.stats');
+
     // Analytics Dashboard (Week 21 Focus)
     Route::middleware('permission:analytics.view')->group(function () {
         Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
@@ -166,4 +174,5 @@ Route::middleware(['auth:sanctum', 'verified', 'role:system_administrator'])
     ->name('admin.')
     ->group(function () {
         Route::get('/security', [\App\Http\Controllers\Admin\SecurityController::class, 'index'])->name('security.index');
+        Route::get('/security/metrics', [\App\Http\Controllers\Admin\SecurityController::class, 'metrics'])->name('security.metrics');
     });

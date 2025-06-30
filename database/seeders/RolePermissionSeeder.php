@@ -178,7 +178,8 @@ class RolePermissionSeeder extends Seeder
                 'view',
                 'grant',
                 'revoke',
-                'manage'
+                'manage',
+                'recover'
             ],
 
             // Permissions

@@ -359,4 +359,48 @@ class EmergencyAccessController extends Controller
             'data' => $result,
         ]);
     }
+
+    /**
+     * Perform emergency access recovery
+     */
+    public function performRecovery(Request $request, int $emergencyAccessId)
+    {
+        $this->authorize('delete', EmergencyAccess::class);
+
+        $request->validate([
+            'recovery_reason' => 'required|string|min:10|max:500',
+        ]);
+
+        try {
+            $recoveryService = app(\App\Services\EmergencyRecoveryService::class);
+            $result = $recoveryService->performIncidentRecovery(
+                $emergencyAccessId,
+                $request->recovery_reason,
+                Auth::id()
+            );
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Recovery failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get recovery statistics
+     */
+    public function getRecoveryStats(Request $request)
+    {
+        $this->authorize('viewAny', EmergencyAccess::class);
+
+        $days = $request->integer('days', 30);
+        $recoveryService = app(\App\Services\EmergencyRecoveryService::class);
+
+        return response()->json([
+            'success' => true,
+            'data' => $recoveryService->getRecoveryStats($days),
+        ]);
+    }
 }
