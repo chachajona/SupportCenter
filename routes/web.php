@@ -49,6 +49,15 @@ Route::middleware(['setup.completed'])->group(function () {
         // Two-Factor QR Code route - using standard auth middleware for consistency
         Route::get('/user/two-factor-qr-code', [TwoFactorQrCodeController::class, 'show'])
             ->name('two-factor.qr-code');
+
+        // Ticket management routes
+        Route::resource('tickets', \App\Http\Controllers\TicketController::class);
+        Route::post('tickets/{ticket}/assign', [\App\Http\Controllers\TicketController::class, 'assign'])
+            ->name('tickets.assign');
+        Route::delete('tickets/{ticket}/assign', [\App\Http\Controllers\TicketController::class, 'unassign'])
+            ->name('tickets.unassign');
+        Route::post('tickets/{ticket}/transfer', [\App\Http\Controllers\TicketController::class, 'transfer'])
+            ->name('tickets.transfer');
     });
 
     require __DIR__ . '/settings.php';

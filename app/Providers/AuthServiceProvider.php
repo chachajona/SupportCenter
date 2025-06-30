@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Models\Department;
 use App\Models\Role;
+use App\Models\Ticket;
 use App\Models\User;
 use App\Policies\DepartmentPolicy;
 use App\Policies\RolePolicy;
+use App\Policies\TicketPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -21,6 +23,7 @@ class AuthServiceProvider extends ServiceProvider
         User::class => UserPolicy::class,
         Role::class => RolePolicy::class,
         Department::class => DepartmentPolicy::class,
+        Ticket::class => TicketPolicy::class,
     ];
 
     /**
