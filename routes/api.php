@@ -38,4 +38,31 @@ Route::middleware(['auth:sanctum'])->group(function () {
             ] : [],
         ]);
     });
+
+    // Ticket API routes
+    Route::apiResource('tickets', App\Http\Controllers\Api\TicketController::class);
+    Route::post('tickets/{ticket}/assign', [App\Http\Controllers\Api\TicketController::class, 'assign'])
+        ->name('api.tickets.assign');
+    Route::post('tickets/{ticket}/responses', [App\Http\Controllers\Api\TicketController::class, 'addResponse'])
+        ->name('api.tickets.responses.store');
+
+    // Knowledge Base API routes
+    Route::get('knowledge/articles', [App\Http\Controllers\Api\KnowledgeArticleController::class, 'index'])
+        ->name('api.knowledge.articles.index');
+    Route::get('knowledge/articles/{article}', [App\Http\Controllers\Api\KnowledgeArticleController::class, 'show'])
+        ->name('api.knowledge.articles.show');
+    Route::get('knowledge/search', [App\Http\Controllers\Api\KnowledgeArticleController::class, 'search'])
+        ->name('api.knowledge.search');
+    Route::get('knowledge/popular', [App\Http\Controllers\Api\KnowledgeArticleController::class, 'popular'])
+        ->name('api.knowledge.popular');
+    Route::get('knowledge/recent', [App\Http\Controllers\Api\KnowledgeArticleController::class, 'recent'])
+        ->name('api.knowledge.recent');
+
+    // Analytics API routes
+    Route::middleware('permission:helpdesk_analytics.view')->group(function () {
+        Route::get('analytics/dashboard', [App\Http\Controllers\Admin\HelpdeskAnalyticsController::class, 'index'])
+            ->name('api.analytics.dashboard');
+        Route::get('analytics/metrics', [App\Http\Controllers\Admin\HelpdeskAnalyticsController::class, 'getMetrics'])
+            ->name('api.analytics.metrics');
+    });
 });

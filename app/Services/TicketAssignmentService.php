@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\PermissionAudit;
+use App\Services\SlackNotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,6 +17,10 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class TicketAssignmentService
 {
+    public function __construct(
+        private readonly SlackNotificationService $slackService
+    ) {
+    }
     /**
      * Assign a ticket to a user.
      */
@@ -51,6 +56,9 @@ final class TicketAssignmentService
 
         // Send notification (simple email)
         $this->notifyAssignment($ticket, $assignee);
+
+        // Send Slack notification
+        $this->slackService->notifyTicketAssignment($ticket);
 
         return true;
     }

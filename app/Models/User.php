@@ -158,6 +158,22 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
     }
 
     /**
+     * Get tickets assigned to this user.
+     */
+    public function assignedTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'assigned_to');
+    }
+
+    /**
+     * Get tickets created by this user.
+     */
+    public function createdTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'created_by');
+    }
+
+    /**
      * Check if user has department-scoped access to a resource.
      */
     public function hasDepartmentAccess(int $resourceDepartmentId): bool

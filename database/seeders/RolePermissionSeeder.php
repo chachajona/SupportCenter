@@ -167,6 +167,15 @@ class RolePermissionSeeder extends Seeder
                 'export'
             ],
 
+            // Helpdesk Analytics
+            'helpdesk_analytics' => [
+                'view',
+                'view_own',
+                'view_department',
+                'view_all',
+                'export'
+            ],
+
             // Monitoring
             'monitoring' => [
                 'view',
@@ -297,7 +306,8 @@ class RolePermissionSeeder extends Seeder
                 'knowledge.edit_articles',
                 'knowledge.approve_articles',
                 // NEW: Analytics
-                'analytics.view_department'
+                'analytics.view_department',
+                'helpdesk_analytics.view_department'
             ],
 
             'regional_manager' => [
@@ -315,7 +325,9 @@ class RolePermissionSeeder extends Seeder
                 'reports.schedule',
                 // NEW: Analytics
                 'analytics.view_all',
-                'analytics.export'
+                'analytics.export',
+                'helpdesk_analytics.view_all',
+                'helpdesk_analytics.export'
             ],
 
             'system_administrator' => [

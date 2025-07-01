@@ -81,6 +81,14 @@ class Department extends Model
     }
 
     /**
+     * Get tickets belonging to this department.
+     */
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    /**
      * Get all ancestor departments using materialized path.
      */
     public function getAncestors(): Collection

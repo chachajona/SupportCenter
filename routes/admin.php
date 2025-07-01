@@ -89,6 +89,19 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
             ->name('analytics.export');
     });
 
+    // Helpdesk Analytics Dashboard (Phase 3B)
+    Route::middleware('permission:helpdesk_analytics.view')->group(function () {
+        Route::get('/helpdesk-analytics', [\App\Http\Controllers\Admin\HelpdeskAnalyticsController::class, 'index'])
+            ->name('helpdesk-analytics.index');
+        Route::get('/helpdesk-analytics/metrics', [\App\Http\Controllers\Admin\HelpdeskAnalyticsController::class, 'metrics'])
+            ->name('helpdesk-analytics.metrics');
+        Route::get('/helpdesk-analytics/departments/{department}/metrics', [\App\Http\Controllers\Admin\HelpdeskAnalyticsController::class, 'departmentMetrics'])
+            ->name('helpdesk-analytics.department-metrics');
+        Route::get('/helpdesk-analytics/export', [\App\Http\Controllers\Admin\HelpdeskAnalyticsController::class, 'export'])
+            ->middleware('permission:helpdesk_analytics.export')
+            ->name('helpdesk-analytics.export');
+    });
+
     // Role Management
     Route::middleware('permission:roles.view')->group(function () {
         Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');

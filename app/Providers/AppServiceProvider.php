@@ -9,6 +9,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use App\Models\Ticket;
+use App\Observers\TicketObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,5 +33,8 @@ class AppServiceProvider extends ServiceProvider
             // 50 requests per minute per user (or IP if guest)
             return Limit::perMinute(50)->by($request->user()?->id ?? $request->ip());
         });
+
+        // Register model observers
+        Ticket::observe(TicketObserver::class);
     }
 }
