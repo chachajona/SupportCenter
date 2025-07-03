@@ -9,9 +9,7 @@ use App\Services\ThreatResponseService;
 
 final class ThreatResponseListener
 {
-    public function __construct(private readonly ThreatResponseService $service)
-    {
-    }
+    public function __construct(private readonly ThreatResponseService $service) {}
 
     public function handle(SecurityEvent $event): void
     {

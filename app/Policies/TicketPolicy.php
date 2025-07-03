@@ -20,7 +20,7 @@ final class TicketPolicy
         return $user->hasAnyPermission([
             'tickets.view_own',
             'tickets.view_department',
-            'tickets.view_all'
+            'tickets.view_all',
         ]);
     }
 
@@ -42,6 +42,7 @@ final class TicketPolicy
         // Support agents see own tickets (assigned or created)
         if ($user->hasPermissionTo('tickets.view_own')) {
             $userId = $user->getKey();
+
             return $ticket->assigned_to === $userId || $ticket->created_by === $userId;
         }
 
@@ -71,6 +72,7 @@ final class TicketPolicy
 
         if ($user->hasPermissionTo('tickets.edit_own')) {
             $userId = $user->getKey();
+
             return $ticket->assigned_to === $userId;
         }
 
@@ -92,6 +94,7 @@ final class TicketPolicy
 
         if ($user->hasPermissionTo('tickets.delete_own')) {
             $userId = $user->getKey();
+
             return $ticket->assigned_to === $userId;
         }
 
@@ -135,7 +138,7 @@ final class TicketPolicy
         // Internal responses visible to department staff and above
         return $user->hasAnyPermission([
             'tickets.view_department',
-            'tickets.view_all'
+            'tickets.view_all',
         ]) && $this->view($user, $ticket);
     }
 

@@ -5,10 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\SecurityEventType;
 use App\Http\Controllers\Controller;
 use App\Models\SecurityLog;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Laragear\WebAuthn\Http\Requests\AssertionRequest;
 use Laragear\WebAuthn\Http\Requests\AssertedRequest;
+use Laragear\WebAuthn\Http\Requests\AssertionRequest;
 
 class WebAuthnLoginController extends Controller
 {
@@ -18,7 +17,7 @@ class WebAuthnLoginController extends Controller
     public function options(AssertionRequest $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email'
+            'email' => 'required|email|exists:users,email',
         ]);
 
         return response()->json(
@@ -50,7 +49,7 @@ class WebAuthnLoginController extends Controller
             return response()->json([
                 'success' => true,
                 'redirect' => config('fortify.home', '/dashboard'),
-                'message' => "Welcome back, {$user->name}!"
+                'message' => "Welcome back, {$user->name}!",
             ]);
         }
 
@@ -64,7 +63,7 @@ class WebAuthnLoginController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => 'WebAuthn authentication failed.'
+            'message' => 'WebAuthn authentication failed.',
         ], 422);
     }
 }

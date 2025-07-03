@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Models\TicketPriority;
-use App\Models\TicketResponse;
-use App\Models\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -56,7 +53,7 @@ final class Ticket extends Model
         'assigned_to',
         'created_by',
         'updated_by',
-        'due_at'
+        'due_at',
     ];
 
     /**
@@ -152,7 +149,7 @@ final class Ticket extends Model
      */
     public function generateTicketNumber(): string
     {
-        return date('Y') . str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
+        return date('Y').str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -160,7 +157,7 @@ final class Ticket extends Model
      */
     public function isOverdue(): bool
     {
-        return $this->due_at !== null && $this->due_at->isPast() && !$this->status->is_closed;
+        return $this->due_at !== null && $this->due_at->isPast() && ! $this->status->is_closed;
     }
 
     /**
@@ -195,47 +192,47 @@ final class Ticket extends Model
         $latestTicket = self::latest('id')->first();
         $nextId = $latestTicket ? $latestTicket->id + 1 : 1;
 
-        return date('Y') . str_pad((string) $nextId, 6, '0', STR_PAD_LEFT);
+        return date('Y').str_pad((string) $nextId, 6, '0', STR_PAD_LEFT);
     }
 
     /**
      * Scope to only open tickets.
      *
-     * @param Builder<Ticket> $query
+     * @param  Builder<Ticket>  $query
      * @return Builder<Ticket>
      */
     public function scopeOpen(Builder $query): Builder
     {
-        return $query->whereHas('status', fn(Builder $q) => $q->where('is_closed', false));
+        return $query->whereHas('status', fn (Builder $q) => $q->where('is_closed', false));
     }
 
     /**
      * Scope to only closed tickets.
      *
-     * @param Builder<Ticket> $query
+     * @param  Builder<Ticket>  $query
      * @return Builder<Ticket>
      */
     public function scopeClosed(Builder $query): Builder
     {
-        return $query->whereHas('status', fn(Builder $q) => $q->where('is_closed', true));
+        return $query->whereHas('status', fn (Builder $q) => $q->where('is_closed', true));
     }
 
     /**
      * Scope to only overdue tickets.
      *
-     * @param Builder<Ticket> $query
+     * @param  Builder<Ticket>  $query
      * @return Builder<Ticket>
      */
     public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('due_at', '<', now())
-            ->whereHas('status', fn(Builder $q) => $q->where('is_closed', false));
+            ->whereHas('status', fn (Builder $q) => $q->where('is_closed', false));
     }
 
     /**
      * Scope to only assigned tickets.
      *
-     * @param Builder<Ticket> $query
+     * @param  Builder<Ticket>  $query
      * @return Builder<Ticket>
      */
     public function scopeAssigned(Builder $query): Builder
@@ -246,7 +243,7 @@ final class Ticket extends Model
     /**
      * Scope to only unassigned tickets.
      *
-     * @param Builder<Ticket> $query
+     * @param  Builder<Ticket>  $query
      * @return Builder<Ticket>
      */
     public function scopeUnassigned(Builder $query): Builder
@@ -257,7 +254,7 @@ final class Ticket extends Model
     /**
      * Scope tickets for a specific department.
      *
-     * @param Builder<Ticket> $query
+     * @param  Builder<Ticket>  $query
      */
     public function scopeForDepartment(Builder $query, int $departmentId): Builder
     {
@@ -267,7 +264,7 @@ final class Ticket extends Model
     /**
      * Scope tickets by priority.
      *
-     * @param Builder<Ticket> $query
+     * @param  Builder<Ticket>  $query
      */
     public function scopeByPriority(Builder $query, int $priorityId): Builder
     {
@@ -277,12 +274,12 @@ final class Ticket extends Model
     /**
      * Scope to high priority tickets (level 3 and above).
      *
-     * @param Builder<Ticket> $query
+     * @param  Builder<Ticket>  $query
      * @return Builder<Ticket>
      */
     public function scopeHighPriority(Builder $query): Builder
     {
-        return $query->whereHas('priority', fn(Builder $q) => $q->where('level', '>=', 3));
+        return $query->whereHas('priority', fn (Builder $q) => $q->where('level', '>=', 3));
     }
 
     // Boot method to auto-generate ticket number
@@ -290,12 +287,12 @@ final class Ticket extends Model
     {
         parent::boot();
 
-        static::creating(function (Ticket $ticket) {
-            if (!$ticket->number) {
+        self::creating(function (Ticket $ticket) {
+            if (! $ticket->number) {
                 // Generate a temporary number before creating
                 $latest = static::latest('id')->first();
                 $nextId = $latest ? $latest->id + 1 : 1;
-                $ticket->number = date('Y') . str_pad((string) $nextId, 6, '0', STR_PAD_LEFT);
+                $ticket->number = date('Y').str_pad((string) $nextId, 6, '0', STR_PAD_LEFT);
             }
         });
     }

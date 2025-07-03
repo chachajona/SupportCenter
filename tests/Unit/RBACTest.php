@@ -10,8 +10,8 @@ use App\Services\EmergencyAccessService;
 use App\Services\TemporalAccessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class RBACTest extends TestCase
 {

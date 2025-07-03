@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
-use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
-use Laravel\Fortify\Http\Requests\TwoFactorLoginRequest;
-use Laravel\Fortify\Contracts\TwoFactorChallengeViewResponse;
-use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
+use Laravel\Fortify\Contracts\TwoFactorChallengeViewResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
+use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+use Laravel\Fortify\Http\Requests\TwoFactorLoginRequest;
+use Symfony\Component\HttpFoundation\Response;
 
 final class CustomTwoFactorAuthenticatedSessionController extends TwoFactorAuthenticatedSessionController
 {
@@ -24,7 +24,7 @@ final class CustomTwoFactorAuthenticatedSessionController extends TwoFactorAuthe
     public function create(Request $request): TwoFactorChallengeViewResponse
     {
         // Ensure we have a valid TwoFactorLoginRequest, convert if needed
-        if (!$request instanceof TwoFactorLoginRequest) {
+        if (! $request instanceof TwoFactorLoginRequest) {
             $twoFactorRequest = TwoFactorLoginRequest::createFrom($request);
         } else {
             $twoFactorRequest = $request;
@@ -43,7 +43,7 @@ final class CustomTwoFactorAuthenticatedSessionController extends TwoFactorAuthe
     public function store(Request $request): Response
     {
         // Ensure we have a valid TwoFactorLoginRequest, convert if needed
-        if (!$request instanceof TwoFactorLoginRequest) {
+        if (! $request instanceof TwoFactorLoginRequest) {
             $twoFactorRequest = TwoFactorLoginRequest::createFrom($request);
         } else {
             $twoFactorRequest = $request;
@@ -65,7 +65,7 @@ final class CustomTwoFactorAuthenticatedSessionController extends TwoFactorAuthe
         // We check if authentication state changed or if we have a proper TwoFactorLoginResponse
         if (
             $response instanceof TwoFactorLoginResponse ||
-            (!$wasAuthenticated && $isNowAuthenticated) ||
+            (! $wasAuthenticated && $isNowAuthenticated) ||
             ($userId !== $currentUserId && $isNowAuthenticated)
         ) {
 

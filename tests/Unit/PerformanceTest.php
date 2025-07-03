@@ -229,7 +229,7 @@ class PerformanceTest extends TestCase
         $wildcardPermission = Permission::create([
             'name' => 'tickets.*',
             'resource' => 'tickets',
-            'action' => '*'
+            'action' => '*',
         ]);
 
         $role->givePermissionTo($wildcardPermission);

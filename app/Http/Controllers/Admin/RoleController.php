@@ -4,14 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Permission;
+use App\Models\PermissionAudit;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\PermissionAudit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Auth;
 
 class RoleController extends Controller
 {
@@ -31,7 +31,7 @@ class RoleController extends Controller
             ->withCount([
                 'users' => function ($query) {
                     $query->where('role_user.is_active', true);
-                }
+                },
             ])
             ->with(['permissions:id,name,display_name,resource'])
             ->orderBy('hierarchy_level')
@@ -71,7 +71,7 @@ class RoleController extends Controller
                 $query->where('role_user.is_active', true)
                     ->select('users.id', 'users.name', 'users.email')
                     ->withPivot(['granted_at', 'expires_at', 'granted_by']);
-            }
+            },
         ]);
 
         // Get recent permission changes for this role
@@ -119,7 +119,7 @@ class RoleController extends Controller
                     'is_active' => true,
                 ]);
 
-                if ($request->has('permissions') && !empty($request->permissions)) {
+                if ($request->has('permissions') && ! empty($request->permissions)) {
                     $permissions = Permission::whereIn('id', $request->permissions)->get();
                     $role->syncPermissions($permissions);
 
@@ -156,7 +156,7 @@ class RoleController extends Controller
                 ->with('success', 'Role created successfully');
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to create role: ' . $e->getMessage(),
+                'message' => 'Failed to create role: '.$e->getMessage(),
             ], 422);
         }
     }
@@ -274,7 +274,7 @@ class RoleController extends Controller
             return redirect()->back()->with('success', 'Role updated successfully');
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to update role: ' . $e->getMessage(),
+                'message' => 'Failed to update role: '.$e->getMessage(),
             ], 422);
         }
     }
@@ -325,7 +325,7 @@ class RoleController extends Controller
             return redirect()->back()->with('success', 'Role deleted successfully');
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to delete role: ' . $e->getMessage(),
+                'message' => 'Failed to delete role: '.$e->getMessage(),
             ], 422);
         }
     }
@@ -381,7 +381,7 @@ class RoleController extends Controller
                     'role_id' => $request->role_id,
                     'permission_id' => $request->permission_id,
                     'granted' => $request->granted,
-                ]
+                ],
             ];
         }
 
@@ -413,7 +413,7 @@ class RoleController extends Controller
                             'role_name' => $role->display_name,
                             'permission_name' => $permission->display_name,
                         ] : null,
-                        'old_values' => !$entry['granted'] ? [
+                        'old_values' => ! $entry['granted'] ? [
                             'role_name' => $role->display_name,
                             'permission_name' => $permission->display_name,
                         ] : null,
@@ -435,7 +435,7 @@ class RoleController extends Controller
             return response()->noContent();
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to update permission matrix: ' . $e->getMessage(),
+                'message' => 'Failed to update permission matrix: '.$e->getMessage(),
             ], 422);
         }
     }

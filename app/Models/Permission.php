@@ -87,7 +87,7 @@ class Permission extends SpatiePermission
         }
 
         if ($this->resource && $this->action) {
-            return ucfirst($this->action) . ' ' . ucfirst($this->resource);
+            return ucfirst($this->action).' '.ucfirst($this->resource);
         }
 
         return $this->display_name;

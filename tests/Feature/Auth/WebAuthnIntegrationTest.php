@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
-use Mockery;
 
 class WebAuthnIntegrationTest extends TestCase
 {
@@ -102,18 +101,18 @@ class WebAuthnIntegrationTest extends TestCase
 
         // Simulate multiple failed attempts
         for ($i = 0; $i < 10; $i++) {
-            RateLimiter::hit('webauthn:' . $ip, 60);
+            RateLimiter::hit('webauthn:'.$ip, 60);
         }
 
         $response = $this->withServerVariables(['REMOTE_ADDR' => $ip])
             ->postJson('/webauthn/login/options', [
-                'email' => $this->user->email
+                'email' => $this->user->email,
             ]);
 
         $response->assertStatus(429);
         $response->assertJson([
             'success' => false,
-            'message' => 'Too many WebAuthn attempts. Please try again later.'
+            'message' => 'Too many WebAuthn attempts. Please try again later.',
         ]);
     }
 
@@ -125,12 +124,12 @@ class WebAuthnIntegrationTest extends TestCase
         // The middleware should catch non-HTTPS requests in production
         $response = $this->post('/webauthn/login/options', [
             'email' => $this->user->email,
-            '_token' => csrf_token()
+            '_token' => csrf_token(),
         ]);
 
         // In production without HTTPS, should get 400 from our middleware
         // But since we're in test environment, let's test the middleware logic directly
-        $middleware = new \App\Http\Middleware\WebAuthnSecurityMiddleware();
+        $middleware = new \App\Http\Middleware\WebAuthnSecurityMiddleware;
         $request = \Illuminate\Http\Request::create('/webauthn/login/options', 'POST');
         $request->server->set('HTTPS', false);
 
@@ -181,7 +180,7 @@ class WebAuthnIntegrationTest extends TestCase
         $response = $this->post('/emergency-access', [
             'email' => $this->user->email,
             'password' => 'password',
-            'reason' => 'Lost my authenticator device'
+            'reason' => 'Lost my authenticator device',
         ]);
 
         $response->assertRedirect();
@@ -221,7 +220,7 @@ class WebAuthnIntegrationTest extends TestCase
         $response = $this->post('/emergency-access', [
             'email' => $this->user->email,
             'password' => 'wrong-password',
-            'reason' => 'Lost my device'
+            'reason' => 'Lost my device',
         ]);
 
         $response->assertRedirect();
@@ -235,7 +234,7 @@ class WebAuthnIntegrationTest extends TestCase
             $this->post('/emergency-access', [
                 'email' => $this->user->email,
                 'password' => 'wrong-password',
-                'reason' => 'Test'
+                'reason' => 'Test',
             ]);
         }
 
@@ -243,7 +242,7 @@ class WebAuthnIntegrationTest extends TestCase
         $response = $this->post('/emergency-access', [
             'email' => $this->user->email,
             'password' => 'password',
-            'reason' => 'Test'
+            'reason' => 'Test',
         ]);
 
         $response->assertStatus(429);
@@ -254,13 +253,13 @@ class WebAuthnIntegrationTest extends TestCase
         session(['login.id' => $this->user->id]);
 
         $response = $this->post('/two-factor-choice', [
-            'method' => 'webauthn'
+            'method' => 'webauthn',
         ]);
 
         $response->assertRedirect('/webauthn/login');
 
         $response = $this->post('/two-factor-choice', [
-            'method' => 'totp'
+            'method' => 'totp',
         ]);
 
         $response->assertRedirect('/two-factor-challenge');
@@ -271,7 +270,7 @@ class WebAuthnIntegrationTest extends TestCase
         session(['login.id' => $this->user->id]);
 
         $response = $this->post('/two-factor-choice', [
-            'method' => 'invalid-method'
+            'method' => 'invalid-method',
         ]);
 
         $response->assertSessionHasErrors(['method']);
@@ -281,7 +280,7 @@ class WebAuthnIntegrationTest extends TestCase
     {
         // Test that the middleware is applied to WebAuthn routes
         $response = $this->postJson('/webauthn/login/options', [
-            'email' => $this->user->email
+            'email' => $this->user->email,
         ]);
 
         // Should not be rate limited on first attempt
@@ -298,7 +297,7 @@ class WebAuthnIntegrationTest extends TestCase
 
         // Step 2: User chooses WebAuthn
         $response = $this->post('/two-factor-choice', [
-            'method' => 'webauthn'
+            'method' => 'webauthn',
         ]);
 
         $response->assertRedirect('/webauthn/login');
@@ -384,7 +383,7 @@ class WebAuthnIntegrationTest extends TestCase
         }
 
         // Clear rate limiter
-        RateLimiter::clear('webauthn:' . request()->ip());
+        RateLimiter::clear('webauthn:'.request()->ip());
 
         // Clear cache
         Cache::flush();

@@ -3,21 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PermissionAudit;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\PermissionAudit;
 use App\Services\TemporalAccessService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class UserRoleController extends Controller
 {
     public function __construct(
         private readonly TemporalAccessService $temporalAccessService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -44,7 +43,7 @@ class UserRoleController extends Controller
                     $query->where('role_user.is_active', true)
                         ->withPivot(['granted_at', 'expires_at', 'granted_by']);
                 },
-                'department:id,name'
+                'department:id,name',
             ])
             ->orderBy('name')
             ->paginate(20);
@@ -69,7 +68,7 @@ class UserRoleController extends Controller
                 $query->withPivot(['granted_at', 'expires_at', 'granted_by', 'delegation_reason', 'is_active'])
                     ->with('permissions:id,name,display_name,resource');
             },
-            'department:id,name'
+            'department:id,name',
         ]);
 
         // Get available roles for assignment
@@ -136,7 +135,7 @@ class UserRoleController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to assign role: ' . $e->getMessage(),
+                'message' => 'Failed to assign role: '.$e->getMessage(),
             ], 422);
         }
     }
@@ -148,7 +147,7 @@ class UserRoleController extends Controller
         ]);
 
         // Check if user has this role
-        if (!$user->hasRole($role)) {
+        if (! $user->hasRole($role)) {
             return response()->json([
                 'message' => 'User does not have this role',
             ], 422);
@@ -190,7 +189,7 @@ class UserRoleController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to revoke role: ' . $e->getMessage(),
+                'message' => 'Failed to revoke role: '.$e->getMessage(),
             ], 422);
         }
     }
@@ -226,11 +225,12 @@ class UserRoleController extends Controller
         foreach ($request->role_ids as $roleId) {
             $role = Role::find($roleId);
 
-            if (!$role) {
+            if (! $role) {
                 $skipped[] = [
                     'role_id' => $roleId,
                     'reason' => 'Role not found',
                 ];
+
                 continue;
             }
 
@@ -239,6 +239,7 @@ class UserRoleController extends Controller
                     'role_id' => $roleId,
                     'reason' => 'User already has role',
                 ];
+
                 continue;
             }
 
@@ -312,7 +313,7 @@ class UserRoleController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to revoke temporary role: ' . $e->getMessage(),
+                'message' => 'Failed to revoke temporary role: '.$e->getMessage(),
             ], 422);
         }
     }
@@ -340,7 +341,7 @@ class UserRoleController extends Controller
                     'name' => $role->name,
                     'display_name' => $role->display_name,
                     'expires_at' => $role->pivot->expires_at,
-                    'is_temporary' => !is_null($role->pivot->expires_at),
+                    'is_temporary' => ! is_null($role->pivot->expires_at),
                 ];
             }),
         ]);
@@ -366,6 +367,7 @@ class UserRoleController extends Controller
                 foreach ($users as $user) {
                     if ($user->hasRole($role)) {
                         $skipped++;
+
                         continue;
                     }
 
@@ -398,7 +400,7 @@ class UserRoleController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to perform bulk assignment: ' . $e->getMessage(),
+                'message' => 'Failed to perform bulk assignment: '.$e->getMessage(),
             ], 422);
         }
     }
@@ -418,7 +420,7 @@ class UserRoleController extends Controller
         // Check for system administrator protection
         if ($role->name === 'system_administrator') {
             $totalAdmins = User::role('system_administrator')->count();
-            $revokeCount = $users->filter(fn($user) => $user->hasRole($role))->count();
+            $revokeCount = $users->filter(fn ($user) => $user->hasRole($role))->count();
 
             if ($totalAdmins - $revokeCount <= 0) {
                 return response()->json([
@@ -433,8 +435,9 @@ class UserRoleController extends Controller
         try {
             DB::transaction(function () use ($request, $role, $users, &$revoked, &$skipped) {
                 foreach ($users as $user) {
-                    if (!$user->hasRole($role)) {
+                    if (! $user->hasRole($role)) {
                         $skipped++;
+
                         continue;
                     }
 
@@ -467,7 +470,7 @@ class UserRoleController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to perform bulk revocation: ' . $e->getMessage(),
+                'message' => 'Failed to perform bulk revocation: '.$e->getMessage(),
             ], 422);
         }
     }

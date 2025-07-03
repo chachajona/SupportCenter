@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\TicketStatus;
-use App\Models\TicketPriority;
-use App\Models\KnowledgeCategory;
 use App\Models\Department;
+use App\Models\KnowledgeCategory;
+use App\Models\TicketPriority;
+use App\Models\TicketStatus;
 use Illuminate\Database\Seeder;
 
 final class HelpdeskSeeder extends Seeder
@@ -75,10 +75,10 @@ final class HelpdeskSeeder extends Seeder
         if ($departments->isNotEmpty()) {
             foreach ($departments as $index => $department) {
                 $categories[] = [
-                    'name' => $department->name . ' Specific',
-                    'description' => 'Knowledge specific to ' . $department->name,
+                    'name' => $department->name.' Specific',
+                    'description' => 'Knowledge specific to '.$department->name,
                     'department_id' => $department->id,
-                    'sort_order' => 10 + $index
+                    'sort_order' => 10 + $index,
                 ];
             }
         }

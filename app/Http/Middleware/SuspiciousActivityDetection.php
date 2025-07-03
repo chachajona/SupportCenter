@@ -11,7 +11,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Notification;
 use Symfony\Component\HttpFoundation\Response;
 
 final class SuspiciousActivityDetection
@@ -23,7 +22,7 @@ final class SuspiciousActivityDetection
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
@@ -50,7 +49,7 @@ final class SuspiciousActivityDetection
         $lastKnownUserAgent = Cache::get("last_user_agent_{$user->id}");
         if ($lastKnownUserAgent && $lastKnownUserAgent !== $userAgent) {
             $suspiciousScore += 15;
-            $alerts[] = "Login from new device/browser";
+            $alerts[] = 'Login from new device/browser';
         }
 
         // Check for rapid session creation (potential session hijacking)
@@ -60,14 +59,14 @@ final class SuspiciousActivityDetection
 
         if ($sessionCount > 5) {
             $suspiciousScore += 40;
-            $alerts[] = "Unusual number of concurrent sessions";
+            $alerts[] = 'Unusual number of concurrent sessions';
         }
 
         // Check for access outside normal hours (if configured)
         $currentHour = now()->hour;
         if ($currentHour < 6 || $currentHour > 22) { // Outside 6 AM - 10 PM
             $suspiciousScore += 10;
-            $alerts[] = "Access outside normal business hours";
+            $alerts[] = 'Access outside normal business hours';
         }
 
         // Log suspicious activity
@@ -97,12 +96,12 @@ final class SuspiciousActivityDetection
                 if ($request->expectsJson()) {
                     return response()->json([
                         'message' => 'Session terminated due to suspicious activity.',
-                        'redirect' => '/login'
+                        'redirect' => '/login',
                     ], 401);
                 }
 
                 return redirect('/login')->withErrors([
-                    'security' => 'Session terminated due to suspicious activity. Please contact support if this was legitimate access.'
+                    'security' => 'Session terminated due to suspicious activity. Please contact support if this was legitimate access.',
                 ]);
             }
         }

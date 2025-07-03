@@ -5,19 +5,18 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\HelpdeskAnalyticsService;
 use App\Models\Department;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Inertia\Response;
+use App\Services\HelpdeskAnalyticsService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Response;
 
 final class HelpdeskAnalyticsController extends Controller
 {
     public function __construct(
         private readonly HelpdeskAnalyticsService $analyticsService
-    ) {
-    }
+    ) {}
 
     /**
      * Display the helpdesk analytics dashboard.
@@ -45,8 +44,8 @@ final class HelpdeskAnalyticsController extends Controller
             'userPermissions' => [
                 'can_view_all_departments' => $user->hasPermissionTo('analytics.view_all'),
                 'can_export' => $user->hasPermissionTo('analytics.export'),
-                'accessible_departments' => $departmentIds
-            ]
+                'accessible_departments' => $departmentIds,
+            ],
         ]);
     }
 
@@ -64,7 +63,7 @@ final class HelpdeskAnalyticsController extends Controller
         return response()->json([
             'overview' => $overview,
             'recent_activity' => $recentActivity,
-            'timestamp' => Carbon::now()->toISOString()
+            'timestamp' => Carbon::now()->toISOString(),
         ]);
     }
 
@@ -75,7 +74,7 @@ final class HelpdeskAnalyticsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('analytics.export')) {
+        if (! $user->hasPermissionTo('analytics.export')) {
             abort(403, 'Insufficient permissions to export analytics data.');
         }
 
@@ -89,10 +88,10 @@ final class HelpdeskAnalyticsController extends Controller
             'exported_by' => $user->name,
             'time_range' => $timeRange,
             'scope' => $departmentIds ? 'Filtered Departments' : 'All Departments',
-            'data' => $analytics
+            'data' => $analytics,
         ];
 
-        $filename = 'helpdesk-analytics-' . Carbon::now()->format('Y-m-d-H-i') . '.json';
+        $filename = 'helpdesk-analytics-'.Carbon::now()->format('Y-m-d-H-i').'.json';
 
         return response()->json($exportData)
             ->header('Content-Type', 'application/json')
@@ -109,7 +108,7 @@ final class HelpdeskAnalyticsController extends Controller
         // Check if user has access to this department
         $accessibleDepartments = $this->getAccessibleDepartments($user);
 
-        if ($accessibleDepartments !== null && !in_array($departmentId, $accessibleDepartments)) {
+        if ($accessibleDepartments !== null && ! in_array($departmentId, $accessibleDepartments)) {
             abort(403, 'Insufficient permissions to view this department\'s analytics.');
         }
 
@@ -119,7 +118,7 @@ final class HelpdeskAnalyticsController extends Controller
         return response()->json([
             'analytics' => $analytics,
             'recent_activity' => $recentActivity,
-            'department_id' => $departmentId
+            'department_id' => $departmentId,
         ]);
     }
 

@@ -39,7 +39,7 @@ final class KnowledgeCategory extends Model
         'description',
         'department_id',
         'sort_order',
-        'is_active'
+        'is_active',
     ];
 
     /**
@@ -50,7 +50,7 @@ final class KnowledgeCategory extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
-        'department_id' => 'integer'
+        'department_id' => 'integer',
     ];
 
     /**
@@ -84,7 +84,7 @@ final class KnowledgeCategory extends Model
     /**
      * Scope to only active categories.
      *
-     * @param Builder<KnowledgeCategory> $query
+     * @param  Builder<KnowledgeCategory>  $query
      * @return Builder<KnowledgeCategory>
      */
     public function scopeActive(Builder $query): Builder
@@ -95,7 +95,7 @@ final class KnowledgeCategory extends Model
     /**
      * Scope by department.
      *
-     * @param Builder<KnowledgeCategory> $query
+     * @param  Builder<KnowledgeCategory>  $query
      * @return Builder<KnowledgeCategory>
      */
     public function scopeForDepartment(Builder $query, ?int $departmentId): Builder
@@ -111,7 +111,7 @@ final class KnowledgeCategory extends Model
     /**
      * Scope ordered by sort order.
      *
-     * @param Builder<KnowledgeCategory> $query
+     * @param  Builder<KnowledgeCategory>  $query
      * @return Builder<KnowledgeCategory>
      */
     public function scopeOrdered(Builder $query): Builder

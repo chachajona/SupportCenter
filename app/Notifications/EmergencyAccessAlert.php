@@ -14,8 +14,7 @@ class EmergencyAccessAlert extends Notification implements ShouldQueue
     public function __construct(
         private string $token,
         private string $reason
-    ) {
-    }
+    ) {}
 
     /**
      * Get the notification's delivery channels.

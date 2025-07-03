@@ -49,7 +49,7 @@ final class KnowledgeArticleFactory extends Factory
      */
     public function published(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'status' => 'published',
             'published_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
         ]);
@@ -60,7 +60,7 @@ final class KnowledgeArticleFactory extends Factory
      */
     public function archived(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'status' => 'archived',
         ]);
     }
@@ -70,7 +70,7 @@ final class KnowledgeArticleFactory extends Factory
      */
     public function public(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'is_public' => true,
         ]);
     }
@@ -78,9 +78,9 @@ final class KnowledgeArticleFactory extends Factory
     /**
      * Create an article for a specific department.
      */
-    public function forDepartment(Department $department = null): static
+    public function forDepartment(?Department $department = null): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'department_id' => $department?->id ?? Department::factory(),
         ]);
     }
@@ -88,9 +88,9 @@ final class KnowledgeArticleFactory extends Factory
     /**
      * Create an article with specific category.
      */
-    public function inCategory(KnowledgeCategory $category = null): static
+    public function inCategory(?KnowledgeCategory $category = null): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'category_id' => $category?->id ?? KnowledgeCategory::factory(),
         ]);
     }
@@ -98,9 +98,9 @@ final class KnowledgeArticleFactory extends Factory
     /**
      * Create an article by a specific author.
      */
-    public function byAuthor(User $author = null): static
+    public function byAuthor(?User $author = null): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'author_id' => $author?->id ?? User::factory(),
         ]);
     }
@@ -110,7 +110,7 @@ final class KnowledgeArticleFactory extends Factory
      */
     public function popular(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'view_count' => $this->faker->numberBetween(500, 2000),
         ]);
     }

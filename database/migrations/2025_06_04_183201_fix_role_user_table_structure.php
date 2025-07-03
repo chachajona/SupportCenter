@@ -2,10 +2,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -14,7 +15,7 @@ return new class extends Migration {
         // Only proceed if role_user table exists and needs modification
         if (Schema::hasTable('role_user')) {
             // Add missing columns if they don't exist
-            if (!Schema::hasColumn('role_user', 'granted_by')) {
+            if (! Schema::hasColumn('role_user', 'granted_by')) {
                 Schema::table('role_user', function (Blueprint $table) {
                     $table->unsignedBigInteger('granted_by')->nullable();
                 });
@@ -29,31 +30,31 @@ return new class extends Migration {
                 }
             }
 
-            if (!Schema::hasColumn('role_user', 'granted_at')) {
+            if (! Schema::hasColumn('role_user', 'granted_at')) {
                 Schema::table('role_user', function (Blueprint $table) {
                     $table->timestamp('granted_at')->nullable();
                 });
             }
 
-            if (!Schema::hasColumn('role_user', 'expires_at')) {
+            if (! Schema::hasColumn('role_user', 'expires_at')) {
                 Schema::table('role_user', function (Blueprint $table) {
                     $table->timestamp('expires_at')->nullable();
                 });
             }
 
-            if (!Schema::hasColumn('role_user', 'is_active')) {
+            if (! Schema::hasColumn('role_user', 'is_active')) {
                 Schema::table('role_user', function (Blueprint $table) {
                     $table->boolean('is_active')->default(true);
                 });
             }
 
-            if (!Schema::hasColumn('role_user', 'delegation_reason')) {
+            if (! Schema::hasColumn('role_user', 'delegation_reason')) {
                 Schema::table('role_user', function (Blueprint $table) {
                     $table->text('delegation_reason')->nullable();
                 });
             }
 
-            if (!Schema::hasColumn('role_user', 'created_at')) {
+            if (! Schema::hasColumn('role_user', 'created_at')) {
                 Schema::table('role_user', function (Blueprint $table) {
                     $table->timestamps();
                 });
@@ -63,7 +64,7 @@ return new class extends Migration {
             $indexQueries = [
                 'CREATE INDEX IF NOT EXISTS idx_role_user_active ON role_user (user_id, is_active)',
                 'CREATE INDEX IF NOT EXISTS idx_role_user_expires ON role_user (expires_at)',
-                'CREATE INDEX IF NOT EXISTS idx_role_user_granted ON role_user (granted_by)'
+                'CREATE INDEX IF NOT EXISTS idx_role_user_granted ON role_user (granted_by)',
             ];
 
             foreach ($indexQueries as $query) {
@@ -76,7 +77,7 @@ return new class extends Migration {
         }
 
         // Ensure model_has_roles exists for other models if needed
-        if (!Schema::hasTable('model_has_roles')) {
+        if (! Schema::hasTable('model_has_roles')) {
             try {
                 Schema::create('model_has_roles', function (Blueprint $table) {
                     $table->unsignedBigInteger('role_id');

@@ -38,7 +38,7 @@ class ConfirmablePasswordController extends Controller
     public function store(Request $request): RedirectResponse
     {
         if (
-            !Auth::guard('web')->validate([
+            ! Auth::guard('web')->validate([
                 'email' => $request->user()->email,
                 'password' => $request->password,
             ])
@@ -61,7 +61,7 @@ class ConfirmablePasswordController extends Controller
     private function isValidIntendedUrl(string $url): bool
     {
         // Allow relative URLs that start with /
-        if (str_starts_with($url, '/') && !str_starts_with($url, '//')) {
+        if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
             return true;
         }
 
@@ -74,9 +74,9 @@ class ConfirmablePasswordController extends Controller
         }
 
         // If no host is present, it's likely a relative URL (but be cautious)
-        if (!isset($parsedUrl['host'])) {
+        if (! isset($parsedUrl['host'])) {
             // Additional check for protocol-relative URLs (//example.com)
-            return !str_starts_with($url, '//');
+            return ! str_starts_with($url, '//');
         }
 
         // For absolute URLs, check if the host matches the application domain

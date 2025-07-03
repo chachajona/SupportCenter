@@ -17,7 +17,7 @@ final class IdleSessionTimeout
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return $next($request);
         }
 
@@ -28,6 +28,7 @@ final class IdleSessionTimeout
         // If last_activity_time doesn't exist (new session), initialize it
         if ($lastActivity === 0) {
             $request->session()->put('last_activity_time', $currentTime);
+
             return $next($request);
         }
 
@@ -37,7 +38,7 @@ final class IdleSessionTimeout
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Session expired due to inactivity.',
-                    'redirect' => '/login'
+                    'redirect' => '/login',
                 ], 401);
             }
 

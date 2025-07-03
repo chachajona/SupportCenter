@@ -6,10 +6,10 @@ namespace App\Services;
 
 use App\Models\PermissionAudit;
 use App\Models\SecurityLog;
+use App\Notifications\SuspiciousActivityAlert;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\SuspiciousActivityAlert;
 
 final class ThreatResponseService
 {
@@ -18,7 +18,7 @@ final class ThreatResponseService
      */
     public function handle(SecurityLog $log): void
     {
-        if (!$log->event_type->isThreat()) {
+        if (! $log->event_type->isThreat()) {
             return;
         }
 
@@ -31,12 +31,12 @@ final class ThreatResponseService
      */
     private function processIpBlock(SecurityLog $log): void
     {
-        if (!$log->ip_address || !config('security.audit.log_ip_blocks', true)) {
+        if (! $log->ip_address || ! config('security.audit.log_ip_blocks', true)) {
             return;
         }
 
         $blockTtl = config('security.ip_block_ttl', 1800); // Default 30 minutes
-        $cacheKey = config('security.cache.blocked_ip_prefix', 'blocked_ip:') . $log->ip_address;
+        $cacheKey = config('security.cache.blocked_ip_prefix', 'blocked_ip:').$log->ip_address;
 
         // Check if IP is already blocked to avoid duplicate audit entries
         if (Cache::has($cacheKey)) {
@@ -72,13 +72,13 @@ final class ThreatResponseService
      */
     private function sendNotificationIfNeeded(SecurityLog $log): void
     {
-        if (!config('security.notifications.enable_email_alerts', true) || !$log->user) {
+        if (! config('security.notifications.enable_email_alerts', true) || ! $log->user) {
             return;
         }
 
         $rateLimitWindow = config('security.notifications.rate_limit_window', 3600);
         $rateLimitKey = config('security.cache.notification_rate_limit_prefix', 'security_notification:')
-            . $log->user_id . ':' . $log->ip_address;
+            .$log->user_id.':'.$log->ip_address;
 
         // Check rate limit to prevent notification spam
         if (Cache::has($rateLimitKey)) {
@@ -116,13 +116,13 @@ final class ThreatResponseService
      */
     private function createIpBlockAudit(SecurityLog $log, string $action, int $blockTtl): void
     {
-        if (!config('security.audit.log_ip_blocks', true)) {
+        if (! config('security.audit.log_ip_blocks', true)) {
             return;
         }
 
         try {
             // Create audit entry directly using Eloquent to bypass model validation
-            $audit = new PermissionAudit();
+            $audit = new PermissionAudit;
             $audit->user_id = $log->user_id;
             $audit->permission_id = null; // IP blocks don't relate to permissions
             $audit->role_id = null; // IP blocks don't relate to roles
@@ -158,7 +158,7 @@ final class ThreatResponseService
     private function scheduleUnblockAudit(string $ipAddress, int $blockTtl): void
     {
         // Store unblock info in cache to be processed later
-        $unblockKey = "unblock_audit:{$ipAddress}:" . now()->addSeconds($blockTtl)->timestamp;
+        $unblockKey = "unblock_audit:{$ipAddress}:".now()->addSeconds($blockTtl)->timestamp;
 
         Cache::put($unblockKey, [
             'ip_address' => $ipAddress,
@@ -171,7 +171,8 @@ final class ThreatResponseService
      */
     public function isIpBlocked(string $ipAddress): bool
     {
-        $cacheKey = config('security.cache.blocked_ip_prefix', 'blocked_ip:') . $ipAddress;
+        $cacheKey = config('security.cache.blocked_ip_prefix', 'blocked_ip:').$ipAddress;
+
         return Cache::has($cacheKey);
     }
 
@@ -180,7 +181,8 @@ final class ThreatResponseService
      */
     public function getBlockedIpInfo(string $ipAddress): ?array
     {
-        $cacheKey = config('security.cache.blocked_ip_prefix', 'blocked_ip:') . $ipAddress;
+        $cacheKey = config('security.cache.blocked_ip_prefix', 'blocked_ip:').$ipAddress;
+
         return Cache::get($cacheKey);
     }
 
@@ -189,9 +191,9 @@ final class ThreatResponseService
      */
     public function unblockIp(string $ipAddress, ?int $performedBy = null, string $reason = 'Manual unblock'): bool
     {
-        $cacheKey = config('security.cache.blocked_ip_prefix', 'blocked_ip:') . $ipAddress;
+        $cacheKey = config('security.cache.blocked_ip_prefix', 'blocked_ip:').$ipAddress;
 
-        if (!Cache::has($cacheKey)) {
+        if (! Cache::has($cacheKey)) {
             return false; // IP was not blocked
         }
 
@@ -202,7 +204,7 @@ final class ThreatResponseService
         if (config('security.audit.log_ip_blocks', true)) {
             try {
                 // Create audit entry directly using Eloquent to bypass model validation
-                $audit = new PermissionAudit();
+                $audit = new PermissionAudit;
                 $audit->user_id = $blockInfo['user_id'] ?? null;
                 $audit->permission_id = null; // IP blocks don't relate to permissions
                 $audit->role_id = null; // IP blocks don't relate to roles

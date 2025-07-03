@@ -5,19 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\SetupStatus;
-use App\Models\User;
-use App\Models\Role;
-use App\Models\Permission;
+use Database\Seeders\RolePermissionSeeder;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Artisan;
-use Tests\TestCase;
-use Exception;
 use Illuminate\Support\Facades\Schema;
-use Database\Seeders\RolePermissionSeeder;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class SetupSystemMySQLAdvancedTest extends TestCase
 {
@@ -29,7 +23,7 @@ class SetupSystemMySQLAdvancedTest extends TestCase
 
         // The RefreshDatabase trait now handles all database setup and cleanup.
         // We only need to ensure we're running on a MySQL connection.
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL tests skipped - SQLite in use (normal for CI/local testing)');
         }
     }
@@ -54,11 +48,11 @@ class SetupSystemMySQLAdvancedTest extends TestCase
         $response->assertJson(['success' => true]);
 
         // Check database charset and collation
-        $dbInfo = DB::select("
+        $dbInfo = DB::select('
             SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME
             FROM information_schema.SCHEMATA
             WHERE SCHEMA_NAME = DATABASE()
-        ");
+        ');
 
         $this->assertNotEmpty($dbInfo);
         $this->assertEquals('utf8mb4', $dbInfo[0]->DEFAULT_CHARACTER_SET_NAME);
@@ -153,7 +147,7 @@ class SetupSystemMySQLAdvancedTest extends TestCase
     #[Test]
     public function mysql_json_data_type_functionality(): void
     {
-        if (!$this->mysqlSupportsJson()) {
+        if (! $this->mysqlSupportsJson()) {
             $this->markTestSkipped('MySQL version does not support JSON data type');
         }
 
@@ -167,14 +161,14 @@ class SetupSystemMySQLAdvancedTest extends TestCase
                 'metrics' => [
                     'duration' => 123.456,
                     'memory_peak' => 1024 * 1024 * 16,
-                    'queries_executed' => 42
-                ]
+                    'queries_executed' => 42,
+                ],
             ],
             'unicode_test' => '这是中文测试 🚀 العربية',
             'nested_arrays' => [
                 ['id' => 1, 'name' => 'test1'],
-                ['id' => 2, 'name' => 'test2']
-            ]
+                ['id' => 2, 'name' => 'test2'],
+            ],
         ];
 
         SetupStatus::markCompleted('admin_created', $complexData);
@@ -205,7 +199,7 @@ class SetupSystemMySQLAdvancedTest extends TestCase
         $response->assertJson(['success' => true]);
 
         // Check that proper indexes exist
-        $indexes = DB::select("SHOW INDEX FROM setup_status");
+        $indexes = DB::select('SHOW INDEX FROM setup_status');
 
         $indexNames = collect($indexes)->pluck('Key_name')->unique()->toArray();
 
@@ -250,12 +244,12 @@ class SetupSystemMySQLAdvancedTest extends TestCase
         // Create test data with searchable content
         SetupStatus::markCompleted('search_test_1', [
             'description' => 'Laravel setup system with RBAC functionality',
-            'keywords' => 'authentication authorization roles permissions'
+            'keywords' => 'authentication authorization roles permissions',
         ]);
 
         SetupStatus::markCompleted('search_test_2', [
             'description' => 'Database migration and seeding process',
-            'keywords' => 'mysql innodb foreign keys'
+            'keywords' => 'mysql innodb foreign keys',
         ]);
 
         // Test that data was stored
@@ -391,7 +385,7 @@ class SetupSystemMySQLAdvancedTest extends TestCase
             $this->assertNotEmpty($queries);
 
             // Check for potentially slow queries (over 1 second)
-            $slowQueries = array_filter($queries, fn($query) => $query['time'] > 1000);
+            $slowQueries = array_filter($queries, fn ($query) => $query['time'] > 1000);
 
             // Should not have excessively slow queries during setup
             $this->assertLessThan(
@@ -445,13 +439,14 @@ class SetupSystemMySQLAdvancedTest extends TestCase
     protected function mysqlSupportsJson(): bool
     {
         $version = $this->getMySQLVersion();
-        if (!$version) {
+        if (! $version) {
             return false;
         }
         // MariaDB supports JSON from 10.2.7, MySQL from 5.7.8
         if (str_contains(strtolower($version), 'mariadb')) {
             return version_compare(preg_replace('/-MariaDB/', '', $version), '10.2.7', '>=');
         }
+
         return version_compare($version, '5.7.8', '>=');
     }
 

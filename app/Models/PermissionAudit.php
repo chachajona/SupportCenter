@@ -189,7 +189,7 @@ class PermissionAudit extends Model
             throw new \InvalidArgumentException('Action cannot be empty');
         }
 
-        if (!in_array($action, ['granted', 'revoked', 'modified', 'unauthorized_access_attempt'])) {
+        if (! in_array($action, ['granted', 'revoked', 'modified', 'unauthorized_access_attempt'])) {
             throw new \InvalidArgumentException("Invalid action: {$action}");
         }
 

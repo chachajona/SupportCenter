@@ -2,21 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
 use App\Models\SetupStatus;
 use App\Models\User;
-use App\Models\Role;
-use App\Models\Permission;
 use Database\Seeders\RolePermissionSeeder;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Artisan;
-use Tests\TestCase;
-use Exception;
-use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class SetupSystemTest extends TestCase
 {
@@ -276,7 +272,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function database_migration_with_mysql_specific_features(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('This test requires a MySQL database connection.');
         }
 
@@ -295,7 +291,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function concurrent_setup_step_execution(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('This test requires a MySQL database connection for transaction testing.');
         }
         $this->markTestIncomplete('This test requires a more advanced setup for concurrency.');
@@ -304,7 +300,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function database_integrity_after_setup(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('This test requires a MySQL database connection.');
         }
 
@@ -340,7 +336,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function setup_mysql_transaction_rollback(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL-specific test for transactions.');
         }
 
@@ -360,7 +356,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function mysql_large_dataset_performance(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL-specific performance test.');
         }
         $this->markTestIncomplete('This test requires a large dataset.');
@@ -369,7 +365,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function mysql_utf8_encoding_support(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL-specific encoding test.');
         }
 
@@ -393,7 +389,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function setup_status_mysql_json_data_storage(): void
     {
-        if (!$this->isMySql() || !$this->mysqlSupportsJson()) {
+        if (! $this->isMySql() || ! $this->mysqlSupportsJson()) {
             $this->markTestSkipped('MySQL-specific test for JSON columns.');
         }
 
@@ -407,7 +403,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function mysql_setup_table_indexes_performance(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL-specific performance test for indexes.');
         }
         $this->markTestIncomplete('Index performance testing requires a large dataset.');
@@ -416,7 +412,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function mysql_foreign_key_constraints(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL-specific test for foreign key constraints.');
         }
 
@@ -436,7 +432,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function setup_mysql_backup_compatibility(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL-specific backup compatibility test.');
         }
         $this->markTestIncomplete('Backup compatibility testing is complex.');
@@ -445,7 +441,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function mysql_storage_engine_compatibility(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL-specific storage engine test.');
         }
 
@@ -457,7 +453,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function setup_error_logging_with_mysql(): void
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             $this->markTestSkipped('MySQL-specific error logging test.');
         }
 
@@ -481,7 +477,7 @@ class SetupSystemTest extends TestCase
      */
     protected function mysqlSupportsJson(): bool
     {
-        if (!$this->isMySql()) {
+        if (! $this->isMySql()) {
             return false;
         }
 

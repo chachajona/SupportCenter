@@ -18,7 +18,7 @@ class TwoFactorChoiceController extends Controller
     {
         $user = session('login.id') ? User::find(session('login.id')) : null;
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -48,7 +48,7 @@ class TwoFactorChoiceController extends Controller
     public function select(Request $request)
     {
         $request->validate([
-            'method' => 'required|in:totp,webauthn,recovery'
+            'method' => 'required|in:totp,webauthn,recovery',
         ]);
 
         $method = $request->input('method');

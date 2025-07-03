@@ -32,7 +32,7 @@ final class TicketResponse extends Model
         'user_id',
         'message',
         'is_internal',
-        'is_email'
+        'is_email',
     ];
 
     /**
@@ -44,7 +44,7 @@ final class TicketResponse extends Model
         'is_internal' => 'boolean',
         'is_email' => 'boolean',
         'ticket_id' => 'integer',
-        'user_id' => 'integer'
+        'user_id' => 'integer',
     ];
 
     /**
@@ -70,7 +70,7 @@ final class TicketResponse extends Model
     /**
      * Scope to only public responses.
      *
-     * @param Builder<TicketResponse> $query
+     * @param  Builder<TicketResponse>  $query
      * @return Builder<TicketResponse>
      */
     public function scopePublic(Builder $query): Builder
@@ -81,7 +81,7 @@ final class TicketResponse extends Model
     /**
      * Scope to only internal responses.
      *
-     * @param Builder<TicketResponse> $query
+     * @param  Builder<TicketResponse>  $query
      * @return Builder<TicketResponse>
      */
     public function scopeInternal(Builder $query): Builder
@@ -92,7 +92,7 @@ final class TicketResponse extends Model
     /**
      * Scope to only email responses.
      *
-     * @param Builder<TicketResponse> $query
+     * @param  Builder<TicketResponse>  $query
      * @return Builder<TicketResponse>
      */
     public function scopeFromEmail(Builder $query): Builder
@@ -105,7 +105,7 @@ final class TicketResponse extends Model
      */
     public function isPublic(): bool
     {
-        return !$this->is_internal;
+        return ! $this->is_internal;
     }
 
     /**

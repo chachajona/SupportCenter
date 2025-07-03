@@ -17,7 +17,7 @@ class DepartmentPolicy
     {
         return $user->hasAnyPermission([
             'departments.view_own',
-            'departments.view_all'
+            'departments.view_all',
         ]);
     }
 

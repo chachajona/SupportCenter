@@ -2,17 +2,18 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         // Add department_id to users table if it doesn't exist (without foreign key for now)
-        if (!Schema::hasColumn('users', 'department_id')) {
+        if (! Schema::hasColumn('users', 'department_id')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->unsignedBigInteger('department_id')->nullable()->after('email_verified_at');
                 $table->index('department_id');
@@ -20,7 +21,7 @@ return new class extends Migration {
         }
 
         // Create permission_audits table if it doesn't exist
-        if (!Schema::hasTable('permission_audits')) {
+        if (! Schema::hasTable('permission_audits')) {
             Schema::create('permission_audits', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('user_id');
@@ -47,7 +48,7 @@ return new class extends Migration {
         }
 
         // Create emergency_access table if it doesn't exist
-        if (!Schema::hasTable('emergency_access')) {
+        if (! Schema::hasTable('emergency_access')) {
             Schema::create('emergency_access', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('user_id');
@@ -70,13 +71,13 @@ return new class extends Migration {
 
         // Add missing columns to permissions table if they don't exist
         Schema::table('permissions', function (Blueprint $table) {
-            if (!Schema::hasColumn('permissions', 'resource')) {
+            if (! Schema::hasColumn('permissions', 'resource')) {
                 $table->string('resource', 100)->nullable()->after('guard_name');
             }
-            if (!Schema::hasColumn('permissions', 'action')) {
+            if (! Schema::hasColumn('permissions', 'action')) {
                 $table->string('action', 50)->nullable()->after('resource');
             }
-            if (!Schema::hasColumn('permissions', 'is_active')) {
+            if (! Schema::hasColumn('permissions', 'is_active')) {
                 $table->boolean('is_active')->default(true)->after('action');
             }
         });

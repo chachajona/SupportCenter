@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 use App\Http\Controllers\Settings\TwoFactorQrCodeController;
 use App\Http\Controllers\SetupController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // Setup routes - only accessible before setup completion
 Route::prefix('setup')->name('setup.')->middleware(['web', 'prevent.setup.access'])->group(function () {
@@ -41,8 +41,8 @@ Route::middleware(['setup.completed'])->group(function () {
 
             return Inertia::render('dashboard', [
                 'auth' => [
-                    'user' => $user
-                ]
+                    'user' => $user,
+                ],
             ]);
         })->name('dashboard');
 
@@ -60,7 +60,7 @@ Route::middleware(['setup.completed'])->group(function () {
             ->name('tickets.transfer');
     });
 
-    require __DIR__ . '/settings.php';
-    require __DIR__ . '/auth.php';
-    require __DIR__ . '/admin.php';
+    require __DIR__.'/settings.php';
+    require __DIR__.'/auth.php';
+    require __DIR__.'/admin.php';
 });

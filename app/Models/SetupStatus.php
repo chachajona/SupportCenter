@@ -15,7 +15,7 @@ class SetupStatus extends Model
         'step',
         'completed',
         'completed_at',
-        'data'
+        'data',
     ];
 
     protected $casts = [
@@ -101,12 +101,12 @@ class SetupStatus extends Model
         $steps = ['database_migration', 'roles_seeded', 'permissions_seeded', 'admin_created'];
 
         foreach ($steps as $step) {
-            if (!static::isCompleted($step)) {
+            if (! static::isCompleted($step)) {
                 return $step;
             }
         }
 
-        if (!static::isCompleted('setup_completed')) {
+        if (! static::isCompleted('setup_completed')) {
             return 'setup_completed';
         }
 

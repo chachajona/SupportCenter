@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Ticket;
-use App\Models\User;
 use App\Models\Department;
-use App\Models\TicketStatus;
+use App\Models\Ticket;
 use App\Models\TicketPriority;
+use App\Models\TicketStatus;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -36,28 +36,28 @@ final class TicketFactory extends Factory
 
     public function assigned(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'assigned_to' => User::inRandomOrder()->first()?->id ?? User::factory(),
         ]);
     }
 
     public function highPriority(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'priority_id' => TicketPriority::where('level', 3)->first()?->id ?? 3,
         ]);
     }
 
     public function critical(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'priority_id' => TicketPriority::where('level', 4)->first()?->id ?? 4,
         ]);
     }
 
     public function closed(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'status_id' => TicketStatus::where('is_closed', true)->first()?->id ?? 4,
             'resolved_at' => $this->faker->dateTimeBetween('-7 days', 'now'),
         ]);
@@ -65,7 +65,7 @@ final class TicketFactory extends Factory
 
     public function overdue(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'due_at' => $this->faker->dateTimeBetween('-7 days', '-1 day'),
             'status_id' => TicketStatus::where('is_closed', false)->first()?->id ?? 1,
         ]);

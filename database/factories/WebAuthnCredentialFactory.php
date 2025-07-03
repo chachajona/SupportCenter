@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\WebAuthnCredential;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WebAuthnCredential>
@@ -52,7 +52,7 @@ final class WebAuthnCredentialFactory extends Factory
      */
     public function disabled(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'disabled_at' => now(),
         ]);
     }
@@ -62,7 +62,7 @@ final class WebAuthnCredentialFactory extends Factory
      */
     public function enabled(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'disabled_at' => null,
         ]);
     }

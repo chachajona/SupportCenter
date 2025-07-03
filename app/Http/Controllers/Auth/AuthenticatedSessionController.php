@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Models\User;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\EmergencyAccess;
+use App\Models\SecurityLog;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Inertia\Response;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
-use App\Models\EmergencyAccess;
-use App\Models\SecurityLog;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -43,14 +43,13 @@ class AuthenticatedSessionController extends Controller
 
         $hashedPassword = $user?->password ?? Hash::make(str()->random(32));
 
-        if (!$user || !Hash::check($request->input('password'), $hashedPassword)) {
+        if (! $user || ! Hash::check($request->input('password'), $hashedPassword)) {
             RateLimiter::hit($request->throttleKey());
 
             throw ValidationException::withMessages([
                 $usernameField => [trans('auth.failed')],
             ]);
         }
-
 
         if (
             method_exists($user, 'hasEnabledTwoFactorAuthentication') &&
@@ -126,7 +125,7 @@ class AuthenticatedSessionController extends Controller
             ->whereNull('used_at')
             ->first();
 
-        if (!$emergencyAccess) {
+        if (! $emergencyAccess) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or expired break-glass token',

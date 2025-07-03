@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,18 +23,18 @@ class WebAuthnSettingsController extends Controller
                 'name',
                 'email',
                 'webauthn_enabled',
-                'preferred_mfa_method'
+                'preferred_mfa_method',
             ]),
             'credentials' => $user->webAuthnCredentials()
                 ->whereEnabled()
                 ->get()
-                ->map(fn($credential) => [
+                ->map(fn ($credential) => [
                     'id' => $credential->id,
                     'name' => $credential->alias ?? 'Unnamed Device',
                     'type' => 'security-key', // You can enhance this based on actual device type
                     'created_at' => $credential->created_at,
                     'last_used_at' => $credential->updated_at,
-                ])
+                ]),
         ]);
     }
 
@@ -53,7 +52,7 @@ class WebAuthnSettingsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'WebAuthn enabled successfully.'
+            'message' => 'WebAuthn enabled successfully.',
         ]);
     }
 
@@ -75,7 +74,7 @@ class WebAuthnSettingsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'WebAuthn disabled successfully.'
+            'message' => 'WebAuthn disabled successfully.',
         ]);
     }
 
@@ -89,7 +88,7 @@ class WebAuthnSettingsController extends Controller
         $credentials = $user->webAuthnCredentials()
             ->whereEnabled()
             ->get()
-            ->map(fn($credential) => [
+            ->map(fn ($credential) => [
                 'id' => $credential->id,
                 'name' => $credential->alias ?? 'Unnamed Device',
                 'type' => 'security-key',

@@ -5,17 +5,16 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\EmergencyAccess;
-use App\Models\User;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 use App\Models\SecurityLog;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 final class EmergencyAccessService
 {
     public function __construct(
         private readonly PermissionCacheService $cacheService
-    ) {
-    }
+    ) {}
 
     /**
      * Grant emergency access to a user.
@@ -61,7 +60,7 @@ final class EmergencyAccessService
     {
         $emergencyAccess = EmergencyAccess::find($emergencyAccessId);
 
-        if (!$emergencyAccess || !$emergencyAccess->isValid()) {
+        if (! $emergencyAccess || ! $emergencyAccess->isValid()) {
             return false;
         }
 
@@ -88,7 +87,7 @@ final class EmergencyAccessService
     {
         $emergencyAccess = EmergencyAccess::find($emergencyAccessId);
 
-        if (!$emergencyAccess || !$emergencyAccess->isValid()) {
+        if (! $emergencyAccess || ! $emergencyAccess->isValid()) {
             return false;
         }
 
@@ -123,7 +122,7 @@ final class EmergencyAccessService
     {
         $emergencyAccess = $this->getUserActiveEmergencyAccess($userId);
 
-        if (!$emergencyAccess) {
+        if (! $emergencyAccess) {
             return false;
         }
 
@@ -186,6 +185,7 @@ final class EmergencyAccessService
         }
 
         arsort($permissionCounts);
+
         return array_slice($permissionCounts, 0, 10, true);
     }
 
@@ -219,7 +219,7 @@ final class EmergencyAccessService
     {
         $emergencyAccess = EmergencyAccess::with(['user', 'grantedBy'])->find($emergencyAccessId);
 
-        if (!$emergencyAccess) {
+        if (! $emergencyAccess) {
             return [];
         }
 

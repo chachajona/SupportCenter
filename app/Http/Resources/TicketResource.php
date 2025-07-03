@@ -64,10 +64,10 @@ final class TicketResource extends JsonResource
                     'name' => $department->name,
                 ];
             }),
-            'assigned_to' => $this->whenLoaded('assignedTo', fn() => $this->resource->assignedTo ? [
+            'assigned_to' => $this->whenLoaded('assignedTo', fn () => $this->resource->assignedTo ? [
                 'id' => $this->resource->assignedTo->id,
                 'name' => $this->resource->assignedTo->name,
-                'email' => $this->resource->assignedTo->email
+                'email' => $this->resource->assignedTo->email,
             ] : null),
             'created_by' => $this->whenLoaded('createdBy', function (): ?array {
                 $creator = $this->resource->createdBy;
@@ -82,10 +82,10 @@ final class TicketResource extends JsonResource
                     'email' => $creator->email,
                 ];
             }),
-            'updated_by' => $this->whenLoaded('updatedBy', fn() => $this->resource->updatedBy ? [
+            'updated_by' => $this->whenLoaded('updatedBy', fn () => $this->resource->updatedBy ? [
                 'id' => $this->resource->updatedBy->id,
                 'name' => $this->resource->updatedBy->name,
-                'email' => $this->resource->updatedBy->email
+                'email' => $this->resource->updatedBy->email,
             ] : null),
             'due_at' => $this->resource->due_at?->toISOString(),
             'resolved_at' => $this->resource->resolved_at?->toISOString(),
@@ -93,8 +93,7 @@ final class TicketResource extends JsonResource
             'updated_at' => $this->resource->updated_at->toISOString(),
             'responses' => $this->whenLoaded(
                 'responses',
-                fn() =>
-                \App\Http\Resources\TicketResponseResource::collection($this->resource->responses)
+                fn () => \App\Http\Resources\TicketResponseResource::collection($this->resource->responses)
             ),
             'is_overdue' => $this->resource->isOverdue(),
             'is_closed' => $this->resource->isClosed(),

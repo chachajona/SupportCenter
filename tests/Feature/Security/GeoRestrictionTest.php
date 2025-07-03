@@ -19,7 +19,7 @@ class GeoRestrictionTest extends TestCase
 
         // Define a temporary route that applies the GeoRestriction middleware for testing
         Route::middleware([\App\Http\Middleware\GeoRestrictionMiddleware::class])
-            ->get('/geo-check', fn() => response()->json(['message' => 'OK']))
+            ->get('/geo-check', fn () => response()->json(['message' => 'OK']))
             ->name('geo.check');
     }
 

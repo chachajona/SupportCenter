@@ -32,9 +32,9 @@ final class GeoRestrictionMiddleware
             return $next($request);
         }
 
-        $country = Cache::remember("geoip:{$ip}", 86400, fn() => $this->lookupCountry($ip));
+        $country = Cache::remember("geoip:{$ip}", 86400, fn () => $this->lookupCountry($ip));
 
-        if ($country !== null && !in_array($country, $this->allowedCountries, true)) {
+        if ($country !== null && ! in_array($country, $this->allowedCountries, true)) {
             return response()->json([
                 'message' => 'Access from your region is not allowed.',
             ], 403);

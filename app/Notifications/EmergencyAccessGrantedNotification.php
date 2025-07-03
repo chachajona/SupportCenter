@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Enums\SecurityEventType;
 use App\Events\SecurityEvent;
 use App\Models\EmergencyAccess;
 use App\Models\SecurityLog;
-use App\Enums\SecurityEventType;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;

@@ -2,23 +2,23 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\CustomTwoFactorAuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\EmergencyAccessController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TwoFactorChoiceController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\WebAuthnLoginController;
+use App\Http\Controllers\Auth\WebAuthnManageController;
+use App\Http\Controllers\Auth\WebAuthnRegisterController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\CustomTwoFactorAuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\ConfirmedTwoFactorAuthenticationController;
+use Laravel\Fortify\Http\Controllers\RecoveryCodeController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticationController;
 use Laravel\Fortify\Http\Controllers\TwoFactorSecretKeyController;
-use Laravel\Fortify\Http\Controllers\RecoveryCodeController;
-use Laravel\Fortify\Http\Controllers\ConfirmedTwoFactorAuthenticationController;
-use App\Http\Controllers\Auth\WebAuthnLoginController;
-use App\Http\Controllers\Auth\WebAuthnRegisterController;
-use App\Http\Controllers\Auth\WebAuthnManageController;
-use App\Http\Controllers\Auth\TwoFactorChoiceController;
-use App\Http\Controllers\Auth\EmergencyAccessController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {

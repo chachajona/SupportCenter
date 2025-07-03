@@ -6,8 +6,8 @@ namespace App\Services\Setup;
 
 use App\Models\SetupStatus;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class SetupResetService
 {

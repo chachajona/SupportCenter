@@ -29,7 +29,7 @@ final class TicketStatus extends Model
         'name',
         'color',
         'is_closed',
-        'sort_order'
+        'sort_order',
     ];
 
     /**
@@ -39,7 +39,7 @@ final class TicketStatus extends Model
      */
     protected $casts = [
         'is_closed' => 'boolean',
-        'sort_order' => 'integer'
+        'sort_order' => 'integer',
     ];
 
     /**
@@ -55,7 +55,7 @@ final class TicketStatus extends Model
     /**
      * Scope to only open statuses.
      *
-     * @param Builder<TicketStatus> $query
+     * @param  Builder<TicketStatus>  $query
      * @return Builder<TicketStatus>
      */
     public function scopeOpen(Builder $query): Builder
@@ -66,7 +66,7 @@ final class TicketStatus extends Model
     /**
      * Scope to only closed statuses.
      *
-     * @param Builder<TicketStatus> $query
+     * @param  Builder<TicketStatus>  $query
      * @return Builder<TicketStatus>
      */
     public function scopeClosed(Builder $query): Builder
@@ -77,7 +77,7 @@ final class TicketStatus extends Model
     /**
      * Scope to order by sort order.
      *
-     * @param Builder<TicketStatus> $query
+     * @param  Builder<TicketStatus>  $query
      * @return Builder<TicketStatus>
      */
     public function scopeOrdered(Builder $query): Builder

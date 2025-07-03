@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Role;
 use App\Models\Permission;
-use App\Models\User;
 use App\Models\PermissionAudit;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,6 +14,7 @@ class RoleManagementTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $user;
 
     protected function setUp(): void
@@ -39,8 +40,7 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) =>
-            $page->component('admin/roles/index')
+            fn ($page) => $page->component('admin/roles/index')
                 ->has('roles')
                 ->has('permissions')
         );
@@ -152,13 +152,11 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) =>
-            $page->component('admin/roles/show')
+            fn ($page) => $page->component('admin/roles/show')
                 ->has('role')
                 ->has('recentAudits')
         );
     }
-
 
     public function test_test_admin_can_delete_non_system_role()
     {
@@ -173,7 +171,6 @@ class RoleManagementTest extends TestCase
         $this->assertDatabaseMissing('roles', ['id' => $role->id]);
     }
 
-
     public function test_test_cannot_delete_system_roles()
     {
         $systemRole = Role::where('name', 'system_administrator')->first();
@@ -184,7 +181,6 @@ class RoleManagementTest extends TestCase
         $response->assertStatus(422);
         $response->assertJson(['message' => 'Cannot delete system roles']);
     }
-
 
     public function test_test_cannot_delete_role_with_users()
     {
@@ -199,7 +195,6 @@ class RoleManagementTest extends TestCase
         $response->assertJsonFragment(['message' => 'Cannot delete role that has assigned users. Please reassign users first.']);
     }
 
-
     public function test_admin_can_view_permission_matrix()
     {
         $response = $this->actingAs($this->admin)
@@ -207,14 +202,12 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) =>
-            $page->component('admin/roles/matrix')
+            fn ($page) => $page->component('admin/roles/matrix')
                 ->has('roles')
                 ->has('permissions')
                 ->has('matrix')
         );
     }
-
 
     public function test_admin_can_update_permission_matrix()
     {
@@ -242,7 +235,6 @@ class RoleManagementTest extends TestCase
         ]);
     }
 
-
     public function test_role_filters_work_correctly()
     {
         Role::factory()->create([
@@ -269,7 +261,6 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
     }
-
 
     public function test_permission_changes_are_audited()
     {

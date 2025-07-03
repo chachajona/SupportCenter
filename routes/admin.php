@@ -6,8 +6,8 @@ use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\EmergencyAccessController;
 use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\UserRoleController;
 use App\Http\Controllers\Admin\TemporalAccessController;
+use App\Http\Controllers\Admin\UserRoleController;
 use Illuminate\Support\Facades\Route;
 
 /*

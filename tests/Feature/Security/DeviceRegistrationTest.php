@@ -23,7 +23,7 @@ class DeviceRegistrationTest extends TestCase
 
         // Define a temporary route for testing device registration middleware
         Route::middleware([\App\Http\Middleware\DeviceRegistrationMiddleware::class])
-            ->get('/device-check', fn() => response()->json(['message' => 'OK']))
+            ->get('/device-check', fn () => response()->json(['message' => 'OK']))
             ->name('device.check');
     }
 

@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\PermissionAudit;
 use App\Models\SetupStatus;
+use App\Services\Setup\SetupResetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use App\Services\Setup\SetupResetService;
 
 class AdminSetupController extends Controller
 {
@@ -55,7 +54,7 @@ class AdminSetupController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Setup system has been reset. You will be redirected to setup.',
-                'redirect' => route('setup.index')
+                'redirect' => route('setup.index'),
             ]);
         } catch (\Exception $e) {
             Log::error('Setup reset failed', [
@@ -66,7 +65,7 @@ class AdminSetupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Setup reset failed: ' . $e->getMessage()
+                'message' => 'Setup reset failed: '.$e->getMessage(),
             ], 500);
         }
     }

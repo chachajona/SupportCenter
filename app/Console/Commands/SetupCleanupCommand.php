@@ -3,9 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\SetupStatus;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Exception;
 
 class SetupCleanupCommand extends Command
 {
@@ -24,9 +24,10 @@ class SetupCleanupCommand extends Command
      */
     public function handle(): int
     {
-        if (!$this->option('force')) {
-            if (!$this->confirm('This will permanently disable the setup system. Continue?')) {
+        if (! $this->option('force')) {
+            if (! $this->confirm('This will permanently disable the setup system. Continue?')) {
                 $this->info('Setup cleanup cancelled.');
+
                 return 1;
             }
         }
@@ -37,8 +38,9 @@ class SetupCleanupCommand extends Command
                 ->where('completed', true)
                 ->exists();
 
-            if (!$setupCompleted) {
+            if (! $setupCompleted) {
                 $this->error('Setup is not completed. Cannot cleanup.');
+
                 return 1;
             }
 
@@ -61,11 +63,12 @@ class SetupCleanupCommand extends Command
             }
 
             $this->info('Setup system cleaned up successfully.');
-            $this->info('Setup lock file created at: ' . $setupLockFile);
+            $this->info('Setup lock file created at: '.$setupLockFile);
 
             return 0;
         } catch (Exception $e) {
-            $this->error('Failed to cleanup setup system: ' . $e->getMessage());
+            $this->error('Failed to cleanup setup system: '.$e->getMessage());
+
             return 1;
         }
     }

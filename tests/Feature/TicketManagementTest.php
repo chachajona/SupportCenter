@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\{Ticket, User, Department, TicketStatus, TicketPriority};
+use App\Models\Department;
+use App\Models\Ticket;
+use App\Models\User;
 use App\Services\TicketAssignmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
 
 final class TicketManagementTest extends TestCase
 {
@@ -32,7 +34,7 @@ final class TicketManagementTest extends TestCase
         $response = $this->actingAs($user)->post('/tickets', [
             'subject' => 'Test ticket',
             'description' => 'Test description',
-            'priority_id' => 2
+            'priority_id' => 2,
         ]);
 
         $response->assertRedirect();
@@ -71,7 +73,7 @@ final class TicketManagementTest extends TestCase
         $expectedAction = DB::connection()->getDriverName() === 'sqlite' ? 'granted' : 'ticket_assigned';
         $this->assertDatabaseHas('permission_audits', [
             'user_id' => $agent->id,
-            'action' => $expectedAction
+            'action' => $expectedAction,
         ]);
     }
 
@@ -81,7 +83,7 @@ final class TicketManagementTest extends TestCase
         $user->assignRole('support_agent');
 
         $ticket = Ticket::factory()->create([
-            'assigned_to' => $user->id
+            'assigned_to' => $user->id,
         ]);
 
         $response = $this->actingAs($user)->get("/tickets/{$ticket->id}");
@@ -115,7 +117,7 @@ final class TicketManagementTest extends TestCase
 
         $ticket = Ticket::factory()->create([
             'assigned_to' => $user2->id,
-            'created_by' => $user3->id
+            'created_by' => $user3->id,
         ]);
 
         $this->assertFalse($user1->can('view', $ticket));
@@ -134,7 +136,7 @@ final class TicketManagementTest extends TestCase
 
         $ticket = Ticket::factory()->create([
             'department_id' => $department->id,
-            'assigned_to' => null  // Ensure it's not already assigned
+            'assigned_to' => null,  // Ensure it's not already assigned
         ]);
 
         $assignmentService = app(TicketAssignmentService::class);

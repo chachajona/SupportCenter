@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use App\Models\User;
 
 final class PermissionCacheService
 {
     private readonly string $cachePrefix;
+
     private readonly int $cacheTtl;
 
     public function __construct()
@@ -24,7 +25,7 @@ final class PermissionCacheService
      */
     public function getUserPermissions(int $userId): Collection
     {
-        $key = $this->cachePrefix . "user:{$userId}:permissions";
+        $key = $this->cachePrefix."user:{$userId}:permissions";
 
         if (Cache::supportsTags()) {
             return Cache::tags(['permissions', "user:{$userId}"])
@@ -43,7 +44,7 @@ final class PermissionCacheService
      */
     public function getUserRoles(int $userId): Collection
     {
-        $key = $this->cachePrefix . "user:{$userId}:roles";
+        $key = $this->cachePrefix."user:{$userId}:roles";
 
         if (Cache::supportsTags()) {
             return Cache::tags(['roles', "user:{$userId}"])
@@ -63,7 +64,7 @@ final class PermissionCacheService
     private function loadUserPermissions(int $userId): Collection
     {
         $user = User::find($userId);
-        if (!$user) {
+        if (! $user) {
             return collect();
         }
 
@@ -76,7 +77,7 @@ final class PermissionCacheService
     private function loadUserRoles(int $userId): Collection
     {
         $user = User::find($userId);
-        if (!$user) {
+        if (! $user) {
             return collect();
         }
 
@@ -89,6 +90,7 @@ final class PermissionCacheService
     public function userHasPermission(int $userId, string $permission): bool
     {
         $permissions = $this->getUserPermissions($userId);
+
         return $permissions->contains($permission);
     }
 
@@ -98,6 +100,7 @@ final class PermissionCacheService
     public function userHasAnyPermission(int $userId, array $permissions): bool
     {
         $userPermissions = $this->getUserPermissions($userId);
+
         return $userPermissions->intersect($permissions)->isNotEmpty();
     }
 
@@ -107,7 +110,8 @@ final class PermissionCacheService
     public function userHasAllPermissions(int $userId, array $permissions): bool
     {
         $userPermissions = $this->getUserPermissions($userId);
-        return collect($permissions)->every(fn($permission) => $userPermissions->contains($permission));
+
+        return collect($permissions)->every(fn ($permission) => $userPermissions->contains($permission));
     }
 
     /**
@@ -116,6 +120,7 @@ final class PermissionCacheService
     public function userHasRole(int $userId, string $role): bool
     {
         $roles = $this->getUserRoles($userId);
+
         return $roles->contains($role);
     }
 
@@ -125,6 +130,7 @@ final class PermissionCacheService
     public function userHasAnyRole(int $userId, array $roles): bool
     {
         $userRoles = $this->getUserRoles($userId);
+
         return $userRoles->intersect($roles)->isNotEmpty();
     }
 
@@ -137,8 +143,8 @@ final class PermissionCacheService
             Cache::tags(["user:{$userId}"])->flush();
         } else {
             // Clear individual cache keys when tags aren't supported
-            Cache::forget($this->cachePrefix . "user:{$userId}:permissions");
-            Cache::forget($this->cachePrefix . "user:{$userId}:roles");
+            Cache::forget($this->cachePrefix."user:{$userId}:permissions");
+            Cache::forget($this->cachePrefix."user:{$userId}:roles");
         }
     }
 
@@ -171,7 +177,7 @@ final class PermissionCacheService
      */
     public function getCacheStats(): array
     {
-        $cacheKey = config('cache.prefix', '') . ':';
+        $cacheKey = config('cache.prefix', '').':';
 
         return [
             'store' => config('cache.default'),

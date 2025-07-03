@@ -18,8 +18,7 @@ final class IpAllowlistMiddleware
 {
     public function __construct(
         private readonly ThreatResponseService $threatResponseService
-    ) {
-    }
+    ) {}
 
     /**
      * Handle an incoming request.
@@ -55,12 +54,12 @@ final class IpAllowlistMiddleware
             }
 
             return redirect('/login')->withErrors([
-                'ip' => 'Access denied: Your IP address has been temporarily blocked due to security concerns. Please try again later or contact support.'
+                'ip' => 'Access denied: Your IP address has been temporarily blocked due to security concerns. Please try again later or contact support.',
             ]);
         }
 
         // Check if IP is in allowlist (only for authenticated users)
-        if ($user && !$this->isIpAllowed($clientIp, $user->id)) {
+        if ($user && ! $this->isIpAllowed($clientIp, $user->id)) {
             // Log blocked access attempt
             SecurityLog::create([
                 'user_id' => $user->id,
@@ -69,7 +68,7 @@ final class IpAllowlistMiddleware
                 'user_agent' => $userAgent,
                 'details' => json_encode([
                     'blocked_ip' => $clientIp,
-                    'reason' => 'IP not in allowlist'
+                    'reason' => 'IP not in allowlist',
                 ]),
                 'created_at' => now(),
             ]);
@@ -83,7 +82,7 @@ final class IpAllowlistMiddleware
             }
 
             return redirect('/login')->withErrors([
-                'ip' => 'Access denied: Your IP address is not authorized for this account.'
+                'ip' => 'Access denied: Your IP address is not authorized for this account.',
             ]);
         }
 
@@ -112,7 +111,7 @@ final class IpAllowlistMiddleware
                 'user_agent' => $userAgent,
                 'details' => json_encode([
                     'route' => $request->route()?->getName(),
-                    'method' => $request->method()
+                    'method' => $request->method(),
                 ]),
                 'created_at' => now(),
             ]);
@@ -152,14 +151,14 @@ final class IpAllowlistMiddleware
     private function ipInCidr(string $ip, string $cidr): bool
     {
         // Validate CIDR format
-        if (!str_contains($cidr, '/')) {
+        if (! str_contains($cidr, '/')) {
             return false;
         }
 
         [$subnet, $mask] = explode('/', $cidr, 2);
 
         // Validate mask is numeric
-        if (!is_numeric($mask)) {
+        if (! is_numeric($mask)) {
             return false;
         }
 

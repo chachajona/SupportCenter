@@ -16,8 +16,7 @@ final class TemporalAccessService
 {
     public function __construct(
         private readonly PermissionCacheService $cacheService
-    ) {
-    }
+    ) {}
 
     /**
      * Grant a temporary role to a user.
@@ -107,7 +106,7 @@ final class TemporalAccessService
                 ->where('expires_at', '>', now())
                 ->first(['expires_at']);
 
-            if (!$roleAssignment) {
+            if (! $roleAssignment) {
                 return false;
             }
 
@@ -330,29 +329,29 @@ final class TemporalAccessService
     private function validateTemporaryRoleRequest(int $userId, int $roleId, int $grantedBy): void
     {
         // Validate user exists
-        if (!User::find($userId)) {
+        if (! User::find($userId)) {
             throw new InvalidArgumentException("User with ID {$userId} does not exist");
         }
 
         // Validate role exists and is active
         $role = Role::find($roleId);
-        if (!$role) {
+        if (! $role) {
             throw new InvalidArgumentException("Role with ID {$roleId} does not exist");
         }
 
-        if (!$role->is_active) {
+        if (! $role->is_active) {
             throw new InvalidArgumentException("Role '{$role->name}' is inactive and cannot be assigned");
         }
 
         // Validate granter exists
         $granter = User::find($grantedBy);
-        if (!$granter) {
+        if (! $granter) {
             throw new InvalidArgumentException("Granter with ID {$grantedBy} does not exist");
         }
 
         // Basic permission check - granter should have permission to assign roles
         // This is a simplified check; implement more complex authorization as needed
-        if (!$granter->hasAnyRole(['system_administrator', 'department_manager'])) {
+        if (! $granter->hasAnyRole(['system_administrator', 'department_manager'])) {
             throw new RuntimeException("User {$grantedBy} does not have permission to grant temporary roles");
         }
     }

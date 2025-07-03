@@ -39,9 +39,9 @@ final class KnowledgeCategoryFactory extends Factory
     /**
      * Create a category for a specific department.
      */
-    public function forDepartment(Department $department = null): static
+    public function forDepartment(?Department $department = null): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'department_id' => $department?->id ?? Department::factory(),
         ]);
     }
@@ -51,7 +51,7 @@ final class KnowledgeCategoryFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'is_active' => false,
         ]);
     }
@@ -61,7 +61,7 @@ final class KnowledgeCategoryFactory extends Factory
      */
     public function general(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'department_id' => null,
         ]);
     }

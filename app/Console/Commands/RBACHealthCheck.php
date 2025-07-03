@@ -2,13 +2,13 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\User;
+use App\Services\EmergencyAccessService;
 use App\Services\PermissionCacheService;
 use App\Services\TemporalAccessService;
-use App\Services\EmergencyAccessService;
-use App\Models\Role;
-use App\Models\Permission;
-use App\Models\User;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class RBACHealthCheck extends Command
@@ -59,9 +59,11 @@ class RBACHealthCheck extends Command
 
         if ($issues === 0) {
             $this->info('✅ All RBAC health checks passed!');
+
             return Command::SUCCESS;
         } else {
             $this->error("❌ Found {$issues} issue(s) in RBAC system");
+
             return Command::FAILURE;
         }
     }
@@ -82,7 +84,7 @@ class RBACHealthCheck extends Command
                 $this->line("Cache store: {$stats['store']}");
                 $this->line("Cache prefix: {$stats['prefix']}");
                 $this->line("TTL: {$stats['ttl']} seconds");
-                $this->line("Tags supported: " . ($stats['tags_supported'] ? 'Yes' : 'No'));
+                $this->line('Tags supported: '.($stats['tags_supported'] ? 'Yes' : 'No'));
             }
 
             // Test cache performance with a sample user
@@ -101,12 +103,12 @@ class RBACHealthCheck extends Command
                     $this->line("✅ Cache response time: {$responseTime}ms");
                 }
             } else {
-                $this->warn("⚠️  No users found in database - skipping cache performance test");
-                $this->line("💡 Create users to enable cache performance testing");
+                $this->warn('⚠️  No users found in database - skipping cache performance test');
+                $this->line('💡 Create users to enable cache performance testing');
             }
 
         } catch (\Exception $e) {
-            $this->error("❌ Cache performance check failed: " . $e->getMessage());
+            $this->error('❌ Cache performance check failed: '.$e->getMessage());
             $issues++;
         }
 
@@ -129,7 +131,7 @@ class RBACHealthCheck extends Command
             ->get();
 
         if ($duplicateRoles->count() > 0) {
-            $this->error("❌ Found duplicate role names: " . $duplicateRoles->pluck('name')->implode(', '));
+            $this->error('❌ Found duplicate role names: '.$duplicateRoles->pluck('name')->implode(', '));
             $issues++;
         } else {
             $this->line('✅ No duplicate role names found');
@@ -148,7 +150,7 @@ class RBACHealthCheck extends Command
 
         foreach ($expectedRoles as $roleName => $expectedLevel) {
             $role = $roles->where('name', $roleName)->first();
-            if (!$role) {
+            if (! $role) {
                 $this->error("❌ Missing required role: {$roleName}");
                 $issues++;
             } elseif ($role->hierarchy_level !== $expectedLevel) {
@@ -192,8 +194,9 @@ class RBACHealthCheck extends Command
 
             foreach ($inheritanceRules as $higherRole => $lowerRoles) {
                 $higherRoleModel = Role::where('name', $higherRole)->first();
-                if (!$higherRoleModel) {
+                if (! $higherRoleModel) {
                     $this->warn("⚠️  Role '{$higherRole}' not found for inheritance testing");
+
                     continue;
                 }
 
@@ -201,16 +204,17 @@ class RBACHealthCheck extends Command
 
                 foreach ($lowerRoles as $lowerRole) {
                     $lowerRoleModel = Role::where('name', $lowerRole)->first();
-                    if (!$lowerRoleModel) {
+                    if (! $lowerRoleModel) {
                         $this->warn("⚠️  Role '{$lowerRole}' not found for inheritance testing");
+
                         continue;
                     }
 
                     $lowerPermissions = $lowerRoleModel->permissions()->pluck('name')->toArray();
                     $missingPermissions = array_diff($lowerPermissions, $higherPermissions);
 
-                    if (!empty($missingPermissions)) {
-                        $this->warn("⚠️  Role '{$higherRole}' missing permissions from '{$lowerRole}': " . implode(', ', $missingPermissions));
+                    if (! empty($missingPermissions)) {
+                        $this->warn("⚠️  Role '{$higherRole}' missing permissions from '{$lowerRole}': ".implode(', ', $missingPermissions));
                         $issues++;
                     }
                 }
@@ -228,8 +232,8 @@ class RBACHealthCheck extends Command
                     $rolePermissions = $role->permissions()->pluck('name')->toArray();
                     $missingRequired = array_diff($requiredPermissions, $rolePermissions);
 
-                    if (!empty($missingRequired)) {
-                        $this->warn("⚠️  Specialized role '{$roleName}' missing required permissions: " . implode(', ', $missingRequired));
+                    if (! empty($missingRequired)) {
+                        $this->warn("⚠️  Specialized role '{$roleName}' missing required permissions: ".implode(', ', $missingRequired));
                         $issues++;
                     }
                 }
@@ -243,7 +247,7 @@ class RBACHealthCheck extends Command
             }
 
         } catch (\Exception $e) {
-            $this->error("❌ Permission inheritance check failed: " . $e->getMessage());
+            $this->error('❌ Permission inheritance check failed: '.$e->getMessage());
             $issues++;
         }
 
@@ -271,7 +275,7 @@ class RBACHealthCheck extends Command
             // Check for expiring permissions
             $expiringRoles = $temporalService->getExpiringRoles(60); // Within 1 hour
             if (count($expiringRoles) > 0) {
-                $this->warn("⚠️  " . count($expiringRoles) . " role(s) expiring within 1 hour");
+                $this->warn('⚠️  '.count($expiringRoles).' role(s) expiring within 1 hour');
                 if ($this->option('detailed')) {
                     foreach ($expiringRoles as $role) {
                         $this->line("  - {$role->user_name} ({$role->role_name}) expires at {$role->expires_at}");
@@ -280,7 +284,7 @@ class RBACHealthCheck extends Command
             }
 
         } catch (\Exception $e) {
-            $this->error("❌ Expired permissions check failed: " . $e->getMessage());
+            $this->error('❌ Expired permissions check failed: '.$e->getMessage());
             $issues++;
         }
 
@@ -313,8 +317,8 @@ class RBACHealthCheck extends Command
 
             // Check for orphaned permission assignments
             $orphanedPermissionRoles = DB::table(config('permission.table_names.role_has_permissions'))
-                ->leftJoin('permissions', config('permission.table_names.role_has_permissions') . '.permission_id', '=', 'permissions.id')
-                ->leftJoin('roles', config('permission.table_names.role_has_permissions') . '.role_id', '=', 'roles.id')
+                ->leftJoin('permissions', config('permission.table_names.role_has_permissions').'.permission_id', '=', 'permissions.id')
+                ->leftJoin('roles', config('permission.table_names.role_has_permissions').'.role_id', '=', 'roles.id')
                 ->whereNull('permissions.id')
                 ->orWhereNull('roles.id')
                 ->count();
@@ -327,7 +331,7 @@ class RBACHealthCheck extends Command
             }
 
         } catch (\Exception $e) {
-            $this->error("❌ Database integrity check failed: " . $e->getMessage());
+            $this->error('❌ Database integrity check failed: '.$e->getMessage());
             $issues++;
         }
 
@@ -353,7 +357,7 @@ class RBACHealthCheck extends Command
             $stats = $emergencyService->getEmergencyAccessStats(7); // Last 7 days
 
             if ($this->option('detailed')) {
-                $this->line("Emergency access stats (last 7 days):");
+                $this->line('Emergency access stats (last 7 days):');
                 $this->line("  - Total granted: {$stats['total_granted']}");
                 $this->line("  - Currently active: {$stats['currently_active']}");
                 $this->line("  - Used access: {$stats['used_access']}");
@@ -366,7 +370,7 @@ class RBACHealthCheck extends Command
             }
 
         } catch (\Exception $e) {
-            $this->error("❌ Emergency access check failed: " . $e->getMessage());
+            $this->error('❌ Emergency access check failed: '.$e->getMessage());
             $issues++;
         }
 

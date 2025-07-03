@@ -42,7 +42,7 @@ class SessionSecuritySimpleTest extends TestCase
         $this->actingAs($this->user);
 
         // Test the middleware directly
-        $middleware = new \App\Http\Middleware\IdleSessionTimeout();
+        $middleware = new \App\Http\Middleware\IdleSessionTimeout;
         $request = \Illuminate\Http\Request::create('/dashboard', 'GET');
         $request->setLaravelSession($this->app['session']->driver());
 
@@ -147,7 +147,7 @@ class SessionSecuritySimpleTest extends TestCase
         // Authenticate the user
         $this->actingAs($this->user);
 
-        $middleware = new \App\Http\Middleware\SuspiciousActivityDetection();
+        $middleware = new \App\Http\Middleware\SuspiciousActivityDetection;
         $request = \Illuminate\Http\Request::create('/dashboard', 'GET');
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $request->setLaravelSession($this->app['session']->driver());

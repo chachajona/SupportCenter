@@ -16,8 +16,6 @@ class EnvironmentCheckService
 
     /**
      * Run all environment checks.
-     *
-     * @return array
      */
     public function run(): array
     {
@@ -65,7 +63,7 @@ class EnvironmentCheckService
             'Tokenizer',
             'XML',
             'gd',
-            'curl'
+            'curl',
         ];
 
         foreach ($requiredExtensions as $extension) {
@@ -94,25 +92,20 @@ class EnvironmentCheckService
         foreach ($directories as $directory) {
             $isWritable = is_writable($directory);
             $this->addResult(
-                "Directory Permissions: " . str_replace(base_path() . '/', '', $directory),
+                'Directory Permissions: '.str_replace(base_path().'/', '', $directory),
                 $isWritable,
                 "The {$directory} directory must be writable.",
-                "The " . str_replace(base_path() . '/', '', $directory) . " directory is writable."
+                'The '.str_replace(base_path().'/', '', $directory).' directory is writable.'
             );
         }
     }
 
     /**
      * Add a result to the results array.
-     *
-     * @param string $checkName
-     * @param bool $success
-     * @param string $errorMessage
-     * @param string $successMessage
      */
     protected function addResult(string $checkName, bool $success, string $errorMessage, string $successMessage): void
     {
-        if (!$success) {
+        if (! $success) {
             $this->errors[] = $errorMessage;
         }
 

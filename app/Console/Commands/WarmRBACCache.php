@@ -2,10 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Services\PermissionCacheService;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Services\PermissionCacheService;
+use Illuminate\Console\Command;
 
 class WarmRBACCache extends Command
 {
@@ -34,7 +33,7 @@ class WarmRBACCache extends Command
         $specificUsers = $this->option('users');
         $batchSize = (int) $this->option('batch-size');
 
-        if (!empty($specificUsers)) {
+        if (! empty($specificUsers)) {
             // Warm cache for specific users
             $this->warmSpecificUsers($cacheService, $specificUsers);
         } else {
@@ -53,7 +52,7 @@ class WarmRBACCache extends Command
      */
     private function warmSpecificUsers(PermissionCacheService $cacheService, array $userIds): void
     {
-        $this->info("Warming cache for " . count($userIds) . " specific user(s)...");
+        $this->info('Warming cache for '.count($userIds).' specific user(s)...');
 
         $bar = $this->output->createProgressBar(count($userIds));
         $bar->start();
@@ -93,7 +92,7 @@ class WarmRBACCache extends Command
                     $processedCount++;
                 } catch (\Exception $e) {
                     $errorCount++;
-                    $this->warn("  ⚠ Failed to warm cache for user {$user->id}: " . $e->getMessage());
+                    $this->warn("  ⚠ Failed to warm cache for user {$user->id}: ".$e->getMessage());
                 }
                 $bar->advance();
             }
@@ -102,7 +101,7 @@ class WarmRBACCache extends Command
         $bar->finish();
         $this->newLine();
 
-        $this->info("Cache warming summary:");
+        $this->info('Cache warming summary:');
         $this->line("  ✓ Successfully processed: {$processedCount} users");
         if ($errorCount > 0) {
             $this->warn("  ⚠ Errors encountered: {$errorCount} users");
@@ -148,14 +147,14 @@ class WarmRBACCache extends Command
             }
 
             $averageTime = ($totalTime / $iterations) * 1000; // Convert to milliseconds
-            $this->line("Average cache response time: " . number_format($averageTime, 2) . "ms (over {$iterations} requests)");
+            $this->line('Average cache response time: '.number_format($averageTime, 2)."ms (over {$iterations} requests)");
 
             if ($averageTime < 10) {
-                $this->info("✅ Excellent cache performance!");
+                $this->info('✅ Excellent cache performance!');
             } elseif ($averageTime < 50) {
-                $this->line("✅ Good cache performance");
+                $this->line('✅ Good cache performance');
             } else {
-                $this->warn("⚠️ Cache performance could be improved");
+                $this->warn('⚠️ Cache performance could be improved');
             }
         }
     }

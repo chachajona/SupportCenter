@@ -13,7 +13,7 @@ class CreateAdminRequest extends FormRequest
     public function authorize(): bool
     {
         // Only allow if setup is not completed
-        return !SetupStatus::isSetupCompleted();
+        return ! SetupStatus::isSetupCompleted();
     }
 
     /**
@@ -72,7 +72,7 @@ class CreateAdminRequest extends FormRequest
     {
         return response()->json([
             'success' => false,
-            'message' => 'Setup has already been completed or admin user already exists.'
+            'message' => 'Setup has already been completed or admin user already exists.',
         ], 403);
     }
 

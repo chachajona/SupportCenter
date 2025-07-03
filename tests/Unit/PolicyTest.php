@@ -7,8 +7,8 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class PolicyTest extends TestCase
 {
@@ -69,7 +69,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.assign_all',
             'resource' => 'roles',
-            'action' => 'assign_all'
+            'action' => 'assign_all',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -86,7 +86,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.delete_all',
             'resource' => 'users',
-            'action' => 'delete_all'
+            'action' => 'delete_all',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -127,7 +127,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.update',
             'resource' => 'roles',
-            'action' => 'update'
+            'action' => 'update',
         ]);
 
         $lowerRole->givePermissionTo($permission);
@@ -146,7 +146,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.update',
             'resource' => 'roles',
-            'action' => 'update'
+            'action' => 'update',
         ]);
 
         $higherRole->givePermissionTo($permission);
@@ -165,7 +165,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.assign_all',
             'resource' => 'roles',
-            'action' => 'assign_all'
+            'action' => 'assign_all',
         ]);
 
         $lowerRole->givePermissionTo($permission);
@@ -195,7 +195,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'departments.view_all',
             'resource' => 'departments',
-            'action' => 'view_all'
+            'action' => 'view_all',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -215,7 +215,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'departments.delete',
             'resource' => 'departments',
-            'action' => 'delete'
+            'action' => 'delete',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -235,7 +235,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.manage_own_department',
             'resource' => 'users',
-            'action' => 'manage_own_department'
+            'action' => 'manage_own_department',
         ]);
 
         $role = Role::where('name', 'department_manager')->first();
@@ -276,7 +276,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.view_personal_data_all',
             'resource' => 'users',
-            'action' => 'view_personal_data_all'
+            'action' => 'view_personal_data_all',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -307,7 +307,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.edit_own',
             'resource' => 'users',
-            'action' => 'edit_own'
+            'action' => 'edit_own',
         ]);
 
         $role = Role::where('name', 'support_agent')->first();
@@ -327,7 +327,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.edit_department',
             'resource' => 'users',
-            'action' => 'edit_department'
+            'action' => 'edit_department',
         ]);
 
         $role = Role::where('name', 'department_manager')->first();
@@ -347,7 +347,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.delete_department',
             'resource' => 'users',
-            'action' => 'delete_department'
+            'action' => 'delete_department',
         ]);
 
         $role = Role::where('name', 'department_manager')->first();
@@ -365,7 +365,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.create',
             'resource' => 'users',
-            'action' => 'create'
+            'action' => 'create',
         ]);
 
         $role = Role::where('name', 'department_manager')->first();
@@ -384,7 +384,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.restore',
             'resource' => 'users',
-            'action' => 'restore'
+            'action' => 'restore',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -403,7 +403,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.view_all',
             'resource' => 'roles',
-            'action' => 'view_all'
+            'action' => 'view_all',
         ]);
 
         $adminRole = Role::where('name', 'system_administrator')->first();
@@ -423,7 +423,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.view_department',
             'resource' => 'roles',
-            'action' => 'view_department'
+            'action' => 'view_department',
         ]);
 
         $higherRole->givePermissionTo($permission);
@@ -443,7 +443,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.view_department',
             'resource' => 'roles',
-            'action' => 'view_department'
+            'action' => 'view_department',
         ]);
 
         $lowerRole->givePermissionTo($permission);
@@ -460,7 +460,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.create',
             'resource' => 'roles',
-            'action' => 'create'
+            'action' => 'create',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -480,7 +480,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.delete',
             'resource' => 'roles',
-            'action' => 'delete'
+            'action' => 'delete',
         ]);
 
         $higherRole->givePermissionTo($permission);
@@ -497,7 +497,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.delete',
             'resource' => 'roles',
-            'action' => 'delete'
+            'action' => 'delete',
         ]);
 
         $sameRole->givePermissionTo($permission);
@@ -516,7 +516,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.revoke_all',
             'resource' => 'roles',
-            'action' => 'revoke_all'
+            'action' => 'revoke_all',
         ]);
 
         $higherRole = Role::where('name', 'system_administrator')->first();
@@ -535,7 +535,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.manage_permissions',
             'resource' => 'roles',
-            'action' => 'manage_permissions'
+            'action' => 'manage_permissions',
         ]);
 
         $higherRole = Role::where('name', 'system_administrator')->first();
@@ -553,7 +553,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'departments.view_own',
             'resource' => 'departments',
-            'action' => 'view_own'
+            'action' => 'view_own',
         ]);
 
         $role = Role::where('name', 'support_agent')->first();
@@ -572,7 +572,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'departments.update_own',
             'resource' => 'departments',
-            'action' => 'update_own'
+            'action' => 'update_own',
         ]);
 
         $role = Role::where('name', 'department_manager')->first();
@@ -590,7 +590,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'departments.create',
             'resource' => 'departments',
-            'action' => 'create'
+            'action' => 'create',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -609,7 +609,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'analytics.view_department',
             'resource' => 'analytics',
-            'action' => 'view_department'
+            'action' => 'view_department',
         ]);
 
         $role = Role::where('name', 'department_manager')->first();
@@ -628,7 +628,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'departments.assign_manager',
             'resource' => 'departments',
-            'action' => 'assign_manager'
+            'action' => 'assign_manager',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -644,13 +644,13 @@ class PolicyTest extends TestCase
         // Create parent and child departments
         $parentDept = Department::create([
             'name' => 'Parent Department',
-            'path' => '/4'
+            'path' => '/4',
         ]);
 
         $childDept = Department::create([
             'name' => 'Child Department',
             'path' => '/4/1',
-            'parent_id' => $parentDept->id
+            'parent_id' => $parentDept->id,
         ]);
 
         $admin = User::factory()->create();
@@ -658,7 +658,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'departments.delete',
             'resource' => 'departments',
-            'action' => 'delete'
+            'action' => 'delete',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -698,7 +698,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.assign_department',
             'resource' => 'roles',
-            'action' => 'assign_department'
+            'action' => 'assign_department',
         ]);
 
         $role = Role::where('name', 'department_manager')->first();
@@ -717,13 +717,13 @@ class PolicyTest extends TestCase
         // Create parent and child departments
         $parentDept = Department::create([
             'name' => 'Parent IT',
-            'path' => '/5'
+            'path' => '/5',
         ]);
 
         $childDept = Department::create([
             'name' => 'Child IT Support',
             'path' => '/5/1',
-            'parent_id' => $parentDept->id
+            'parent_id' => $parentDept->id,
         ]);
 
         $manager = User::factory()->create(['department_id' => $parentDept->id]);
@@ -747,7 +747,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.edit_department',
             'resource' => 'users',
-            'action' => 'edit_department'
+            'action' => 'edit_department',
         ]);
 
         $role = Role::where('name', 'department_manager')->first();
@@ -780,7 +780,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'analytics.view_all',
             'resource' => 'analytics',
-            'action' => 'view_all'
+            'action' => 'view_all',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -799,7 +799,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.force_delete',
             'resource' => 'users',
-            'action' => 'force_delete'
+            'action' => 'force_delete',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -818,7 +818,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.force_delete',
             'resource' => 'roles',
-            'action' => 'force_delete'
+            'action' => 'force_delete',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -837,7 +837,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'departments.force_delete',
             'resource' => 'departments',
-            'action' => 'force_delete'
+            'action' => 'force_delete',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -855,7 +855,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'users.view_all',
             'resource' => 'users',
-            'action' => 'view_all'
+            'action' => 'view_all',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();
@@ -873,7 +873,7 @@ class PolicyTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.view_all',
             'resource' => 'roles',
-            'action' => 'view_all'
+            'action' => 'view_all',
         ]);
 
         $role = Role::where('name', 'system_administrator')->first();

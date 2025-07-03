@@ -1,12 +1,12 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -30,7 +30,7 @@ return new class extends Migration {
 
             } catch (\Exception $e) {
                 // Log the error but continue - might be in a different state
-                \Illuminate\Support\Facades\Log::warning('Error during role_user table cleanup: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::warning('Error during role_user table cleanup: '.$e->getMessage());
             }
         }
     }
@@ -59,7 +59,7 @@ return new class extends Migration {
                 DB::statement('CREATE INDEX model_has_roles_model_id_model_type_index ON role_user (model_id, model_type)');
 
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Error during role_user table rollback: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::warning('Error during role_user table rollback: '.$e->getMessage());
             }
         }
     }

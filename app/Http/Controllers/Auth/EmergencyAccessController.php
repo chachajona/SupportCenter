@@ -34,7 +34,7 @@ class EmergencyAccessController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ]);
@@ -63,7 +63,7 @@ class EmergencyAccessController extends Controller
     public function process(Request $request, string $token)
     {
         // Basic token validation to prevent obvious attacks and cache abuse
-        if (empty($token) || strlen($token) > 64 || !preg_match('/^[a-zA-Z0-9\-_]+$/', $token)) {
+        if (empty($token) || strlen($token) > 64 || ! preg_match('/^[a-zA-Z0-9\-_]+$/', $token)) {
             // Log suspicious token format attempt
             logger()->warning('Emergency access attempted with invalid token format', [
                 'token_format' => 'invalid',
@@ -77,10 +77,10 @@ class EmergencyAccessController extends Controller
 
         $emergencyData = cache()->get("emergency_access:{$token}");
 
-        if (!$emergencyData) {
+        if (! $emergencyData) {
             // Log failed token attempt for security monitoring
             logger()->warning('Emergency access attempted with invalid/expired token', [
-                'token_prefix' => substr($token, 0, 8) . '...',
+                'token_prefix' => substr($token, 0, 8).'...',
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ]);
@@ -90,10 +90,10 @@ class EmergencyAccessController extends Controller
 
         $user = User::find($emergencyData['user_id']);
 
-        if (!$user) {
+        if (! $user) {
             // Log security incident - token exists but user doesn't
             logger()->error('Emergency access token found but user missing', [
-                'token_prefix' => substr($token, 0, 8) . '...',
+                'token_prefix' => substr($token, 0, 8).'...',
                 'user_id' => $emergencyData['user_id'],
                 'ip_address' => $request->ip(),
             ]);

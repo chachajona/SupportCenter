@@ -59,7 +59,7 @@ class EmailVerificationTest extends TestCase
             $response->assertStatus(200);
         } else {
             // For non-Inertia, we expect a redirect
-            $response->assertRedirect(route('dashboard', absolute: false) . '?verified=1');
+            $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
         }
     }
 

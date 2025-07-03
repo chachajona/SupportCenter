@@ -17,14 +17,11 @@ final class TicketAssignedNotification extends Notification implements ShouldQue
 {
     use Queueable;
 
-    public function __construct(private Ticket $ticket)
-    {
-    }
+    public function __construct(private Ticket $ticket) {}
 
     /**
      * Get the notification's delivery channels.
      *
-     * @param object $notifiable
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -42,7 +39,7 @@ final class TicketAssignedNotification extends Notification implements ShouldQue
 
         return (new MailMessage)
             ->subject("Ticket #{$this->ticket->number} Assigned to You")
-            ->line("You have been assigned a new ticket:")
+            ->line('You have been assigned a new ticket:')
             ->line("**Subject:** {$this->ticket->subject}")
             ->line("**Priority:** {$priorityName}")
             ->line("**Department:** {$departmentName}")
@@ -53,7 +50,6 @@ final class TicketAssignedNotification extends Notification implements ShouldQue
     /**
      * Get the array representation of the notification.
      *
-     * @param object $notifiable
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
@@ -68,7 +64,7 @@ final class TicketAssignedNotification extends Notification implements ShouldQue
             'priority' => $priorityName,
             'department' => $departmentName,
             'message' => "You have been assigned ticket #{$this->ticket->number}: {$this->ticket->subject}.",
-            'action_url' => url("/tickets/{$this->ticket->getKey()}")
+            'action_url' => url("/tickets/{$this->ticket->getKey()}"),
         ];
     }
 }

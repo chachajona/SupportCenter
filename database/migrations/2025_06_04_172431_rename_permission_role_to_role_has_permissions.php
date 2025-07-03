@@ -4,17 +4,18 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         // Check if permission_role table exists and role_has_permissions doesn't
-        if (Schema::hasTable('permission_role') && !Schema::hasTable('role_has_permissions')) {
+        if (Schema::hasTable('permission_role') && ! Schema::hasTable('role_has_permissions')) {
             // Rename the table to match Spatie's default convention
             Schema::rename('permission_role', 'role_has_permissions');
-        } elseif (!Schema::hasTable('role_has_permissions')) {
+        } elseif (! Schema::hasTable('role_has_permissions')) {
             // Create the table if it doesn't exist at all
             $tableNames = config('permission.table_names');
             $columnNames = config('permission.column_names');
@@ -47,7 +48,7 @@ return new class extends Migration {
     {
         // During rollback, we need to ensure the table exists as 'role_has_permissions'
         // so that the Spatie migration can drop it properly
-        if (Schema::hasTable('permission_role') && !Schema::hasTable('role_has_permissions')) {
+        if (Schema::hasTable('permission_role') && ! Schema::hasTable('role_has_permissions')) {
             // Rename back to role_has_permissions so Spatie migration can drop it
             Schema::rename('permission_role', 'role_has_permissions');
         }

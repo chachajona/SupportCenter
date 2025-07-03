@@ -32,7 +32,7 @@ class TwoFactorChallengeMiddleware
         $hasPending2FA = $request->session()->has('login.id') ||
             $request->session()->has('two_factor_login_user_id');
 
-        if (!$hasPending2FA) {
+        if (! $hasPending2FA) {
             // No pending 2FA challenge, redirect to login
             return redirect()->route('login')->with('error', 'Please log in first.');
         }

@@ -4,22 +4,22 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
-use Laravel\Sanctum\HasApiTokens;
-use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
 use Laragear\WebAuthn\WebAuthnAuthentication;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication;
 
     /**
      * The attributes that are mass assignable.
@@ -79,12 +79,12 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
             'user_id',
             'role_id'
         )->withPivot([
-                    'granted_by',
-                    'granted_at',
-                    'expires_at',
-                    'is_active',
-                    'delegation_reason'
-                ])->withTimestamps();
+            'granted_by',
+            'granted_at',
+            'expires_at',
+            'is_active',
+            'delegation_reason',
+        ])->withTimestamps();
     }
 
     /**
@@ -178,7 +178,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
      */
     public function hasDepartmentAccess(int $resourceDepartmentId): bool
     {
-        if (!$this->department_id) {
+        if (! $this->department_id) {
             return false;
         }
 
@@ -201,7 +201,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
      */
     public function getAccessibleDepartmentIds(): array
     {
-        if (!$this->department) {
+        if (! $this->department) {
             return [];
         }
 
@@ -213,7 +213,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
      */
     public function canManageUser(User $otherUser): bool
     {
-        if (!$this->department || !$otherUser->department) {
+        if (! $this->department || ! $otherUser->department) {
             return false;
         }
 
@@ -228,7 +228,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
      */
     public function getTwoFactorEnabledAttribute()
     {
-        return !is_null($this->two_factor_confirmed_at);
+        return ! is_null($this->two_factor_confirmed_at);
     }
 
     /**
@@ -245,7 +245,8 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
         try {
             return json_decode(decrypt($this->two_factor_recovery_codes), true) ?? [];
         } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-            Log::error('Failed to decrypt two_factor_recovery_codes for user: ' . $this->id . ' - ' . $e->getMessage());
+            Log::error('Failed to decrypt two_factor_recovery_codes for user: '.$this->id.' - '.$e->getMessage());
+
             return [];
         }
     }
@@ -297,7 +298,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
                 ->first();
         }
 
-        if (!$permission || !$permission->is_active) {
+        if (! $permission || ! $permission->is_active) {
             return false;
         }
 
@@ -332,7 +333,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
     /**
      * Override hasAnyRole to respect is_active fields.
      */
-    public function hasAnyRole($roles, string $guard = null): bool
+    public function hasAnyRole($roles, ?string $guard = null): bool
     {
         if (is_string($roles)) {
             $roles = [$roles];
@@ -352,7 +353,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
     /**
      * Override hasRole to respect is_active fields.
      */
-    public function hasRole($roles, string $guard = null): bool
+    public function hasRole($roles, ?string $guard = null): bool
     {
         if (is_string($roles)) {
             return $this->hasAnyRole([$roles], $guard);
@@ -360,10 +361,11 @@ class User extends Authenticatable implements WebAuthnAuthenticatable, MustVerif
 
         if (is_array($roles)) {
             foreach ($roles as $role) {
-                if (!$this->hasAnyRole([$role], $guard)) {
+                if (! $this->hasAnyRole([$role], $guard)) {
                     return false;
                 }
             }
+
             return true;
         }
 

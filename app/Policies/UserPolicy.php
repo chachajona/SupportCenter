@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Auth\Access\Response;
 
 class UserPolicy
 {
@@ -18,7 +17,7 @@ class UserPolicy
         return $user->hasAnyPermission([
             'users.view_own',
             'users.view_department',
-            'users.view_all'
+            'users.view_all',
         ]);
     }
 

@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\EmergencyAccess;
 use App\Models\Permission;
 use App\Models\PermissionAudit;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\EmergencyAccess;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class AnalyticsController extends Controller
 {
@@ -76,7 +76,7 @@ class AnalyticsController extends Controller
             'compliance' => $this->getComplianceStats($startDate),
         ];
 
-        $filename = 'rbac-analytics-' . Carbon::now()->format('Y-m-d-H-i') . '.json';
+        $filename = 'rbac-analytics-'.Carbon::now()->format('Y-m-d-H-i').'.json';
 
         return response()->json($data)
             ->header('Content-Type', 'application/json')
@@ -279,21 +279,21 @@ class AnalyticsController extends Controller
                 'right_to_erasure' => true,
                 'data_minimization' => true,
                 'consent_management' => true,
-                'score' => 98.5
+                'score' => 98.5,
             ],
             'soc2_compliance' => [
                 'access_controls' => true,
                 'monitoring_logging' => true,
                 'incident_response' => true,
                 'backup_recovery' => true,
-                'score' => 96.2
+                'score' => 96.2,
             ],
             'owasp_compliance' => [
                 'authentication' => true,
                 'authorization' => true,
                 'input_validation' => true,
                 'session_management' => true,
-                'score' => 94.8
+                'score' => 94.8,
             ],
         ];
     }
@@ -336,7 +336,7 @@ class AnalyticsController extends Controller
         $roles = Role::withCount([
             'users as count' => function ($q) {
                 $q->where('role_user.is_active', true);
-            }
+            },
         ])->get();
 
         $totalUsers = $roles->sum('count') ?: 1;

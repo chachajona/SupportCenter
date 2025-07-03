@@ -52,12 +52,11 @@ final class PasswordConfirmationTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get('/confirm-password?intended=' . urlencode('/settings/webauthn?resume_webauthn=setup'));
+        $response = $this->actingAs($user)->get('/confirm-password?intended='.urlencode('/settings/webauthn?resume_webauthn=setup'));
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) =>
-            $page->component('auth/confirm-password')
+            fn ($page) => $page->component('auth/confirm-password')
                 ->has('intended')
                 ->where('intended', '/settings/webauthn?resume_webauthn=setup')
         );
@@ -70,7 +69,7 @@ final class PasswordConfirmationTest extends TestCase
         $intendedUrl = '/settings/webauthn?resume_webauthn=setup';
 
         // First, set the intended URL by visiting the confirmation page
-        $this->actingAs($user)->get('/confirm-password?intended=' . urlencode($intendedUrl));
+        $this->actingAs($user)->get('/confirm-password?intended='.urlencode($intendedUrl));
 
         // Then submit the password confirmation
         $response = $this->actingAs($user)->post('/confirm-password', [

@@ -29,9 +29,10 @@ class SetupResetCommand extends Command
      */
     public function handle(): int
     {
-        if (!$this->option('force')) {
-            if (!$this->confirm('This will DROP ALL DATABASE TABLES and restart the setup wizard. Continue?')) {
+        if (! $this->option('force')) {
+            if (! $this->confirm('This will DROP ALL DATABASE TABLES and restart the setup wizard. Continue?')) {
                 $this->info('Setup reset cancelled.');
+
                 return self::SUCCESS;
             }
         }
@@ -40,8 +41,9 @@ class SetupResetCommand extends Command
             // Verify we can connect before proceeding to give a clearer error if connection fails.
             DB::connection()->getPdo();
         } catch (Throwable $e) {
-            $this->error('Database connection failed: ' . $e->getMessage());
+            $this->error('Database connection failed: '.$e->getMessage());
             $this->error('Ensure your .env has valid DB_* credentials before running the reset.');
+
             return self::FAILURE;
         }
 

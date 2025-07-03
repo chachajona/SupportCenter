@@ -28,7 +28,7 @@ final class DepartmentFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->company() . ' Department',
+            'name' => $this->faker->company().' Department',
             'description' => $this->faker->sentence(),
             'parent_id' => null,
             'manager_id' => null,
@@ -39,9 +39,9 @@ final class DepartmentFactory extends Factory
     /**
      * Create a department with a manager.
      */
-    public function withManager(User $manager = null): static
+    public function withManager(?User $manager = null): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'manager_id' => $manager?->id ?? User::factory(),
         ]);
     }
@@ -49,9 +49,9 @@ final class DepartmentFactory extends Factory
     /**
      * Create a child department.
      */
-    public function child(Department $parent = null): static
+    public function child(?Department $parent = null): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'parent_id' => $parent?->id ?? Department::factory(),
         ]);
     }
@@ -61,7 +61,7 @@ final class DepartmentFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'is_active' => false,
         ]);
     }

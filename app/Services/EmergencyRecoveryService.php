@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\EmergencyAccess;
-use App\Models\SecurityLog;
-use App\Models\PermissionAudit;
-use App\Models\User;
 use App\Enums\SecurityEventType;
-use Illuminate\Support\Facades\Log;
+use App\Models\EmergencyAccess;
+use App\Models\PermissionAudit;
+use App\Models\SecurityLog;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 final class EmergencyRecoveryService
 {
     public function __construct(
         private readonly PermissionCacheService $cacheService
-    ) {
-    }
+    ) {}
 
     /**
      * Perform complete emergency access incident recovery
@@ -29,7 +27,7 @@ final class EmergencyRecoveryService
     {
         $emergencyAccess = EmergencyAccess::with(['user', 'grantedBy'])->find($emergencyAccessId);
 
-        if (!$emergencyAccess) {
+        if (! $emergencyAccess) {
             throw new \InvalidArgumentException("Emergency access record not found: {$emergencyAccessId}");
         }
 
@@ -112,7 +110,7 @@ final class EmergencyRecoveryService
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            throw new \RuntimeException("Emergency recovery failed: " . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Emergency recovery failed: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -123,7 +121,7 @@ final class EmergencyRecoveryService
     {
         try {
             $user = User::find($userId);
-            if (!$user) {
+            if (! $user) {
                 return false;
             }
 
@@ -141,6 +139,7 @@ final class EmergencyRecoveryService
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -209,7 +208,7 @@ final class EmergencyRecoveryService
             'total_duration_minutes' => $emergencyAccess->granted_at->diffInMinutes($emergencyAccess->expires_at),
             'actual_usage_minutes' => $emergencyAccess->used_at ?
                 $emergencyAccess->granted_at->diffInMinutes($emergencyAccess->used_at) : 0,
-            'was_actually_used' => !is_null($emergencyAccess->used_at),
+            'was_actually_used' => ! is_null($emergencyAccess->used_at),
             'permissions_granted' => $emergencyAccess->permissions,
             'permission_count' => count($emergencyAccess->permissions),
             'granted_by_user_id' => $emergencyAccess->granted_by,
@@ -236,7 +235,7 @@ final class EmergencyRecoveryService
             'users.delete',
             'roles.delete',
             'system.backup',
-            'audit.export_data'
+            'audit.export_data',
         ];
 
         foreach ($emergencyAccess->permissions as $permission) {
@@ -254,7 +253,7 @@ final class EmergencyRecoveryService
         }
 
         // Usage factor
-        if (!$emergencyAccess->used_at) {
+        if (! $emergencyAccess->used_at) {
             $riskScore += 1; // Unused emergency access is suspicious
         }
 
@@ -271,7 +270,7 @@ final class EmergencyRecoveryService
      */
     private function generatePostIncidentReport(EmergencyAccess $emergencyAccess, array $usageAnalysis, string $recoveryReason): array
     {
-        $reportId = 'incident_' . $emergencyAccess->id . '_' . now()->format('Y_m_d_H_i_s');
+        $reportId = 'incident_'.$emergencyAccess->id.'_'.now()->format('Y_m_d_H_i_s');
 
         $report = [
             'id' => $reportId,
@@ -327,7 +326,7 @@ final class EmergencyRecoveryService
             $recommendations[] = 'Review and validate all system changes made during the emergency period';
         }
 
-        if (!$usageAnalysis['was_actually_used']) {
+        if (! $usageAnalysis['was_actually_used']) {
             $recommendations[] = 'Investigate why emergency access was requested but never used';
             $recommendations[] = 'Review approval process for unnecessary emergency access requests';
         }
@@ -440,6 +439,7 @@ final class EmergencyRecoveryService
     private function getMostCommonRecoveryReasons($recoveryEvents): array
     {
         $reasons = $recoveryEvents->pluck('details.recovery_reason')->filter();
+
         return $reasons->countBy()->sortDesc()->take(5)->toArray();
     }
 }

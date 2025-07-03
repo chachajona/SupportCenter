@@ -21,7 +21,9 @@ use Inertia\Inertia;
 class SetupController extends Controller
 {
     protected $envManager;
+
     protected $environmentCheckService;
+
     protected $setupResetService;
 
     public function __construct(EnvManager $envManager, EnvironmentCheckService $environmentCheckService, SetupResetService $setupResetService)
@@ -34,6 +36,7 @@ class SetupController extends Controller
     public function index()
     {
         $step = $this->getCurrentStep();
+
         return Redirect::route("setup.{$step}");
     }
 
@@ -52,7 +55,7 @@ class SetupController extends Controller
     public function showDatabase()
     {
         // Validate that prerequisites are met before showing this step
-        if (!SetupStatus::isCompleted('prerequisites_checked')) {
+        if (! SetupStatus::isCompleted('prerequisites_checked')) {
             return redirect()->route('setup.index');
         }
 
@@ -64,7 +67,7 @@ class SetupController extends Controller
                 'db_port' => config('database.connections.mysql.port'),
                 'db_database' => config('database.connections.mysql.database'),
                 'db_username' => config('database.connections.mysql.username'),
-            ]
+            ],
         ]);
     }
 
@@ -93,7 +96,7 @@ class SetupController extends Controller
             $this->envManager->saveDatabaseCredentials($credentials);
         } else {
             foreach ($credentials as $k => $v) {
-                Config::set('database.connections.mysql.' . strtolower($k), $v);
+                Config::set('database.connections.mysql.'.strtolower($k), $v);
             }
         }
 
@@ -117,9 +120,10 @@ class SetupController extends Controller
 
         } catch (\Exception $e) {
             if ($request->header('X-Inertia', false)) {
-                return redirect()->route('setup.database')->withErrors(['database' => 'Database connection failed: ' . $e->getMessage()]);
+                return redirect()->route('setup.database')->withErrors(['database' => 'Database connection failed: '.$e->getMessage()]);
             }
-            return response()->json(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()], 500);
+
+            return response()->json(['success' => false, 'message' => 'Database connection failed: '.$e->getMessage()], 500);
         }
     }
 
@@ -142,7 +146,7 @@ class SetupController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Database migrations completed.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Migration failed: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Migration failed: '.$e->getMessage()], 500);
         }
     }
 
@@ -165,14 +169,14 @@ class SetupController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Roles and permissions seeded.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Seeding failed: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Seeding failed: '.$e->getMessage()], 500);
         }
     }
 
     public function showAppSettings()
     {
         // Validate that prerequisites are met before showing this step
-        if (!SetupStatus::isCompleted('roles_seeded')) {
+        if (! SetupStatus::isCompleted('roles_seeded')) {
             return redirect()->route('setup.index');
         }
 
@@ -182,21 +186,21 @@ class SetupController extends Controller
             'data' => [
                 'app_name' => config('app.name'),
                 'app_url' => config('app.url'),
-            ]
+            ],
         ]);
     }
 
     public function showRolesSeeded()
     {
         // Validate that prerequisites are met before showing this step
-        if (!SetupStatus::isCompleted('database_migrated')) {
+        if (! SetupStatus::isCompleted('database_migrated')) {
             return redirect()->route('setup.index');
         }
 
         return Inertia::render('setup/index', [
             'currentStep' => 'roles_seeded',
             'steps' => $this->getStepsStatus(),
-            'data' => []
+            'data' => [],
         ]);
     }
 
@@ -255,9 +259,10 @@ class SetupController extends Controller
             if ($request->header('X-Inertia', false)) {
                 return redirect()->route('setup.complete');
             }
+
             return response()->json(['success' => true, 'message' => 'Administrator created.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Admin creation failed: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Admin creation failed: '.$e->getMessage()], 500);
         }
     }
 
@@ -267,7 +272,7 @@ class SetupController extends Controller
             SetupStatus::markCompleted('setup_completed');
             $this->cleanupSetupSystem();
 
-            Log::info('Support Center setup completed successfully. ' . now()->toISOString());
+            Log::info('Support Center setup completed successfully. '.now()->toISOString());
 
             if ($request->header('X-Inertia', false)) {
                 // Inertia requires a redirect for POST/PUT/PATCH/DELETE success.
@@ -280,7 +285,7 @@ class SetupController extends Controller
                 'redirect' => route('login'),
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Setup completion failed: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Setup completion failed: '.$e->getMessage()], 500);
         }
     }
 
@@ -324,7 +329,7 @@ class SetupController extends Controller
     public function showComplete(Request $request)
     {
         // If the final step hasn't run yet, complete it now.
-        if (!SetupStatus::isSetupCompleted()) {
+        if (! SetupStatus::isSetupCompleted()) {
             SetupStatus::markCompleted('setup_completed');
             $this->cleanupSetupSystem();
             Log::info('Support Center setup completed via GET /setup/complete.');
@@ -346,16 +351,22 @@ class SetupController extends Controller
 
     private function getCurrentStep(): string
     {
-        if (!SetupStatus::isCompleted('prerequisites_checked'))
+        if (! SetupStatus::isCompleted('prerequisites_checked')) {
             return 'prerequisites';
-        if (!$this->isDatabaseConnected() || !SetupStatus::isCompleted('database_configured'))
+        }
+        if (! $this->isDatabaseConnected() || ! SetupStatus::isCompleted('database_configured')) {
             return 'database';
-        if (!SetupStatus::isCompleted('database_migrated'))
-            return 'database'; // Migrations happen on db page
-        if (!SetupStatus::isCompleted('roles_seeded'))
-            return 'roles_seeded'; // Fixed: proper step name
-        if (!SetupStatus::isCompleted('admin_created'))
+        }
+        if (! SetupStatus::isCompleted('database_migrated')) {
+            return 'database';
+        } // Migrations happen on db page
+        if (! SetupStatus::isCompleted('roles_seeded')) {
+            return 'roles_seeded';
+        } // Fixed: proper step name
+        if (! SetupStatus::isCompleted('admin_created')) {
             return 'app_settings';
+        }
+
         return 'complete';
     }
 
@@ -363,6 +374,7 @@ class SetupController extends Controller
     {
         try {
             DB::connection()->getPdo();
+
             return true;
         } catch (\Exception $e) {
             return false;

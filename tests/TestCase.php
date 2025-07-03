@@ -4,11 +4,10 @@ namespace Tests;
 
 use App\Models\SetupStatus;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -71,7 +70,8 @@ abstract class TestCase extends BaseTestCase
     protected function withoutThrottling()
     {
         $this->app->bind('throttle', function () {
-            return new class {
+            return new class
+            {
                 public function handle($request, $next, ...$args)
                 {
                     return $next($request);
@@ -120,6 +120,7 @@ abstract class TestCase extends BaseTestCase
     {
         $result = parent::actingAs($user, $guard);
         $this->setUpAuthenticationSession();
+
         return $result;
     }
 
@@ -138,7 +139,7 @@ abstract class TestCase extends BaseTestCase
                 DB::statement('SET SESSION innodb_lock_wait_timeout = 5');
 
             } catch (\Exception $e) {
-                $this->markTestSkipped('MySQL test database not available: ' . $e->getMessage());
+                $this->markTestSkipped('MySQL test database not available: '.$e->getMessage());
             }
         }
     }
@@ -153,7 +154,7 @@ abstract class TestCase extends BaseTestCase
             $mysqlConfig = $connections['mysql'] ?? [];
             $testDbName = $mysqlConfig['database'] ?? null;
 
-            if (!$testDbName) {
+            if (! $testDbName) {
                 $this->markTestSkipped('No test database name configured');
             }
 
@@ -174,7 +175,7 @@ abstract class TestCase extends BaseTestCase
                 DB::connection()->statement('SELECT 1');
 
             } catch (\Exception $e) {
-                $this->markTestSkipped('Could not create test database: ' . $e->getMessage());
+                $this->markTestSkipped('Could not create test database: '.$e->getMessage());
             }
         }
     }
@@ -186,7 +187,7 @@ abstract class TestCase extends BaseTestCase
     {
         if (config('database.default') === 'mysql') {
             $result = DB::select('SELECT @@foreign_key_checks as fk_enabled');
-            if (!$result[0]->fk_enabled) {
+            if (! $result[0]->fk_enabled) {
                 DB::statement('SET foreign_key_checks = 1');
             }
         }
@@ -199,8 +200,10 @@ abstract class TestCase extends BaseTestCase
     {
         if (config('database.default') === 'mysql') {
             $result = DB::select('SELECT VERSION() as version');
+
             return $result[0]->version ?? null;
         }
+
         return null;
     }
 
@@ -210,8 +213,9 @@ abstract class TestCase extends BaseTestCase
     protected function mysqlSupportsJson(): bool
     {
         $version = $this->getMySQLVersion();
-        if (!$version)
+        if (! $version) {
             return false;
+        }
 
         return version_compare($version, '5.7.0', '>=');
     }

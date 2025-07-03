@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Role;
-use App\Models\Permission;
 use App\Models\Department;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\SetupStatus;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class RolePermissionSeeder extends Seeder
@@ -68,7 +67,7 @@ class RolePermissionSeeder extends Seeder
                 'assign',
                 'transfer',
                 'close',
-                'reopen'
+                'reopen',
             ],
 
             // User Management
@@ -82,7 +81,7 @@ class RolePermissionSeeder extends Seeder
                 'edit_all',
                 'delete',
                 'manage_roles',
-                'impersonate'
+                'impersonate',
             ],
 
             // Role Management
@@ -99,7 +98,7 @@ class RolePermissionSeeder extends Seeder
                 'approve_temporal',
                 'deny_temporal',
                 'view_matrix',
-                'edit_matrix'
+                'edit_matrix',
             ],
 
             // Department Management
@@ -109,7 +108,7 @@ class RolePermissionSeeder extends Seeder
                 'create',
                 'edit',
                 'delete',
-                'manage_hierarchy'
+                'manage_hierarchy',
             ],
 
             // System Administration
@@ -119,7 +118,7 @@ class RolePermissionSeeder extends Seeder
                 'backup',
                 'logs_view',
                 'plugins_manage',
-                'manage'
+                'manage',
             ],
 
             // Audit and Compliance
@@ -127,7 +126,7 @@ class RolePermissionSeeder extends Seeder
                 'view_logs',
                 'export_data',
                 'compliance_reports',
-                'view'
+                'view',
             ],
 
             // Knowledge Management
@@ -136,7 +135,7 @@ class RolePermissionSeeder extends Seeder
                 'edit_articles',
                 'approve_articles',
                 'manage_categories',
-                'version_control'
+                'version_control',
             ],
 
             // SLA Management
@@ -145,7 +144,7 @@ class RolePermissionSeeder extends Seeder
                 'create',
                 'edit',
                 'enforce',
-                'escalate'
+                'escalate',
             ],
 
             // Reports and Analytics
@@ -155,7 +154,7 @@ class RolePermissionSeeder extends Seeder
                 'view_all',
                 'create_custom',
                 'export',
-                'schedule'
+                'schedule',
             ],
 
             // Analytics (RBAC Dashboard)
@@ -164,7 +163,7 @@ class RolePermissionSeeder extends Seeder
                 'view_own',
                 'view_department',
                 'view_all',
-                'export'
+                'export',
             ],
 
             // Helpdesk Analytics
@@ -173,13 +172,13 @@ class RolePermissionSeeder extends Seeder
                 'view_own',
                 'view_department',
                 'view_all',
-                'export'
+                'export',
             ],
 
             // Monitoring
             'monitoring' => [
                 'view',
-                'export'
+                'export',
             ],
 
             // Emergency Access Management
@@ -188,7 +187,7 @@ class RolePermissionSeeder extends Seeder
                 'grant',
                 'revoke',
                 'manage',
-                'recover'
+                'recover',
             ],
 
             // Permissions
@@ -196,8 +195,8 @@ class RolePermissionSeeder extends Seeder
                 'view',
                 'create',
                 'edit',
-                'delete'
-            ]
+                'delete',
+            ],
         ];
 
         foreach ($permissions as $resource => $actions) {
@@ -250,7 +249,7 @@ class RolePermissionSeeder extends Seeder
                 'display_name' => 'Knowledge Curator',
                 'description' => 'Manages knowledge base and content',
                 'hierarchy_level' => 2,
-            ]
+            ],
         ];
 
         foreach ($roles as $roleName => $roleData) {
@@ -283,7 +282,7 @@ class RolePermissionSeeder extends Seeder
                 'users.edit_own',
                 'departments.view_own',
                 'knowledge.create_articles',
-                'reports.view_own'
+                'reports.view_own',
             ],
 
             'department_manager' => [
@@ -307,7 +306,7 @@ class RolePermissionSeeder extends Seeder
                 'knowledge.approve_articles',
                 // NEW: Analytics
                 'analytics.view_department',
-                'helpdesk_analytics.view_department'
+                'helpdesk_analytics.view_department',
             ],
 
             'regional_manager' => [
@@ -327,7 +326,7 @@ class RolePermissionSeeder extends Seeder
                 'analytics.view_all',
                 'analytics.export',
                 'helpdesk_analytics.view_all',
-                'helpdesk_analytics.export'
+                'helpdesk_analytics.export',
             ],
 
             'system_administrator' => [
@@ -343,7 +342,7 @@ class RolePermissionSeeder extends Seeder
                 'audit.export_data',
                 'audit.compliance_reports',
                 'reports.view_all',
-                'reports.export'
+                'reports.export',
             ],
 
             'knowledge_curator' => [
@@ -354,14 +353,15 @@ class RolePermissionSeeder extends Seeder
                 'knowledge.approve_articles',
                 'knowledge.manage_categories',
                 'knowledge.version_control',
-                'reports.view_department'
-            ]
+                'reports.view_department',
+            ],
         ];
 
         foreach ($rolePermissions as $roleName => $permissions) {
             $role = Role::where('name', $roleName)->first();
-            if (!$role)
+            if (! $role) {
                 continue;
+            }
 
             // Handle system administrator special case
             if ($roleName === 'system_administrator') {

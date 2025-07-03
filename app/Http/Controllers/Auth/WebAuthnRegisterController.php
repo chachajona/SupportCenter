@@ -27,11 +27,11 @@ class WebAuthnRegisterController extends Controller
     public function store(AttestedRequest $request): JsonResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255',
         ]);
 
         $credential = $request->save([
-            'alias' => $request->input('name')
+            'alias' => $request->input('name'),
         ]);
 
         // Log successful WebAuthn credential registration
@@ -54,7 +54,7 @@ class WebAuthnRegisterController extends Controller
                 'type' => 'security-key',
                 'created_at' => $credential->created_at?->toISOString(),
             ],
-            'message' => 'Passkey registered successfully!'
+            'message' => 'Passkey registered successfully!',
         ]);
     }
 }

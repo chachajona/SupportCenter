@@ -4,17 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmergencyAccess;
-use App\Models\User;
 use App\Models\Permission;
 use App\Models\PermissionAudit;
+use App\Models\User;
+use App\Services\EmergencyAccessService;
 use App\Services\TemporalAccessService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use Carbon\Carbon;
-use App\Services\EmergencyAccessService;
 
 class EmergencyAccessController extends Controller
 {
@@ -22,7 +21,7 @@ class EmergencyAccessController extends Controller
     {
         $query = EmergencyAccess::with([
             'user:id,name,email',
-            'grantedBy:id,name,email'
+            'grantedBy:id,name,email',
         ]);
 
         // Apply filters
@@ -74,7 +73,7 @@ class EmergencyAccessController extends Controller
                 'user' => [
                     'id' => $access->user->id,
                     'name' => $access->user->name,
-                    'email' => $access->user->email
+                    'email' => $access->user->email,
                 ],
                 'permissions' => $access->permissions,
                 'reason' => $access->reason,
@@ -86,7 +85,7 @@ class EmergencyAccessController extends Controller
                 'granted_by_user' => [
                     'id' => $access->grantedBy->id,
                     'name' => $access->grantedBy->name,
-                    'email' => $access->grantedBy->email
+                    'email' => $access->grantedBy->email,
                 ],
                 'is_valid' => $access->isValid(),
                 'remaining_time' => $access->remaining_time,
@@ -159,12 +158,12 @@ class EmergencyAccessController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Emergency access granted successfully'
+                'message' => 'Emergency access granted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to grant emergency access: ' . $e->getMessage()
+                'message' => 'Failed to grant emergency access: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -173,7 +172,7 @@ class EmergencyAccessController extends Controller
     {
         $emergencyAccess = EmergencyAccess::with([
             'user:id,name,email',
-            'grantedBy:id,name,email'
+            'grantedBy:id,name,email',
         ])->findOrFail($id);
 
         return response()->json([
@@ -182,7 +181,7 @@ class EmergencyAccessController extends Controller
             'user' => [
                 'id' => $emergencyAccess->user->id,
                 'name' => $emergencyAccess->user->name,
-                'email' => $emergencyAccess->user->email
+                'email' => $emergencyAccess->user->email,
             ],
             'permissions' => $emergencyAccess->permissions,
             'reason' => $emergencyAccess->reason,
@@ -194,7 +193,7 @@ class EmergencyAccessController extends Controller
             'granted_by_user' => [
                 'id' => $emergencyAccess->grantedBy->id,
                 'name' => $emergencyAccess->grantedBy->name,
-                'email' => $emergencyAccess->grantedBy->email
+                'email' => $emergencyAccess->grantedBy->email,
             ],
             'is_valid' => $emergencyAccess->isValid(),
             'remaining_time' => $emergencyAccess->remaining_time,
@@ -216,10 +215,10 @@ class EmergencyAccessController extends Controller
         try {
             $emergencyAccess = EmergencyAccess::findOrFail($id);
 
-            if (!$emergencyAccess->markAsUsed()) {
+            if (! $emergencyAccess->markAsUsed()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Emergency access is not valid or already expired'
+                    'message' => 'Emergency access is not valid or already expired',
                 ], 400);
             }
 
@@ -234,17 +233,17 @@ class EmergencyAccessController extends Controller
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'performed_by' => Auth::id(),
-                'reason' => "Emergency access marked as used",
+                'reason' => 'Emergency access marked as used',
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Emergency access marked as used'
+                'message' => 'Emergency access marked as used',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to mark emergency access as used: ' . $e->getMessage()
+                'message' => 'Failed to mark emergency access as used: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -262,12 +261,12 @@ class EmergencyAccessController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Cleaned up {$expiredCount} expired emergency access records"
+                'message' => "Cleaned up {$expiredCount} expired emergency access records",
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to cleanup emergency access: ' . $e->getMessage()
+                'message' => 'Failed to cleanup emergency access: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -306,7 +305,7 @@ class EmergencyAccessController extends Controller
 
     private function getAccessStatus(EmergencyAccess $access): string
     {
-        if (!$access->is_active) {
+        if (! $access->is_active) {
             return 'revoked';
         }
 
@@ -383,7 +382,7 @@ class EmergencyAccessController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Recovery failed: ' . $e->getMessage(),
+                'message' => 'Recovery failed: '.$e->getMessage(),
             ], 500);
         }
     }

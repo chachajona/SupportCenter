@@ -8,9 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\TemporalAccessService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -20,8 +20,7 @@ final class TemporalAccessController extends Controller
 {
     public function __construct(
         private readonly TemporalAccessService $temporalAccessService
-    ) {
-    }
+    ) {}
 
     /**
      * Display temporal access requests management page
@@ -151,7 +150,7 @@ final class TemporalAccessController extends Controller
         if ($durationMinutes < 1 || $durationMinutes > 10080) { // Max 7 days
             return response()->json([
                 'message' => 'Invalid duration. Maximum allowed is 7 days.',
-                'errors' => ['duration' => ['Duration exceeds maximum allowed limit.']]
+                'errors' => ['duration' => ['Duration exceeds maximum allowed limit.']],
             ], 422);
         }
 
@@ -185,8 +184,8 @@ final class TemporalAccessController extends Controller
                     'data' => [
                         'user_id' => $user->id,
                         'roles_count' => count($validated['role_ids']),
-                        'duration' => $validated['duration'] . ' ' . $validated['duration_unit'],
-                    ]
+                        'duration' => $validated['duration'].' '.$validated['duration_unit'],
+                    ],
                 ]);
             }
 
@@ -198,11 +197,11 @@ final class TemporalAccessController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'message' => 'Failed to submit temporal access request',
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ], 500);
             }
 
-            return redirect()->back()->withErrors(['error' => 'Failed to submit request: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors(['error' => 'Failed to submit request: '.$e->getMessage()]);
         }
     }
 
@@ -231,7 +230,7 @@ final class TemporalAccessController extends Controller
         if ($durationMinutes < 1) {
             return response()->json([
                 'message' => 'Invalid duration specified.',
-                'errors' => ['duration' => ['Duration must be at least 1 minute.']]
+                'errors' => ['duration' => ['Duration must be at least 1 minute.']],
             ], 422);
         }
 
@@ -264,7 +263,7 @@ final class TemporalAccessController extends Controller
                         'role_name' => $role->display_name,
                         'duration_minutes' => $durationMinutes,
                         'expires_at' => now()->addMinutes($durationMinutes),
-                    ]
+                    ],
                 ]);
             }
 
@@ -274,11 +273,11 @@ final class TemporalAccessController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'message' => 'Failed to approve temporal access',
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ], 500);
             }
 
-            return redirect()->back()->withErrors(['error' => 'Failed to approve request: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors(['error' => 'Failed to approve request: '.$e->getMessage()]);
         }
     }
 
@@ -311,7 +310,7 @@ final class TemporalAccessController extends Controller
                         'role_name' => $role->display_name,
                         'denied_by' => Auth::user()->name,
                         'reason' => $validated['reason'],
-                    ]
+                    ],
                 ]);
             }
 
@@ -321,11 +320,11 @@ final class TemporalAccessController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'message' => 'Failed to deny temporal access request',
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ], 500);
             }
 
-            return redirect()->back()->withErrors(['error' => 'Failed to deny request: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors(['error' => 'Failed to deny request: '.$e->getMessage()]);
         }
     }
 }

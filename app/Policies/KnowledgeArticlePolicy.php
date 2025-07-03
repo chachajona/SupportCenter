@@ -18,7 +18,7 @@ final class KnowledgeArticlePolicy
             'knowledge.view',
             'knowledge.create_articles',
             'knowledge.edit_articles',
-            'knowledge.approve_articles'
+            'knowledge.approve_articles',
         ]);
     }
 
@@ -35,7 +35,7 @@ final class KnowledgeArticlePolicy
         // Department-specific articles
         if ($article->department_id !== null) {
             // Must have department access and knowledge permission
-            if (!$user->hasPermissionTo('knowledge.view')) {
+            if (! $user->hasPermissionTo('knowledge.view')) {
                 return false;
             }
 
@@ -106,7 +106,7 @@ final class KnowledgeArticlePolicy
     public function delete(User $user, KnowledgeArticle $article): bool
     {
         // Only users with approval permissions can delete
-        if (!$user->hasPermissionTo('knowledge.approve_articles')) {
+        if (! $user->hasPermissionTo('knowledge.approve_articles')) {
             return false;
         }
 
@@ -129,7 +129,7 @@ final class KnowledgeArticlePolicy
     public function publish(User $user, KnowledgeArticle $article): bool
     {
         // Must have approval permissions
-        if (!$user->hasPermissionTo('knowledge.approve_articles')) {
+        if (! $user->hasPermissionTo('knowledge.approve_articles')) {
             return false;
         }
 

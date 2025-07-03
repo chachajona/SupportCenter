@@ -9,8 +9,8 @@ use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 final class DeviceRegistrationMiddleware
 {
@@ -23,18 +23,18 @@ final class DeviceRegistrationMiddleware
 
         $user = Auth::user();
         /** @var User|null $user */
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
         // If the user_devices table doesn't exist yet (e.g., before migrations), skip the check to avoid SQL errors
-        if (!Schema::hasTable('user_devices')) {
+        if (! Schema::hasTable('user_devices')) {
             return $next($request);
         }
 
         $userAgent = (string) $request->header('User-Agent', '');
         $ip = $request->ip();
-        $deviceHash = hash('sha256', $userAgent . '|' . ($request->server('HTTP_SEC_CH_UA') ?? ''));
+        $deviceHash = hash('sha256', $userAgent.'|'.($request->server('HTTP_SEC_CH_UA') ?? ''));
 
         $device = Device::firstOrCreate([
             'user_id' => $user->id,

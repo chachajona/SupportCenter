@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Models\SetupStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Artisan;
-use App\Models\SetupStatus;
 
 class TwoFactorQrCodeControllerTest extends TestCase
 {
@@ -32,7 +32,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
 
     protected function enableTwoFactorForUser(User $user, bool $andConfirm = false): string
     {
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey(16); // Generate 16-character Base32 secret
 
         // Generate 8 random recovery codes, each 10 characters long
@@ -284,7 +284,7 @@ class TwoFactorQrCodeControllerTest extends TestCase
         preg_match('/width="(\d+)"/', $svgContent, $widthMatches);
         preg_match('/height="(\d+)"/', $svgContent, $heightMatches);
 
-        if (!empty($widthMatches) && !empty($heightMatches)) {
+        if (! empty($widthMatches) && ! empty($heightMatches)) {
             $width = (int) $widthMatches[1];
             $height = (int) $heightMatches[1];
 

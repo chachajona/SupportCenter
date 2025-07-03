@@ -93,7 +93,7 @@ class Department extends Model
      */
     public function getAncestors(): Collection
     {
-        if (!$this->path) {
+        if (! $this->path) {
             return collect();
         }
 
@@ -120,11 +120,11 @@ class Department extends Model
      */
     public function getDescendants(): Collection
     {
-        if (!$this->path) {
+        if (! $this->path) {
             return collect();
         }
 
-        return static::where('path', 'LIKE', $this->path . $this->id . '/%')
+        return static::where('path', 'LIKE', $this->path.$this->id.'/%')
             ->where('is_active', true)
             ->get();
     }
@@ -146,11 +146,11 @@ class Department extends Model
      */
     public function isAncestorOf(Department $department): bool
     {
-        if (!$department->path) {
+        if (! $department->path) {
             return false;
         }
 
-        return str_contains($department->path, '/' . $this->id . '/');
+        return str_contains($department->path, '/'.$this->id.'/');
     }
 
     /**
@@ -200,7 +200,7 @@ class Department extends Model
             if ($department->parent_id) {
                 $parent = static::find($department->parent_id);
                 if ($parent) {
-                    $department->path = $parent->path . $parent->id . '/';
+                    $department->path = $parent->path.$parent->id.'/';
                 } else {
                     // If parent doesn't exist, set path to empty to maintain consistency
                     $department->path = '/';
@@ -216,19 +216,19 @@ class Department extends Model
                 if ($department->parent_id) {
                     $newParent = static::find($department->parent_id);
 
-                    if (!$newParent) {
+                    if (! $newParent) {
                         // Parent doesn't exist, set to root
                         $department->path = '/';
                     } else {
                         // Check for circular reference
                         if ($department->exists && $newParent->isDescendantOf($department)) {
                             throw new \InvalidArgumentException(
-                                "Cannot set department '{$newParent->name}' as parent: it would create a circular reference. " .
-                                "The selected parent is a descendant of the current department."
+                                "Cannot set department '{$newParent->name}' as parent: it would create a circular reference. ".
+                                'The selected parent is a descendant of the current department.'
                             );
                         }
 
-                        $department->path = $newParent->path . $newParent->id . '/';
+                        $department->path = $newParent->path.$newParent->id.'/';
                     }
                 } else {
                     $department->path = '/';
@@ -245,11 +245,11 @@ class Department extends Model
      */
     protected function updateDescendantPaths(): void
     {
-        $descendants = static::where('path', 'LIKE', $this->getOriginal('path') . $this->id . '/%')->get();
+        $descendants = static::where('path', 'LIKE', $this->getOriginal('path').$this->id.'/%')->get();
 
         foreach ($descendants as $descendant) {
-            $oldPath = $this->getOriginal('path') . $this->id . '/';
-            $newPath = $this->path . $this->id . '/';
+            $oldPath = $this->getOriginal('path').$this->id.'/';
+            $newPath = $this->path.$this->id.'/';
             $descendant->path = str_replace($oldPath, $newPath, $descendant->path);
             $descendant->saveQuietly();
         }

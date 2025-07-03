@@ -16,14 +16,14 @@ final class RequirePasswordConfirmation
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$this->shouldConfirmPassword($request)) {
+        if (! $this->shouldConfirmPassword($request)) {
             return $next($request);
         }
 
         // For API requests or routes that return JSON, return 423 status code
         if ($request->expectsJson() || $this->shouldReturnJson($request)) {
             return response()->json([
-                'message' => 'Password confirmation required.'
+                'message' => 'Password confirmation required.',
             ], 423);
         }
 

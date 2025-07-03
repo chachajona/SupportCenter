@@ -5,21 +5,20 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SecurityLog;
 use App\Models\PermissionAudit;
+use App\Models\SecurityLog;
 use App\Services\ThreatResponseService;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Response;
 
 final class SecurityController extends Controller
 {
     public function __construct(
         private readonly ThreatResponseService $threatResponseService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

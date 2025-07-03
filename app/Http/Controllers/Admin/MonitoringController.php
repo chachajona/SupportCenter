@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\EmergencyAccess;
 use App\Models\PermissionAudit;
 use App\Models\SecurityLog;
 use App\Models\User;
-use App\Models\EmergencyAccess;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class MonitoringController extends Controller
 {
@@ -76,7 +75,7 @@ class MonitoringController extends Controller
         $startDate = $this->getStartDate($timeRange);
 
         // Generate comprehensive monitoring data export
-        $filename = 'monitoring-data-' . Carbon::now()->format('Y-m-d-H-i') . '.json';
+        $filename = 'monitoring-data-'.Carbon::now()->format('Y-m-d-H-i').'.json';
 
         $data = [
             'exported_at' => Carbon::now()->toISOString(),
@@ -209,7 +208,7 @@ class MonitoringController extends Controller
             $checksCount = Cache::remember("perf_history_{$timestamp->format('Y-m-d-H')}", 3600, function () use ($timestamp) {
                 return PermissionAudit::whereBetween('created_at', [
                     $timestamp->copy()->startOfHour(),
-                    $timestamp->copy()->endOfHour()
+                    $timestamp->copy()->endOfHour(),
                 ])->count();
             });
 

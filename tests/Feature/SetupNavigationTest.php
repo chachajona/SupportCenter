@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\SetupStatus;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -30,7 +29,7 @@ final class SetupNavigationTest extends TestCase
         // Should be able to access prerequisites page
         $response = $this->withoutMiddleware(['prevent.setup.access'])->get('/setup/prerequisites');
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->component('setup/index'));
+        $response->assertInertia(fn ($page) => $page->component('setup/index'));
     }
 
     #[Test]
@@ -51,7 +50,7 @@ final class SetupNavigationTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJson([
-            'message' => 'Database migrations already completed.'
+            'message' => 'Database migrations already completed.',
         ]);
     }
 
@@ -65,7 +64,7 @@ final class SetupNavigationTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJson([
-            'message' => 'Roles and permissions have already been seeded.'
+            'message' => 'Roles and permissions have already been seeded.',
         ]);
     }
 
@@ -107,7 +106,7 @@ final class SetupNavigationTest extends TestCase
         $response->assertStatus(422);
         $response->assertJson([
             'success' => false,
-            'message' => 'Database is already configured. Reconfiguration is not allowed.'
+            'message' => 'Database is already configured. Reconfiguration is not allowed.',
         ]);
     }
 
@@ -154,7 +153,7 @@ final class SetupNavigationTest extends TestCase
 
         // Check that the Inertia response contains the step data
         $response->assertInertia(
-            fn($page) => $page
+            fn ($page) => $page
                 ->component('setup/index')
                 ->where('currentStep', 'prerequisites')
         );

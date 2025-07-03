@@ -3,14 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\PermissionAudit;
-use App\Models\User;
 use App\Models\Permission;
-use App\Models\Role;
+use App\Models\PermissionAudit;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class AuditController extends Controller
 {
@@ -20,7 +18,7 @@ class AuditController extends Controller
             'user:id,name,email',
             'permission:id,name,display_name',
             'role:id,name,display_name',
-            'performedBy:id,name,email'
+            'performedBy:id,name,email',
         ]);
 
         // Apply filters
@@ -83,19 +81,19 @@ class AuditController extends Controller
                 'user' => $audit->user ? [
                     'id' => $audit->user->id,
                     'name' => $audit->user->name,
-                    'email' => $audit->user->email
+                    'email' => $audit->user->email,
                 ] : null,
                 'permission_id' => $audit->permission_id,
                 'permission' => $audit->permission ? [
                     'id' => $audit->permission->id,
                     'name' => $audit->permission->name,
-                    'display_name' => $audit->permission->display_name
+                    'display_name' => $audit->permission->display_name,
                 ] : null,
                 'role_id' => $audit->role_id,
                 'role' => $audit->role ? [
                     'id' => $audit->role->id,
                     'name' => $audit->role->name,
-                    'display_name' => $audit->role->display_name
+                    'display_name' => $audit->role->display_name,
                 ] : null,
                 'action' => $audit->action,
                 'old_values' => $audit->old_values,
@@ -106,7 +104,7 @@ class AuditController extends Controller
                 'performed_by_user' => $audit->performedBy ? [
                     'id' => $audit->performedBy->id,
                     'name' => $audit->performedBy->name,
-                    'email' => $audit->performedBy->email
+                    'email' => $audit->performedBy->email,
                 ] : null,
                 'reason' => $audit->reason,
                 'created_at' => $audit->created_at->toISOString(),
@@ -124,7 +122,7 @@ class AuditController extends Controller
             'date_to',
             'performed_by',
             'permission',
-            'role'
+            'role',
         ]);
 
         return Inertia::render('admin/audit/index', [
@@ -148,7 +146,7 @@ class AuditController extends Controller
             'user:id,name,email',
             'permission:id,name,display_name,description',
             'role:id,name,display_name,description',
-            'performedBy:id,name,email'
+            'performedBy:id,name,email',
         ])->findOrFail($id);
 
         return response()->json([
@@ -157,21 +155,21 @@ class AuditController extends Controller
             'user' => $audit->user ? [
                 'id' => $audit->user->id,
                 'name' => $audit->user->name,
-                'email' => $audit->user->email
+                'email' => $audit->user->email,
             ] : null,
             'permission_id' => $audit->permission_id,
             'permission' => $audit->permission ? [
                 'id' => $audit->permission->id,
                 'name' => $audit->permission->name,
                 'display_name' => $audit->permission->display_name,
-                'description' => $audit->permission->description
+                'description' => $audit->permission->description,
             ] : null,
             'role_id' => $audit->role_id,
             'role' => $audit->role ? [
                 'id' => $audit->role->id,
                 'name' => $audit->role->name,
                 'display_name' => $audit->role->display_name,
-                'description' => $audit->role->description
+                'description' => $audit->role->description,
             ] : null,
             'action' => $audit->action,
             'old_values' => $audit->old_values,
@@ -182,7 +180,7 @@ class AuditController extends Controller
             'performed_by_user' => $audit->performedBy ? [
                 'id' => $audit->performedBy->id,
                 'name' => $audit->performedBy->name,
-                'email' => $audit->performedBy->email
+                'email' => $audit->performedBy->email,
             ] : null,
             'reason' => $audit->reason,
             'created_at' => $audit->created_at->toISOString(),
@@ -196,7 +194,7 @@ class AuditController extends Controller
             'user:id,name,email',
             'permission:id,name,display_name',
             'role:id,name,display_name',
-            'performedBy:id,name,email'
+            'performedBy:id,name,email',
         ]);
 
         // Apply same filters as index
@@ -226,7 +224,7 @@ class AuditController extends Controller
         // Limit export to prevent memory issues
         $audits = $query->limit(10000)->get();
 
-        $filename = 'audit-log-' . Carbon::now()->format('Y-m-d-H-i') . '.csv';
+        $filename = 'audit-log-'.Carbon::now()->format('Y-m-d-H-i').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -253,7 +251,7 @@ class AuditController extends Controller
                 'Performed By Name',
                 'Performed By Email',
                 'Reason',
-                'Timestamp'
+                'Timestamp',
             ]);
 
             // Data rows
@@ -277,7 +275,7 @@ class AuditController extends Controller
                     $audit->performedBy?->name ?? '',
                     $audit->performedBy?->email ?? '',
                     $audit->reason,
-                    $audit->created_at->toDateTimeString()
+                    $audit->created_at->toDateTimeString(),
                 ]);
             }
 

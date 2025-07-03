@@ -18,7 +18,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         $permissions = $user->getAllPermissions()->pluck('name')->unique()->values();
 
         return response()->json([
-            'roles' => $user->roles->map(fn($r) => [
+            'roles' => $user->roles->map(fn ($r) => [
                 'id' => $r->id,
                 'name' => $r->name,
                 'display_name' => $r->display_name,
@@ -34,7 +34,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
                     'parent_id' => $user->department->parent_id,
                     'path' => $user->department->path,
                     'is_active' => $user->department->is_active,
-                ]
+                ],
             ] : [],
         ]);
     });
@@ -64,5 +64,37 @@ Route::middleware(['auth:sanctum'])->group(function () {
             ->name('api.analytics.dashboard');
         Route::get('analytics/metrics', [App\Http\Controllers\Admin\HelpdeskAnalyticsController::class, 'getMetrics'])
             ->name('api.analytics.metrics');
+    });
+
+    // Phase 4: Export functionality
+    Route::prefix('tickets')->group(function () {
+        Route::get('export/csv', [App\Http\Controllers\TicketExportController::class, 'exportCsv'])->name('tickets.export.csv');
+        Route::get('export/summary', [App\Http\Controllers\TicketExportController::class, 'exportSummary'])->name('tickets.export.summary');
+        Route::get('export/stats', [App\Http\Controllers\TicketExportController::class, 'getExportStats'])->name('tickets.export.stats');
+    });
+
+    // User feedback endpoints
+    Route::prefix('feedback')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\UserFeedbackController::class, 'index'])->name('feedback.index');
+        Route::post('/', [App\Http\Controllers\Api\UserFeedbackController::class, 'store'])->name('feedback.store');
+        Route::get('{feedback}', [App\Http\Controllers\Api\UserFeedbackController::class, 'show'])->name('feedback.show');
+        Route::put('{feedback}', [App\Http\Controllers\Api\UserFeedbackController::class, 'update'])->name('feedback.update');
+        Route::delete('{feedback}', [App\Http\Controllers\Api\UserFeedbackController::class, 'destroy'])->name('feedback.destroy');
+
+        // Admin feedback management
+        Route::middleware('can:manage-feedback')->group(function () {
+            Route::get('analysis/summary', [App\Http\Controllers\Api\FeedbackAnalysisController::class, 'summary'])->name('feedback.analysis.summary');
+            Route::get('analysis/insights', [App\Http\Controllers\Api\FeedbackAnalysisController::class, 'insights'])->name('feedback.analysis.insights');
+            Route::get('analysis/top-requests', [App\Http\Controllers\Api\FeedbackAnalysisController::class, 'topRequests'])->name('feedback.analysis.top-requests');
+            Route::post('{feedback}/mark-reviewed', [App\Http\Controllers\Api\UserFeedbackController::class, 'markReviewed'])->name('feedback.mark-reviewed');
+            Route::post('{feedback}/mark-implemented', [App\Http\Controllers\Api\UserFeedbackController::class, 'markImplemented'])->name('feedback.mark-implemented');
+        });
+    });
+
+    // Health and monitoring endpoints
+    Route::prefix('system')->middleware('can:view-system-health')->group(function () {
+        Route::get('health', [App\Http\Controllers\Api\SystemHealthController::class, 'health'])->name('system.health');
+        Route::get('performance', [App\Http\Controllers\Api\SystemHealthController::class, 'performance'])->name('system.performance');
+        Route::get('metrics', [App\Http\Controllers\Api\SystemHealthController::class, 'metrics'])->name('system.metrics');
     });
 });

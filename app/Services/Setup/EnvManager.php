@@ -2,8 +2,8 @@
 
 namespace App\Services\Setup;
 
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\File;
 
 class EnvManager
 {
@@ -25,8 +25,6 @@ class EnvManager
 
     /**
      * Get the path to the .env file.
-     *
-     * @return string
      */
     public function getEnvPath(): string
     {
@@ -35,18 +33,15 @@ class EnvManager
 
     /**
      * Save database credentials to the .env file or in-memory config.
-     *
-     * @param array $credentials
-     * @return void
      */
     public function saveDatabaseCredentials(array $credentials): void
     {
         foreach ($credentials as $key => $value) {
-            $configKey = 'database.connections.mysql.' . strtolower($key);
+            $configKey = 'database.connections.mysql.'.strtolower($key);
             if ($this->isTesting) {
                 Config::set($configKey, $value);
             } else {
-                $this->updateEnvFile('DB_' . strtoupper($key), $value);
+                $this->updateEnvFile('DB_'.strtoupper($key), $value);
             }
         }
 
@@ -58,9 +53,6 @@ class EnvManager
 
     /**
      * Save other settings to the .env file or in-memory config.
-     *
-     * @param array $settings
-     * @return void
      */
     public function saveAppSettings(array $settings): void
     {
@@ -77,18 +69,16 @@ class EnvManager
     /**
      * Update a key in the .env file.
      *
-     * @param string $key
-     * @param mixed $value
-     * @return void
+     * @param  mixed  $value
      */
     private function updateEnvFile(string $key, $value): void
     {
-        if (!File::exists($this->envPath)) {
+        if (! File::exists($this->envPath)) {
             return;
         }
 
         $content = File::get($this->envPath);
-        $value = is_string($value) && str_contains($value, ' ') ? '"' . $value . '"' : $value;
+        $value = is_string($value) && str_contains($value, ' ') ? '"'.$value.'"' : $value;
 
         $escapedKey = preg_quote($key, '/');
 

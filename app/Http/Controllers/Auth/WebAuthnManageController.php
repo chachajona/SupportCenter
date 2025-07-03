@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\SecurityEventType;
 use App\Http\Controllers\Controller;
 use App\Models\SecurityLog;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Laragear\WebAuthn\Models\WebAuthnCredential;
 
 class WebAuthnManageController extends Controller
@@ -37,7 +37,7 @@ class WebAuthnManageController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Passkey removed successfully!'
+            'message' => 'Passkey removed successfully!',
         ]);
     }
 
@@ -52,11 +52,11 @@ class WebAuthnManageController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255',
         ]);
 
         $credential->update([
-            'alias' => $request->input('name')
+            'alias' => $request->input('name'),
         ]);
 
         return response()->json([
@@ -68,7 +68,7 @@ class WebAuthnManageController extends Controller
                 'created_at' => $credential->created_at,
                 'last_used_at' => $credential->updated_at,
             ],
-            'message' => 'Passkey updated successfully!'
+            'message' => 'Passkey updated successfully!',
         ]);
     }
 }

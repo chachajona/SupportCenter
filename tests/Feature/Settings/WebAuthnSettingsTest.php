@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Settings;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\WebAuthnCredential;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class WebAuthnSettingsTest extends TestCase
@@ -24,7 +24,7 @@ final class WebAuthnSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(
-            fn($page) => $page
+            fn ($page) => $page
                 ->component('settings/web-authn')
                 ->has('user')
                 ->has('credentials')
@@ -48,7 +48,7 @@ final class WebAuthnSettingsTest extends TestCase
         $response->assertOk();
         $response->assertJson([
             'success' => true,
-            'message' => 'WebAuthn enabled successfully.'
+            'message' => 'WebAuthn enabled successfully.',
         ]);
 
         $this->assertTrue($user->fresh()->webauthn_enabled);
@@ -93,7 +93,7 @@ final class WebAuthnSettingsTest extends TestCase
         $response->assertOk();
         $response->assertJson([
             'success' => true,
-            'message' => 'WebAuthn disabled successfully.'
+            'message' => 'WebAuthn disabled successfully.',
         ]);
 
         $user->refresh();
@@ -223,7 +223,7 @@ final class WebAuthnSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(
-            fn($page) => $page
+            fn ($page) => $page
                 ->component('settings/web-authn')
                 ->where('user.webauthn_enabled', true)
                 ->where('user.preferred_mfa_method', 'webauthn')

@@ -29,8 +29,9 @@ class RolePermissionMiddleware
         $user = $request->user();
 
         // Check if user is authenticated
-        if (!$user) {
+        if (! $user) {
             $this->logUnauthorizedAttempt($request, 'unauthenticated', $permissions);
+
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -45,6 +46,7 @@ class RolePermissionMiddleware
             ]);
 
             $this->auditUnauthorizedAccess($user, $request, $permissions, 'rate_limit_exceeded');
+
             return response()->json(['error' => 'Too many requests'], 429);
         }
 
@@ -65,12 +67,13 @@ class RolePermissionMiddleware
             ]);
         }
 
-        if (!$hasPermission) {
+        if (! $hasPermission) {
             $this->auditUnauthorizedAccess($user, $request, $permissions, 'insufficient_permissions');
+
             return response()->json([
                 'error' => 'Insufficient permissions',
                 'required_permissions' => $permissions,
-                'message' => 'You do not have the required permissions to access this resource.'
+                'message' => 'You do not have the required permissions to access this resource.',
             ], 403);
         }
 

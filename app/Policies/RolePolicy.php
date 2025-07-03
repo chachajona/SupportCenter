@@ -17,7 +17,7 @@ class RolePolicy
     {
         return $user->hasAnyPermission([
             'roles.view_all',
-            'roles.view_department'
+            'roles.view_department',
         ]);
     }
 
@@ -34,6 +34,7 @@ class RolePolicy
         // Department managers can view roles they can assign
         if ($user->hasPermissionTo('roles.view_department')) {
             $userMaxHierarchy = $user->roles()->max('hierarchy_level') ?? 0;
+
             return $role->hierarchy_level <= $userMaxHierarchy;
         }
 
@@ -54,12 +55,13 @@ class RolePolicy
     public function update(User $user, Role $role): bool
     {
         // Only system administrators can update roles
-        if (!$user->hasPermissionTo('roles.update')) {
+        if (! $user->hasPermissionTo('roles.update')) {
             return false;
         }
 
         // Cannot update roles with equal or higher hierarchy level
         $userMaxHierarchy = $user->roles()->max('hierarchy_level') ?? 0;
+
         return $role->hierarchy_level < $userMaxHierarchy;
     }
 
@@ -69,12 +71,13 @@ class RolePolicy
     public function delete(User $user, Role $role): bool
     {
         // Only system administrators can delete roles
-        if (!$user->hasPermissionTo('roles.delete')) {
+        if (! $user->hasPermissionTo('roles.delete')) {
             return false;
         }
 
         // Cannot delete roles with equal or higher hierarchy level
         $userMaxHierarchy = $user->roles()->max('hierarchy_level') ?? 0;
+
         return $role->hierarchy_level < $userMaxHierarchy;
     }
 
@@ -100,12 +103,13 @@ class RolePolicy
     public function assign(User $user, Role $role): bool
     {
         // Check basic assignment permission
-        if (!$user->hasAnyPermission(['roles.assign_all', 'roles.assign_department'])) {
+        if (! $user->hasAnyPermission(['roles.assign_all', 'roles.assign_department'])) {
             return false;
         }
 
         // Cannot assign roles with equal or higher hierarchy level
         $userMaxHierarchy = $user->roles()->max('hierarchy_level') ?? 0;
+
         return $role->hierarchy_level < $userMaxHierarchy;
     }
 
@@ -115,12 +119,13 @@ class RolePolicy
     public function revoke(User $user, Role $role): bool
     {
         // Check basic revocation permission
-        if (!$user->hasAnyPermission(['roles.revoke_all', 'roles.revoke_department'])) {
+        if (! $user->hasAnyPermission(['roles.revoke_all', 'roles.revoke_department'])) {
             return false;
         }
 
         // Cannot revoke roles with equal or higher hierarchy level
         $userMaxHierarchy = $user->roles()->max('hierarchy_level') ?? 0;
+
         return $role->hierarchy_level < $userMaxHierarchy;
     }
 
@@ -130,12 +135,13 @@ class RolePolicy
     public function managePermissions(User $user, Role $role): bool
     {
         // Only system administrators can manage role permissions
-        if (!$user->hasPermissionTo('roles.manage_permissions')) {
+        if (! $user->hasPermissionTo('roles.manage_permissions')) {
             return false;
         }
 
         // Cannot manage permissions for roles with equal or higher hierarchy level
         $userMaxHierarchy = $user->roles()->max('hierarchy_level') ?? 0;
+
         return $role->hierarchy_level < $userMaxHierarchy;
     }
 }

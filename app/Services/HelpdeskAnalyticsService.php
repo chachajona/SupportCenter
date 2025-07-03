@@ -4,22 +4,20 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Ticket;
-use App\Models\TicketStatus;
-use App\Models\TicketPriority;
-use App\Models\User;
 use App\Models\Department;
+use App\Models\Ticket;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 final class HelpdeskAnalyticsService
 {
     /**
      * Get dashboard metrics for helpdesk overview.
      *
-     * @param array<int> $departmentIds
+     * @param  array<int>  $departmentIds
      * @return array<string, mixed>
      */
     public function getDashboardMetrics(?array $departmentIds = null): array
@@ -38,14 +36,14 @@ final class HelpdeskAnalyticsService
             'assignment_metrics' => $this->getAssignmentMetrics($baseQuery),
             'trend_data' => $this->getTrendData($baseQuery),
             'department_performance' => $this->getDepartmentPerformance($departmentIds),
-            'agent_performance' => $this->getAgentPerformance($departmentIds)
+            'agent_performance' => $this->getAgentPerformance($departmentIds),
         ];
     }
 
     /**
      * Get overview metrics.
      *
-     * @param Builder<Ticket> $baseQuery
+     * @param  Builder<Ticket>  $baseQuery
      * @return array<string, mixed>
      */
     private function getOverviewMetrics(Builder $baseQuery): array
@@ -56,19 +54,19 @@ final class HelpdeskAnalyticsService
 
         // Current totals
         $totalTickets = (clone $baseQuery)->count();
-        $openTickets = (clone $baseQuery)->whereHas('status', fn($q) => $q->where('is_closed', false))->count();
-        $closedTickets = (clone $baseQuery)->whereHas('status', fn($q) => $q->where('is_closed', true))->count();
+        $openTickets = (clone $baseQuery)->whereHas('status', fn ($q) => $q->where('is_closed', false))->count();
+        $closedTickets = (clone $baseQuery)->whereHas('status', fn ($q) => $q->where('is_closed', true))->count();
 
         // Overdue tickets
         $overdueTickets = (clone $baseQuery)
             ->where('due_at', '<', now())
-            ->whereHas('status', fn($q) => $q->where('is_closed', false))
+            ->whereHas('status', fn ($q) => $q->where('is_closed', false))
             ->count();
 
         // Unassigned tickets
         $unassignedTickets = (clone $baseQuery)
             ->whereNull('assigned_to')
-            ->whereHas('status', fn($q) => $q->where('is_closed', false))
+            ->whereHas('status', fn ($q) => $q->where('is_closed', false))
             ->count();
 
         // Today's activity
@@ -92,14 +90,14 @@ final class HelpdeskAnalyticsService
             'resolved_today' => $resolvedToday,
             'created_this_week' => $createdThisWeek,
             'resolved_this_week' => $resolvedThisWeek,
-            'resolution_rate' => $totalTickets > 0 ? round(($closedTickets / $totalTickets) * 100, 1) : 0
+            'resolution_rate' => $totalTickets > 0 ? round(($closedTickets / $totalTickets) * 100, 1) : 0,
         ];
     }
 
     /**
      * Get tickets grouped by status.
      *
-     * @param Builder<Ticket> $baseQuery
+     * @param  Builder<Ticket>  $baseQuery
      * @return array<string, mixed>
      */
     private function getTicketsByStatus(Builder $baseQuery): array
@@ -115,8 +113,8 @@ final class HelpdeskAnalyticsService
                 $item->status->name => [
                     'count' => $item->count,
                     'color' => $item->status->color,
-                    'is_closed' => $item->status->is_closed
-                ]
+                    'is_closed' => $item->status->is_closed,
+                ],
             ];
         })->toArray();
     }
@@ -124,7 +122,7 @@ final class HelpdeskAnalyticsService
     /**
      * Get tickets grouped by priority.
      *
-     * @param Builder<Ticket> $baseQuery
+     * @param  Builder<Ticket>  $baseQuery
      * @return array<string, mixed>
      */
     private function getTicketsByPriority(Builder $baseQuery): array
@@ -140,8 +138,8 @@ final class HelpdeskAnalyticsService
                 $item->priority->name => [
                     'count' => $item->count,
                     'color' => $item->priority->color,
-                    'level' => $item->priority->level
-                ]
+                    'level' => $item->priority->level,
+                ],
             ];
         })->toArray();
     }
@@ -149,7 +147,7 @@ final class HelpdeskAnalyticsService
     /**
      * Get resolution metrics.
      *
-     * @param Builder<Ticket> $baseQuery
+     * @param  Builder<Ticket>  $baseQuery
      * @return array<string, mixed>
      */
     private function getResolutionMetrics(Builder $baseQuery): array
@@ -164,7 +162,7 @@ final class HelpdeskAnalyticsService
                 'average_resolution_time' => 0,
                 'median_resolution_time' => 0,
                 'resolution_time_by_priority' => [],
-                'sla_compliance' => 0
+                'sla_compliance' => 0,
             ];
         }
 
@@ -180,7 +178,8 @@ final class HelpdeskAnalyticsService
         $resolutionByPriority = $resolvedTickets
             ->groupBy('priority_id')
             ->map(function ($tickets) {
-                $times = $tickets->map(fn($ticket) => $ticket->created_at->diffInHours($ticket->resolved_at));
+                $times = $tickets->map(fn ($ticket) => $ticket->created_at->diffInHours($ticket->resolved_at));
+
                 return round($times->avg(), 1);
             })
             ->toArray();
@@ -190,6 +189,7 @@ final class HelpdeskAnalyticsService
             $resolutionHours = $ticket->created_at->diffInHours($ticket->resolved_at);
             // Simplified SLA: High priority (level 3+) = 24h, others = 72h
             $slaHours = $ticket->priority_id >= 3 ? 24 : 72;
+
             return $resolutionHours <= $slaHours;
         })->count();
 
@@ -199,14 +199,14 @@ final class HelpdeskAnalyticsService
             'average_resolution_time' => $averageResolutionTime,
             'median_resolution_time' => $medianResolutionTime,
             'resolution_time_by_priority' => $resolutionByPriority,
-            'sla_compliance' => $slaCompliance
+            'sla_compliance' => $slaCompliance,
         ];
     }
 
     /**
      * Get assignment metrics.
      *
-     * @param Builder<Ticket> $baseQuery
+     * @param  Builder<Ticket>  $baseQuery
      * @return array<string, mixed>
      */
     private function getAssignmentMetrics(Builder $baseQuery): array
@@ -227,7 +227,7 @@ final class HelpdeskAnalyticsService
 
         $assignmentDistribution = $assignmentData->mapWithKeys(function ($item) {
             return [
-                $item->assignedTo->name => $item->count
+                $item->assignedTo->name => $item->count,
             ];
         })->toArray();
 
@@ -235,14 +235,14 @@ final class HelpdeskAnalyticsService
             'assignment_rate' => $totalTickets > 0 ? round(($assignedTickets / $totalTickets) * 100, 1) : 0,
             'assigned_tickets' => $assignedTickets,
             'unassigned_tickets' => $unassignedTickets,
-            'assignment_distribution' => $assignmentDistribution
+            'assignment_distribution' => $assignmentDistribution,
         ];
     }
 
     /**
      * Get trend data for the last 30 days.
      *
-     * @param Builder<Ticket> $baseQuery
+     * @param  Builder<Ticket>  $baseQuery
      * @return array<string, mixed>
      */
     private function getTrendData(Builder $baseQuery): array
@@ -253,7 +253,7 @@ final class HelpdeskAnalyticsService
             $days->push([
                 'date' => $date->format('Y-m-d'),
                 'created' => (clone $baseQuery)->whereDate('created_at', $date)->count(),
-                'resolved' => (clone $baseQuery)->whereDate('resolved_at', $date)->count()
+                'resolved' => (clone $baseQuery)->whereDate('resolved_at', $date)->count(),
             ]);
         }
 
@@ -263,7 +263,7 @@ final class HelpdeskAnalyticsService
     /**
      * Get department performance metrics.
      *
-     * @param array<int>|null $departmentIds
+     * @param  array<int>|null  $departmentIds
      * @return array<string, mixed>
      */
     private function getDepartmentPerformance(?array $departmentIds): array
@@ -271,8 +271,8 @@ final class HelpdeskAnalyticsService
         $query = Department::query()
             ->withCount([
                 'tickets',
-                'tickets as open_tickets_count' => fn($q) => $q->whereHas('status', fn($sq) => $sq->where('is_closed', false)),
-                'tickets as resolved_tickets_count' => fn($q) => $q->whereHas('status', fn($sq) => $sq->where('is_closed', true))
+                'tickets as open_tickets_count' => fn ($q) => $q->whereHas('status', fn ($sq) => $sq->where('is_closed', false)),
+                'tickets as resolved_tickets_count' => fn ($q) => $q->whereHas('status', fn ($sq) => $sq->where('is_closed', true)),
             ]);
 
         if ($departmentIds !== null) {
@@ -288,7 +288,7 @@ final class HelpdeskAnalyticsService
                     'resolved_tickets' => $department->resolved_tickets_count,
                     'resolution_rate' => $department->tickets_count > 0
                         ? round(($department->resolved_tickets_count / $department->tickets_count) * 100, 1)
-                        : 0
+                        : 0,
                 ];
             })
             ->toArray();
@@ -297,16 +297,16 @@ final class HelpdeskAnalyticsService
     /**
      * Get agent performance metrics.
      *
-     * @param array<int>|null $departmentIds
+     * @param  array<int>|null  $departmentIds
      * @return array<string, mixed>
      */
     private function getAgentPerformance(?array $departmentIds): array
     {
         $query = User::query()
-            ->whereHas('roles', fn($q) => $q->whereIn('name', ['support_agent', 'department_manager']))
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['support_agent', 'department_manager']))
             ->withCount([
                 'assignedTickets as total_assigned',
-                'assignedTickets as resolved_assigned' => fn($q) => $q->whereHas('status', fn($sq) => $sq->where('is_closed', true))
+                'assignedTickets as resolved_assigned' => fn ($q) => $q->whereHas('status', fn ($sq) => $sq->where('is_closed', true)),
             ]);
 
         if ($departmentIds !== null) {
@@ -322,7 +322,7 @@ final class HelpdeskAnalyticsService
                     'resolved_tickets' => $user->resolved_assigned,
                     'resolution_rate' => $user->total_assigned > 0
                         ? round(($user->resolved_assigned / $user->total_assigned) * 100, 1)
-                        : 0
+                        : 0,
                 ];
             })
             ->toArray();
@@ -331,7 +331,7 @@ final class HelpdeskAnalyticsService
     /**
      * Get recent activity for dashboard.
      *
-     * @param array<int>|null $departmentIds
+     * @param  array<int>|null  $departmentIds
      * @return Collection<int, array<string, mixed>>
      */
     public function getRecentActivity(?array $departmentIds = null, int $limit = 10): Collection
@@ -352,15 +352,15 @@ final class HelpdeskAnalyticsService
                 'subject' => $ticket->subject,
                 'status' => [
                     'name' => $ticket->status->name,
-                    'color' => $ticket->status->color
+                    'color' => $ticket->status->color,
                 ],
                 'priority' => [
                     'name' => $ticket->priority->name,
-                    'color' => $ticket->priority->color
+                    'color' => $ticket->priority->color,
                 ],
                 'assigned_to' => $ticket->assignedTo?->name,
                 'created_by' => $ticket->createdBy->name,
-                'created_at' => $ticket->created_at->diffForHumans()
+                'created_at' => $ticket->created_at->diffForHumans(),
             ];
         });
     }

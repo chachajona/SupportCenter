@@ -29,7 +29,7 @@ final class TicketPriority extends Model
         'name',
         'color',
         'level',
-        'sort_order'
+        'sort_order',
     ];
 
     /**
@@ -39,7 +39,7 @@ final class TicketPriority extends Model
      */
     protected $casts = [
         'level' => 'integer',
-        'sort_order' => 'integer'
+        'sort_order' => 'integer',
     ];
 
     /**
@@ -55,7 +55,7 @@ final class TicketPriority extends Model
     /**
      * Scope to order by sort order.
      *
-     * @param Builder<TicketPriority> $query
+     * @param  Builder<TicketPriority>  $query
      * @return Builder<TicketPriority>
      */
     public function scopeOrdered(Builder $query): Builder
@@ -66,7 +66,7 @@ final class TicketPriority extends Model
     /**
      * Scope to filter by priority level.
      *
-     * @param Builder<TicketPriority> $query
+     * @param  Builder<TicketPriority>  $query
      */
     public function scopeByLevel(Builder $query, int $level): Builder
     {

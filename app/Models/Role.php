@@ -47,7 +47,7 @@ class Role extends SpatieRole
                 'granted_at',
                 'expires_at',
                 'is_active',
-                'delegation_reason'
+                'delegation_reason',
             ])
             ->withTimestamps();
     }

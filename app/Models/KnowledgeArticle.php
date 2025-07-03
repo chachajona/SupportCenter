@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Carbon\Carbon;
 
 /**
  * @property int $id
@@ -49,7 +49,7 @@ final class KnowledgeArticle extends Model
         'status',
         'is_public',
         'tags',
-        'published_at'
+        'published_at',
     ];
 
     /**
@@ -64,7 +64,7 @@ final class KnowledgeArticle extends Model
         'published_at' => 'datetime',
         'category_id' => 'integer',
         'department_id' => 'integer',
-        'author_id' => 'integer'
+        'author_id' => 'integer',
     ];
 
     /**
@@ -128,7 +128,7 @@ final class KnowledgeArticle extends Model
     {
         $this->update([
             'status' => 'published',
-            'published_at' => now()
+            'published_at' => now(),
         ]);
     }
 
@@ -143,7 +143,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope to only published articles.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopePublished(Builder $query): Builder
@@ -155,7 +155,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope to only public articles.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopePublic(Builder $query): Builder
@@ -166,7 +166,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope by department.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopeForDepartment(Builder $query, ?int $departmentId): Builder
@@ -184,7 +184,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope to search articles.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopeSearch(Builder $query, string $term): Builder
@@ -200,7 +200,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope for full-text search.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopeFullTextSearch(Builder $query, string $term): Builder
@@ -215,7 +215,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope by category.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopeInCategory(Builder $query, int $categoryId): Builder
@@ -226,7 +226,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope by tag.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopeWithTag(Builder $query, string $tag): Builder
@@ -238,7 +238,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope ordered by popularity.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopePopular(Builder $query): Builder
@@ -250,7 +250,7 @@ final class KnowledgeArticle extends Model
     /**
      * Scope ordered by recent.
      *
-     * @param Builder<KnowledgeArticle> $query
+     * @param  Builder<KnowledgeArticle>  $query
      * @return Builder<KnowledgeArticle>
      */
     public function scopeRecent(Builder $query): Builder

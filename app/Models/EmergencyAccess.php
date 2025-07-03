@@ -115,11 +115,12 @@ class EmergencyAccess extends Model
      */
     public function markAsUsed(): bool
     {
-        if (!$this->is_active || $this->expires_at <= now()) {
+        if (! $this->is_active || $this->expires_at <= now()) {
             return false;
         }
 
         $this->update(['used_at' => now()]);
+
         return true;
     }
 
@@ -144,7 +145,7 @@ class EmergencyAccess extends Model
      */
     public function getRemainingTimeAttribute(): string
     {
-        if (!$this->isValid()) {
+        if (! $this->isValid()) {
             return 'Expired';
         }
 
@@ -165,10 +166,10 @@ class EmergencyAccess extends Model
         parent::boot();
 
         static::creating(function ($emergencyAccess) {
-            if (!$emergencyAccess->granted_at) {
+            if (! $emergencyAccess->granted_at) {
                 $emergencyAccess->granted_at = now();
             }
-            if (!isset($emergencyAccess->is_active)) {
+            if (! isset($emergencyAccess->is_active)) {
                 $emergencyAccess->is_active = true;
             }
         });
@@ -192,7 +193,7 @@ class EmergencyAccess extends Model
     {
         return $this->is_active &&
             $this->expires_at > now() &&
-            !is_null($this->token) &&
+            ! is_null($this->token) &&
             is_null($this->used_at);
     }
 
