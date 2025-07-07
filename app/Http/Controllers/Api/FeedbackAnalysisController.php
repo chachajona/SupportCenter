@@ -10,9 +10,7 @@ use Illuminate\Http\JsonResponse;
 
 final class FeedbackAnalysisController extends Controller
 {
-    public function __construct(private readonly FeedbackAnalysisService $analysisService)
-    {
-    }
+    public function __construct(private readonly FeedbackAnalysisService $analysisService) {}
 
     /**
      * Return a summary of user feedback statistics.

@@ -65,10 +65,10 @@ class PerformanceMonitoring
         }
 
         // Add performance headers for debugging (only in non-production)
-        if (!app()->isProduction()) {
-            $response->headers->set('X-Execution-Time', $executionTime . 'ms');
-            $response->headers->set('X-Memory-Usage', $memoryUsage . 'MB');
-            $response->headers->set('X-Peak-Memory', $peakMemoryIncrease . 'MB');
+        if (! app()->isProduction()) {
+            $response->headers->set('X-Execution-Time', $executionTime.'ms');
+            $response->headers->set('X-Memory-Usage', $memoryUsage.'MB');
+            $response->headers->set('X-Peak-Memory', $peakMemoryIncrease.'MB');
         }
 
         // Store metrics in cache for dashboard aggregation
@@ -82,7 +82,7 @@ class PerformanceMonitoring
      */
     private function storeMetricsForDashboard(array $performanceData): void
     {
-        $cacheKey = 'performance_metrics_' . now()->format('Y_m_d_H');
+        $cacheKey = 'performance_metrics_'.now()->format('Y_m_d_H');
 
         // Get existing metrics for this hour
         $existingMetrics = cache()->get($cacheKey, []);
@@ -111,7 +111,7 @@ class PerformanceMonitoring
      */
     public static function getHourlyMetrics(): array
     {
-        $cacheKey = 'performance_metrics_' . now()->format('Y_m_d_H');
+        $cacheKey = 'performance_metrics_'.now()->format('Y_m_d_H');
         $metrics = cache()->get($cacheKey, []);
 
         if (empty($metrics)) {
@@ -130,8 +130,8 @@ class PerformanceMonitoring
         $statuses = array_column($metrics, 'status');
 
         $totalRequests = count($metrics);
-        $slowRequests = count(array_filter($executionTimes, fn($time) => $time > 500));
-        $errorRequests = count(array_filter($statuses, fn($status) => $status >= 400));
+        $slowRequests = count(array_filter($executionTimes, fn ($time) => $time > 500));
+        $errorRequests = count(array_filter($statuses, fn ($status) => $status >= 400));
 
         return [
             'avg_response_time' => round(array_sum($executionTimes) / $totalRequests, 2),

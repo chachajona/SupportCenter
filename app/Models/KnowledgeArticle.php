@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int $id
@@ -95,6 +96,16 @@ final class KnowledgeArticle extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * Get the embeddings for this article.
+     *
+     * @return HasOne<KbEmbedding>
+     */
+    public function embeddings(): HasOne
+    {
+        return $this->hasOne(KbEmbedding::class, 'article_id');
     }
 
     /**

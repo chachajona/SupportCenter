@@ -9,6 +9,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Fortify\Events\TwoFactorAuthenticationDisabled;
 use Laravel\Fortify\Events\TwoFactorAuthenticationEnabled;
 use Laravel\Fortify\RecoveryCode;
@@ -49,6 +51,12 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         $this->google2fa = new Google2FAService;
         $this->google2fa->setWindow(2); // Explicitly set a window
 
+        // Flush cache to reset rate limiter and other cached state between tests
+        Cache::flush();
+
+        // Reset two-factor rate limiter for the test IP to ensure clean state per test
+        RateLimiter::clear('127.0.0.1');
+
         Event::fake();
     }
 
@@ -78,7 +86,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
             // }
             return $this->google2fa->getCurrentOtp($decryptedSecret);
         } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-            Log::error('[2FA_TEST_DEBUG] Decryption failed in getValidOtp for user '.$user->id.': '.$e->getMessage());
+            Log::error('[2FA_TEST_DEBUG] Decryption failed in getValidOtp for user ' . $user->id . ': ' . $e->getMessage());
             throw $e;
         }
     }
@@ -92,7 +100,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         $user->two_factor_secret = $rawSecret;
 
         // Generate recovery codes and encrypt them properly
-        $recoveryCodesArray = Collection::times(8, fn () => RecoveryCode::generate())->all();
+        $recoveryCodesArray = Collection::times(8, fn() => RecoveryCode::generate())->all();
         // Manually encrypt and JSON-encode the recovery codes as expected by the User model
         $user->two_factor_recovery_codes = encrypt(json_encode($recoveryCodesArray));
 
@@ -109,7 +117,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         // Verify recovery codes were set up correctly
         $recoveryCodes = $user->recoveryCodes();
         if (empty($recoveryCodes)) {
-            throw new \RuntimeException('Failed to set up recovery codes for user '.$user->id);
+            throw new \RuntimeException('Failed to set up recovery codes for user ' . $user->id);
         }
 
         return $rawSecret;
@@ -245,7 +253,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         ]);
         $loginResponse->assertOk();
         $loginResponse->assertJson(['two_factor' => true]);
-        Log::debug('[TOTP_TEST] Session state after primary login: '.json_encode(session()->all()));
+        Log::debug('[TOTP_TEST] Session state after primary login: ' . json_encode(session()->all()));
 
         // 2. Verify that the user is properly set up for 2FA challenge
         $this->user->refresh();
@@ -271,8 +279,8 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         // Get recovery codes from the user model
         $recoveryCodes = $this->user->recoveryCodes();
 
-        Log::debug('[RECOVERY_TEST] User ID for login: '.$this->user->id);
-        Log::debug('[RECOVERY_TEST] Recovery codes from user model: '.json_encode($recoveryCodes));
+        Log::debug('[RECOVERY_TEST] User ID for login: ' . $this->user->id);
+        Log::debug('[RECOVERY_TEST] Recovery codes from user model: ' . json_encode($recoveryCodes));
 
         $this->assertNotEmpty($recoveryCodes, 'Recovery codes should exist and be an array.');
         $this->assertCount(8, $recoveryCodes, 'Should have exactly 8 recovery codes');
@@ -302,7 +310,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         $this->assertNull($this->user->two_factor_secret);
         $this->assertNull($this->user->two_factor_recovery_codes);
         $this->assertNull($this->user->two_factor_confirmed_at);
-        Event::assertDispatched(TwoFactorAuthenticationDisabled::class, fn ($event) => $event->user->is($this->user));
+        Event::assertDispatched(TwoFactorAuthenticationDisabled::class, fn($event) => $event->user->is($this->user));
     }
 
     // --- Additional Enhanced Test Cases ---
@@ -405,7 +413,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
 
         // Handle case where response might be a string or different format
         if (is_string($newCodes)) {
-            $this->markTestSkipped('Recovery codes regeneration returned unexpected format: '.$newCodes);
+            $this->markTestSkipped('Recovery codes regeneration returned unexpected format: ' . $newCodes);
 
             return;
         }
@@ -530,8 +538,8 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         // Allow 500 for now while we debug the underlying issue
         $this->assertTrue(
             in_array($invalidChallengeResponse->status(), [422, 400, 500]),
-            'Should return validation error for invalid 2FA code, got: '.$invalidChallengeResponse->status().
-            ' with response: '.$invalidChallengeResponse->getContent()
+            'Should return validation error for invalid 2FA code, got: ' . $invalidChallengeResponse->status() .
+            ' with response: ' . $invalidChallengeResponse->getContent()
         );
 
         // Step 4: Test 2FA challenge with invalid recovery code
@@ -548,7 +556,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
 
         $this->assertTrue(
             in_array($invalidRecoveryResponse->status(), [422, 400, 500]),
-            'Should return validation error for invalid recovery code, got: '.$invalidRecoveryResponse->status()
+            'Should return validation error for invalid recovery code, got: ' . $invalidRecoveryResponse->status()
         );
 
         // Step 5: Test that session persists through failed attempts
@@ -606,7 +614,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         // Should get either validation error or specific 2FA error, not authentication error
         $this->assertTrue(
             in_array($postChallengeResponse->status(), [422, 400, 429, 500]), // 429 for throttling, 500 for internal errors
-            'Should return appropriate error status, not 401. Got: '.$postChallengeResponse->status()
+            'Should return appropriate error status, not 401. Got: ' . $postChallengeResponse->status()
         );
     }
 
@@ -634,10 +642,10 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         $sessionData = session()->all();
         $this->assertTrue(
             isset($sessionData['login.id']) || isset($sessionData['two_factor_login_attempt']) ||
-            isset($sessionData['auth']) || ! empty(array_filter($sessionData, function ($key) {
+            isset($sessionData['auth']) || !empty(array_filter($sessionData, function ($key) {
                 return str_contains(strtolower($key), 'login') || str_contains(strtolower($key), 'two');
             }, ARRAY_FILTER_USE_KEY)),
-            'Session should contain 2FA-related data after login. Session keys: '.implode(', ', array_keys($sessionData))
+            'Session should contain 2FA-related data after login. Session keys: ' . implode(', ', array_keys($sessionData))
         );
 
         // Step 3: Make 2FA challenge attempt and verify session is maintained
@@ -652,7 +660,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         // Session should still contain relevant data
         $this->assertTrue(
             isset($sessionAfterChallenge['login.id']) || isset($sessionAfterChallenge['two_factor_login_attempt']) ||
-            isset($sessionAfterChallenge['auth']) || ! empty(array_filter($sessionAfterChallenge, function ($key) {
+            isset($sessionAfterChallenge['auth']) || !empty(array_filter($sessionAfterChallenge, function ($key) {
                 return str_contains(strtolower($key), 'login') || str_contains(strtolower($key), 'two');
             }, ARRAY_FILTER_USE_KEY)),
             'Session should maintain 2FA-related data after challenge attempt'
@@ -696,8 +704,8 @@ class TwoFactorAuthenticationFlowTest extends TestCase
         // 500 is acceptable if it's due to decryption (missing session state), not rate limiter misconfiguration
         $this->assertTrue(
             in_array($challengeResponse->status(), [422, 400, 500]) &&
-            ! str_contains($responseContent, 'Rate limiter [two-factor] is not defined'),
-            'Should return appropriate error (422/400/500) without rate limiter configuration error. Got: '.$challengeResponse->status()
+            !str_contains($responseContent, 'Rate limiter [two-factor] is not defined'),
+            'Should return appropriate error (422/400/500) without rate limiter configuration error. Got: ' . $challengeResponse->status()
         );
     }
 
@@ -743,7 +751,7 @@ class TwoFactorAuthenticationFlowTest extends TestCase
                 // 6th attempt should be rate limited (429) OR still work if rate limiting is based on session
                 $this->assertTrue(
                     in_array($challengeResponse->status(), [422, 400, 429, 500]),
-                    "Attempt $i should either be rate limited (429) or validation error (422/400). Got: ".$challengeResponse->status()
+                    "Attempt $i should either be rate limited (429) or validation error (422/400). Got: " . $challengeResponse->status()
                 );
             }
         }

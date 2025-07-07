@@ -17,13 +17,11 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Clear rate limiting for tests
-        RateLimiter::clear('setup');
     }
 
     /**
      * Complete setup for testing purposes to avoid middleware redirections.
+     * Call this manually in tests that need setup to be marked as completed.
      */
     protected function completeSetupForTesting(): void
     {
@@ -39,8 +37,26 @@ abstract class TestCase extends BaseTestCase
         file_put_contents($setupLockFile, json_encode([
             'completed_at' => now()->toISOString(),
             'completed_by' => 'testing_suite',
-            'version' => '1.0.0-test',
+            'version' => '1.0'
         ]));
+    }
+
+    /**
+     * Flush cache manually when needed in tests.
+     * Call this after database is ready to avoid transaction conflicts.
+     */
+    protected function flushCacheForTesting(): void
+    {
+        Cache::flush();
+    }
+
+    /**
+     * Clear rate limiting manually when needed in tests.
+     * Call this after database is ready to avoid transaction conflicts.
+     */
+    protected function clearRateLimitingForTesting(): void
+    {
+        RateLimiter::clear('setup');
     }
 
     /**
@@ -49,7 +65,7 @@ abstract class TestCase extends BaseTestCase
     protected function resetSetupForTesting(): void
     {
         // Clear rate limiting
-        RateLimiter::clear('setup');
+        $this->clearRateLimitingForTesting();
 
         // Remove lock file
         $setupLockFile = storage_path('app/setup.lock');
@@ -57,11 +73,17 @@ abstract class TestCase extends BaseTestCase
             unlink($setupLockFile);
         }
 
-        // Reset all setup status
-        SetupStatus::resetSetup();
+        // Clear setup status records
+        SetupStatus::whereIn('step', [
+            'database_migration',
+            'roles_seeded',
+            'permissions_seeded',
+            'admin_created',
+            'setup_completed'
+        ])->delete();
 
         // Clear caches
-        Cache::flush();
+        $this->flushCacheForTesting();
     }
 
     /**
@@ -70,8 +92,7 @@ abstract class TestCase extends BaseTestCase
     protected function withoutThrottling()
     {
         $this->app->bind('throttle', function () {
-            return new class
-            {
+            return new class {
                 public function handle($request, $next, ...$args)
                 {
                     return $next($request);
@@ -139,7 +160,7 @@ abstract class TestCase extends BaseTestCase
                 DB::statement('SET SESSION innodb_lock_wait_timeout = 5');
 
             } catch (\Exception $e) {
-                $this->markTestSkipped('MySQL test database not available: '.$e->getMessage());
+                $this->markTestSkipped('MySQL test database not available: ' . $e->getMessage());
             }
         }
     }
@@ -154,7 +175,7 @@ abstract class TestCase extends BaseTestCase
             $mysqlConfig = $connections['mysql'] ?? [];
             $testDbName = $mysqlConfig['database'] ?? null;
 
-            if (! $testDbName) {
+            if (!$testDbName) {
                 $this->markTestSkipped('No test database name configured');
             }
 
@@ -175,7 +196,7 @@ abstract class TestCase extends BaseTestCase
                 DB::connection()->statement('SELECT 1');
 
             } catch (\Exception $e) {
-                $this->markTestSkipped('Could not create test database: '.$e->getMessage());
+                $this->markTestSkipped('Could not create test database: ' . $e->getMessage());
             }
         }
     }
@@ -187,7 +208,7 @@ abstract class TestCase extends BaseTestCase
     {
         if (config('database.default') === 'mysql') {
             $result = DB::select('SELECT @@foreign_key_checks as fk_enabled');
-            if (! $result[0]->fk_enabled) {
+            if (!$result[0]->fk_enabled) {
                 DB::statement('SET foreign_key_checks = 1');
             }
         }
@@ -213,7 +234,7 @@ abstract class TestCase extends BaseTestCase
     protected function mysqlSupportsJson(): bool
     {
         $version = $this->getMySQLVersion();
-        if (! $version) {
+        if (!$version) {
             return false;
         }
 

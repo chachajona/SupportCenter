@@ -21,8 +21,14 @@ class RoleManagementTest extends TestCase
     {
         parent::setUp();
 
+        // Disable CSRF protection for JSON requests in this test suite
+        $this->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
         // Seed permissions and roles
         $this->artisan('db:seed', ['--class' => 'RolePermissionSeeder']);
+
+        // Mark setup as completed to satisfy SetupMiddleware redirects
+        $this->completeSetupForTesting();
 
         // Create admin user
         $this->admin = User::factory()->create();
@@ -40,7 +46,7 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn ($page) => $page->component('admin/roles/index')
+            fn($page) => $page->component('admin/roles/index')
                 ->has('roles')
                 ->has('permissions')
         );
@@ -152,7 +158,7 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn ($page) => $page->component('admin/roles/show')
+            fn($page) => $page->component('admin/roles/show')
                 ->has('role')
                 ->has('recentAudits')
         );
@@ -202,7 +208,7 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn ($page) => $page->component('admin/roles/matrix')
+            fn($page) => $page->component('admin/roles/matrix')
                 ->has('roles')
                 ->has('permissions')
                 ->has('matrix')
