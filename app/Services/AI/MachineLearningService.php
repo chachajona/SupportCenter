@@ -8,6 +8,9 @@ use App\Models\Ticket;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Services\AI\Providers\AIProviderInterface;
+use App\Services\AI\Providers\GeminiProvider;
+use App\Services\AI\Providers\AnthropicProvider;
 
 class MachineLearningService
 {
@@ -29,6 +32,11 @@ class MachineLearningService
     // Currently selected provider (gemini | anthropic)
     protected string $provider;
 
+    /**
+     * Provider client implementing AIProviderInterface.
+     */
+    protected AIProviderInterface $providerClient;
+
     public function __construct()
     {
         // Determine active provider (defaults to gemini)
@@ -42,13 +50,27 @@ class MachineLearningService
         $this->anthropicApiKey = config('services.anthropic.api_key');
         $this->anthropicBaseUrl = config('services.anthropic.base_url');
 
-        if ($this->provider === 'gemini' && ! $this->geminiApiKey) {
+        if ($this->provider === 'gemini' && !$this->geminiApiKey) {
             Log::warning('Gemini API key not configured. AI features will use fallback methods.');
         }
 
-        if ($this->provider === 'anthropic' && ! $this->anthropicApiKey) {
+        if ($this->provider === 'anthropic' && !$this->anthropicApiKey) {
             Log::warning('Anthropic API key not configured. AI features will use fallback methods.');
         }
+
+        // Initialize provider client
+        $this->providerClient = $this->getProviderClient();
+    }
+
+    /**
+     * Factory method to resolve the active AI provider implementation.
+     */
+    protected function getProviderClient(): AIProviderInterface
+    {
+        return match ($this->provider) {
+            'anthropic' => new AnthropicProvider($this->anthropicApiKey, $this->anthropicBaseUrl),
+            default => new GeminiProvider($this->geminiApiKey, $this->geminiBaseUrl),
+        };
     }
 
     /**
@@ -56,83 +78,23 @@ class MachineLearningService
      */
     public function categorizeTicket(string $subject, string $description): array
     {
-        $cacheKey = 'ai_categorize_'.md5($subject.$description);
+        $cacheKey = 'ai_categorize_' . md5($subject . $description);
 
         return Cache::store('ai_cache')->remember($cacheKey, 3600, function () use ($subject, $description) {
-            // Check if API key is available
-            if (! $this->geminiApiKey && ! $this->anthropicApiKey) {
-                Log::info('Gemini and Anthropic API keys not available, using fallback categorization');
+            if (!$this->providerClient->isConfigured()) {
+                Log::info('AI provider not configured, using fallback categorization');
 
                 return $this->fallbackCategorization($subject, $description);
             }
 
             try {
                 $prompt = $this->buildCategorizationPrompt($subject, $description);
+                $result = $this->providerClient->categorize($this->getSystemPrompt(), $prompt);
 
-                // NEW: Anthropic provider support
-                if ($this->provider === 'anthropic') {
-                    try {
-                        $response = Http::withHeaders([
-                            'x-api-key' => $this->anthropicApiKey,
-                            'anthropic-version' => '2023-06-01',
-                        ])->timeout(config('services.anthropic.timeout', 30))
-                            ->post($this->anthropicBaseUrl.'/messages', [
-                                'model' => config('services.anthropic.default_model'),
-                                'system' => $this->getSystemPrompt(),
-                                'messages' => [
-                                    ['role' => 'user', 'content' => $prompt],
-                                ],
-                                'max_tokens' => (int) config('services.anthropic.max_tokens', 800),
-                                'temperature' => (float) config('services.anthropic.temperature', 0.3),
-                            ]);
+                if ($result) {
+                    $this->storePrediction(null, 'category', $result, $result['confidence'] ?? 0.8);
 
-                        if ($response->successful()) {
-                            $data = $response->json();
-                            $content = $data['content'][0]['text'] ?? '';
-                            $result = json_decode($content, true);
-
-                            if (json_last_error() === JSON_ERROR_NONE) {
-                                $this->storePrediction(null, 'category', $result, $result['confidence'] ?? 0.8);
-
-                                return $result;
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Anthropic AI Categorization failed', [
-                            'subject' => $subject,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                }
-
-                $response = Http::timeout(30)
-                    ->post($this->geminiBaseUrl.'/models/'.config('services.gemini.default_model').':generateContent?key='.$this->geminiApiKey, [
-                        'contents' => [
-                            [
-                                'parts' => [
-                                    ['text' => $this->getSystemPrompt()."\n\n".$prompt],
-                                ],
-                            ],
-                        ],
-                        'generationConfig' => [
-                            'temperature' => (float) config('services.gemini.temperature'),
-                            'maxOutputTokens' => (int) config('services.gemini.max_tokens'),
-                            'responseMimeType' => 'application/json',
-                        ],
-                        'safetySettings' => $this->getSafetySettings(),
-                    ]);
-
-                if ($response->successful()) {
-                    $responseData = $response->json();
-                    $content = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                    $result = json_decode($content, true);
-
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        // Store prediction for learning
-                        $this->storePrediction(null, 'category', $result, $result['confidence'] ?? 0.8);
-
-                        return $result;
-                    }
+                    return $result;
                 }
             } catch (\Exception $e) {
                 Log::error('AI Categorization failed', [
@@ -141,7 +103,6 @@ class MachineLearningService
                 ]);
             }
 
-            // Fallback to rule-based categorization
             return $this->fallbackCategorization($subject, $description);
         });
     }
@@ -151,78 +112,24 @@ class MachineLearningService
      */
     public function suggestResponses(Ticket $ticket): array
     {
-        $cacheKey = 'ai_responses_'.$ticket->id;
+        $cacheKey = 'ai_responses_' . $ticket->id;
 
         return Cache::store('ai_cache')->remember($cacheKey, 1800, function () use ($ticket) {
-            // Check if API key is available
-            if (! $this->geminiApiKey && ! $this->anthropicApiKey) {
-                Log::info('Gemini and Anthropic API keys not available, returning empty suggestions');
+            if (!$this->providerClient->isConfigured()) {
+                Log::info('AI provider not configured, returning empty suggestions');
 
                 return ['suggestions' => [], 'confidence' => 0.0];
             }
 
             try {
-                // Get relevant knowledge articles first
                 $relevantArticles = $this->findRelevantKnowledgeArticles($ticket);
-
                 $prompt = $this->buildResponseSuggestionPrompt($ticket, $relevantArticles);
 
-                if ($this->provider === 'anthropic') {
-                    try {
-                        $response = Http::withHeaders([
-                            'x-api-key' => $this->anthropicApiKey,
-                            'anthropic-version' => '2023-06-01',
-                        ])->timeout(config('services.anthropic.timeout', 45))
-                            ->post($this->anthropicBaseUrl.'/messages', [
-                                'model' => config('services.anthropic.default_model'),
-                                'system' => $this->getResponseSystemPrompt(),
-                                'messages' => [
-                                    ['role' => 'user', 'content' => $prompt],
-                                ],
-                                'max_tokens' => 800,
-                                'temperature' => (float) config('services.anthropic.temperature', 0.4),
-                            ]);
+                $aiContent = $this->providerClient->suggestResponses($this->getResponseSystemPrompt(), $prompt);
 
-                        if ($response->successful()) {
-                            $data = $response->json();
-                            $content = $data['content'][0]['text'] ?? '';
-
-                            return [
-                                'suggestions' => $this->parseResponseSuggestions($content),
-                                'confidence' => 0.85,
-                                'knowledge_articles' => $relevantArticles->pluck('id')->toArray(),
-                            ];
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Anthropic AI Response Suggestion failed', [
-                            'ticket_id' => $ticket->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                }
-
-                $response = Http::timeout(45)
-                    ->post($this->geminiBaseUrl.'/models/'.config('services.gemini.default_model').':generateContent?key='.$this->geminiApiKey, [
-                        'contents' => [
-                            [
-                                'parts' => [
-                                    ['text' => $this->getResponseSystemPrompt()."\n\n".$prompt],
-                                ],
-                            ],
-                        ],
-                        'generationConfig' => [
-                            'temperature' => 0.4,
-                            'maxOutputTokens' => 800,
-                        ],
-                        'safetySettings' => $this->getSafetySettings(),
-                    ]);
-
-                if ($response->successful()) {
-                    $responseData = $response->json();
-                    $suggestions = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
-
+                if ($aiContent) {
                     return [
-                        'suggestions' => $this->parseResponseSuggestions($suggestions),
+                        'suggestions' => $this->parseResponseSuggestions($aiContent),
                         'confidence' => 0.85,
                         'knowledge_articles' => $relevantArticles->pluck('id')->toArray(),
                     ];
@@ -243,94 +150,30 @@ class MachineLearningService
      */
     public function predictEscalation(Ticket $ticket): float
     {
-        $cacheKey = 'ai_escalation_'.$ticket->id;
+        $cacheKey = 'ai_escalation_' . $ticket->id;
 
         return Cache::store('prediction_cache')->remember($cacheKey, 600, function () use ($ticket) {
-            // Check if API key is available
-            if (! $this->geminiApiKey && ! $this->anthropicApiKey) {
-                Log::info('Gemini and Anthropic API keys not available, returning default escalation probability');
+            if (!$this->providerClient->isConfigured()) {
+                Log::info('AI provider not configured, returning default escalation probability');
 
-                return 0.5; // Default neutral probability
+                return 0.5;
             }
 
             try {
                 $features = $this->extractEscalationFeatures($ticket);
                 $prompt = $this->buildEscalationPrompt($ticket, $features);
 
-                if ($this->provider === 'anthropic') {
-                    try {
-                        $response = Http::withHeaders([
-                            'x-api-key' => $this->anthropicApiKey,
-                            'anthropic-version' => '2023-06-01',
-                        ])->timeout(config('services.anthropic.timeout', 20))
-                            ->post($this->anthropicBaseUrl.'/messages', [
-                                'model' => config('services.anthropic.default_model'),
-                                'system' => $this->getEscalationSystemPrompt(),
-                                'messages' => [
-                                    ['role' => 'user', 'content' => $prompt],
-                                ],
-                                'max_tokens' => 200,
-                                'temperature' => (float) config('services.anthropic.temperature', 0.2),
-                            ]);
+                $result = $this->providerClient->predictEscalation($this->getEscalationSystemPrompt(), $prompt);
 
-                        if ($response->successful()) {
-                            $data = $response->json();
-                            $content = $data['content'][0]['text'] ?? '';
-                            $result = json_decode($content, true);
+                if ($result) {
+                    $probability = (float) ($result['escalation_probability'] ?? 0.5);
 
-                            if (json_last_error() === JSON_ERROR_NONE) {
-                                $probability = (float) ($result['escalation_probability'] ?? 0.5);
+                    $this->storePrediction($ticket->id, 'escalation', [
+                        'probability' => $probability,
+                        'factors' => $result['factors'] ?? [],
+                    ], $result['confidence'] ?? 0.7);
 
-                                // Store prediction
-                                $this->storePrediction($ticket->id, 'escalation', [
-                                    'probability' => $probability,
-                                    'factors' => $result['factors'] ?? [],
-                                ], $result['confidence'] ?? 0.7);
-
-                                return $probability;
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Anthropic AI Escalation Prediction failed', [
-                            'ticket_id' => $ticket->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                }
-
-                $response = Http::timeout(20)
-                    ->post($this->geminiBaseUrl.'/models/'.config('services.gemini.default_model').':generateContent?key='.$this->geminiApiKey, [
-                        'contents' => [
-                            [
-                                'parts' => [
-                                    ['text' => $this->getEscalationSystemPrompt()."\n\n".$prompt],
-                                ],
-                            ],
-                        ],
-                        'generationConfig' => [
-                            'temperature' => 0.2,
-                            'maxOutputTokens' => 200,
-                            'responseMimeType' => 'application/json',
-                        ],
-                        'safetySettings' => $this->getSafetySettings(),
-                    ]);
-
-                if ($response->successful()) {
-                    $responseData = $response->json();
-                    $content = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                    $result = json_decode($content, true);
-
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        $probability = (float) ($result['escalation_probability'] ?? 0.5);
-
-                        // Store prediction
-                        $this->storePrediction($ticket->id, 'escalation', [
-                            'probability' => $probability,
-                            'factors' => $result['factors'] ?? [],
-                        ], $result['confidence'] ?? 0.7);
-
-                        return $probability;
-                    }
+                    return $probability;
                 }
             } catch (\Exception $e) {
                 Log::error('AI Escalation Prediction failed', [
@@ -339,7 +182,7 @@ class MachineLearningService
                 ]);
             }
 
-            return 0.5; // Default neutral probability
+            return 0.5;
         });
     }
 
@@ -348,40 +191,25 @@ class MachineLearningService
      */
     public function generateEmbeddings(string $text): array
     {
-        $cacheKey = 'embeddings_'.md5($text);
+        $cacheKey = 'embeddings_' . md5($text);
 
         return Cache::store('vector_cache')->remember($cacheKey, 86400, function () use ($text) {
-            // Check if API key is available
-            if (! $this->geminiApiKey && ! $this->anthropicApiKey) {
-                Log::info('Gemini and Anthropic API keys not available, cannot generate embeddings');
+            if (!$this->providerClient->isConfigured()) {
+                Log::info('AI provider not configured, cannot generate embeddings');
 
                 return [];
             }
 
             try {
-                $response = Http::timeout(30)
-                    ->post($this->geminiBaseUrl.'/models/'.config('services.gemini.embedding_model').':embedContent?key='.$this->geminiApiKey, [
-                        'content' => [
-                            'parts' => [
-                                ['text' => $text],
-                            ],
-                        ],
-                        'taskType' => 'SEMANTIC_SIMILARITY',
-                    ]);
-
-                if ($response->successful()) {
-                    $responseData = $response->json();
-
-                    return $responseData['embedding']['values'] ?? [];
-                }
+                return $this->providerClient->generateEmbeddings($text);
             } catch (\Exception $e) {
                 Log::error('Embedding generation failed', [
                     'text_length' => strlen($text),
                     'error' => $e->getMessage(),
                 ]);
-            }
 
-            return [];
+                return [];
+            }
         });
     }
 
@@ -396,7 +224,7 @@ class MachineLearningService
                 'prediction_type' => $type,
                 'predicted_value' => $prediction,
                 'confidence_score' => $confidence,
-                'model_version' => $this->provider.'-'.date('Y-m'),
+                'model_version' => $this->provider . '-' . date('Y-m'),
                 'features_used' => $this->getCurrentFeatures(),
             ]);
         } catch (\Exception $e) {
@@ -432,7 +260,7 @@ Return JSON with:
     protected function buildResponseSuggestionPrompt(Ticket $ticket, $articles): string
     {
         $knowledgeContext = $articles->map(function ($article) {
-            return "Title: {$article->title}\nContent: ".substr($article->content, 0, 300).'...';
+            return "Title: {$article->title}\nContent: " . substr($article->content, 0, 300) . '...';
         })->join("\n\n");
 
         return "Generate helpful response suggestions for this support ticket:
@@ -494,7 +322,7 @@ Provide 2-3 response suggestions that are helpful, professional, and reference t
      */
     protected function fallbackCategorization(string $subject, string $description): array
     {
-        $text = strtolower($subject.' '.$description);
+        $text = strtolower($subject . ' ' . $description);
 
         // Simple keyword-based fallback
         $department = 'general';
@@ -519,12 +347,12 @@ Provide 2-3 response suggestions that are helpful, professional, and reference t
      */
     protected function findRelevantKnowledgeArticles(Ticket $ticket)
     {
-        // This will be enhanced with vector search later
+        // Use full-text search for performance over wildcard LIKE queries
+        $searchTerm = $ticket->subject;
+
         return KnowledgeArticle::published()
-            ->where(function ($query) use ($ticket) {
-                $query->where('title', 'like', '%'.$ticket->subject.'%')
-                    ->orWhere('content', 'like', '%'.$ticket->subject.'%');
-            })
+            ->whereRaw('MATCH(title, content) AGAINST (? IN NATURAL LANGUAGE MODE)', [$searchTerm])
+            ->orderByRaw('MATCH(title, content) AGAINST (? IN NATURAL LANGUAGE MODE) DESC', [$searchTerm])
             ->limit(3)
             ->get();
     }
@@ -540,7 +368,7 @@ Provide 2-3 response suggestions that are helpful, professional, and reference t
 
         foreach ($lines as $line) {
             $line = trim($line);
-            if (! empty($line) && ! str_starts_with($line, '#')) {
+            if (!empty($line) && !str_starts_with($line, '#')) {
                 $suggestions[] = $line;
             }
         }
@@ -570,12 +398,20 @@ Provide 2-3 response suggestions that are helpful, professional, and reference t
      */
     protected function getCurrentFeatures(): array
     {
-        return [
-            'gemini_model' => config('services.gemini.default_model'),
-            'embedding_model' => config('services.gemini.embedding_model'),
+        $features = [
+            'provider' => $this->provider,
             'feature_version' => '1.0',
             'timestamp' => now()->toISOString(),
         ];
+
+        if ($this->provider === 'anthropic') {
+            $features['model'] = config('services.anthropic.default_model');
+        } else {
+            $features['model'] = config('services.gemini.default_model');
+            $features['embedding_model'] = config('services.gemini.embedding_model');
+        }
+
+        return $features;
     }
 
     /**
@@ -593,7 +429,7 @@ Ticket Details:
 - Department: {$features['department']}
 
 Content Analysis:
-- Has angry language: ".($features['has_angry_words'] ? 'Yes' : 'No')."
+- Has angry language: " . ($features['has_angry_words'] ? 'Yes' : 'No') . "
 - Description length: {$features['description_length']} characters
 
 Return JSON with:

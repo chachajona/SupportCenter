@@ -10,6 +10,13 @@ class AIPrediction extends Model
 {
     use HasFactory;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'ai_predictions';
+
     protected $fillable = [
         'ticket_id',
         'prediction_type',
@@ -42,7 +49,7 @@ class AIPrediction extends Model
      */
     public function isValidated(): bool
     {
-        return ! is_null($this->actual_value);
+        return !is_null($this->actual_value);
     }
 
     /**
@@ -50,15 +57,17 @@ class AIPrediction extends Model
      */
     public function calculateAccuracy(): ?float
     {
-        if (! $this->isValidated()) {
+        if (!$this->isValidated()) {
             return null;
         }
 
         // Simple accuracy calculation - can be enhanced based on prediction type
         switch ($this->prediction_type) {
             case 'category':
+                return ($this->predicted_value['category'] ?? null) === ($this->actual_value['category'] ?? null) ? 1.0 : 0.0;
+
             case 'priority':
-                return $this->predicted_value['department'] === $this->actual_value['department'] ? 1.0 : 0.0;
+                return ($this->predicted_value['priority'] ?? null) === ($this->actual_value['priority'] ?? null) ? 1.0 : 0.0;
 
             case 'escalation':
                 $predicted = (float) $this->predicted_value['probability'];

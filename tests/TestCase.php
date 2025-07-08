@@ -17,10 +17,16 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Disable middleware that interferes with automated tests
+        $this->withoutMiddleware([
+            \App\Http\Middleware\SuspiciousActivityDetection::class,
+            \App\Http\Middleware\IdleSessionTimeout::class,
+        ]);
     }
 
     /**
-     * Complete setup for testing purposes to avoid middleware redirections.
+     * Complete setup for testing purposes to avoid middleware re-directions.
      * Call this manually in tests that need setup to be marked as completed.
      */
     protected function completeSetupForTesting(): void

@@ -25,6 +25,11 @@ class KbEmbedding extends Model
     ];
 
     /**
+     * Small epsilon value for floating-point comparisons.
+     */
+    private const EPSILON = 1e-9;
+
+    /**
      * Get the knowledge article that this embedding belongs to.
      */
     public function article(): BelongsTo
@@ -57,7 +62,8 @@ class KbEmbedding extends Model
         $magnitude1 = sqrt($magnitude1);
         $magnitude2 = sqrt($magnitude2);
 
-        if ($magnitude1 == 0.0 || $magnitude2 == 0.0) {
+        // Handle floating-point precision by comparing against a small epsilon.
+        if (abs($magnitude1) < self::EPSILON || abs($magnitude2) < self::EPSILON) {
             return 0.0;
         }
 
@@ -69,25 +75,38 @@ class KbEmbedding extends Model
      */
     public static function findSimilar(array $queryVector, int $limit = 5, float $threshold = 0.0): Collection
     {
-        $embeddings = static::all();
-        $similarities = [];
+        /**
+         * To avoid loading all embeddings into memory, iterate through them in manageable chunks
+         * and keep track of only the top-N most similar results.
+         */
+        $topSimilarities = [];
 
-        foreach ($embeddings as $embedding) {
-            $similarity = $embedding->cosineSimilarity($queryVector);
+        static::chunkById(1000, function ($embeddings) use (&$topSimilarities, $queryVector, $threshold, $limit) {
+            foreach ($embeddings as $embedding) {
+                $similarity = $embedding->cosineSimilarity($queryVector);
 
-            if ($similarity >= $threshold) {
-                $similarities[] = [
+                if ($similarity < $threshold) {
+                    continue;
+                }
+
+                $topSimilarities[] = [
                     'embedding' => $embedding,
                     'similarity' => $similarity,
                     'article' => $embedding->article,
                 ];
+
+                // Keep the array size in check by trimming to roughly double the limit.
+                if (count($topSimilarities) > $limit * 2) {
+                    usort($topSimilarities, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
+                    $topSimilarities = array_slice($topSimilarities, 0, $limit);
+                }
             }
-        }
+        });
 
-        // Sort by similarity score in descending order
-        usort($similarities, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+        // Final sort and trim to the requested limit.
+        usort($topSimilarities, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
 
-        return collect($similarities)->take($limit);
+        return collect($topSimilarities)->take($limit);
     }
 
     /**
