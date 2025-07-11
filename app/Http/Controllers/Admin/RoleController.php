@@ -85,7 +85,7 @@ class RoleController extends Controller
                     'id' => $audit->id,
                     'action' => $audit->action,
                     'user_name' => $audit->performedBy?->name ?? 'System',
-                    'created_at' => $audit->created_at?->toISOString(),
+                    'created_at' => $audit->created_at->toISOString(),
                     'description' => $audit->reason,
                 ];
             });

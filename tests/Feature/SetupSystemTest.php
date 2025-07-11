@@ -8,7 +8,6 @@ use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,12 +20,18 @@ class SetupSystemTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Artisan::call('migrate'); // Workaround for DB issues, prefer RefreshDatabase
+
         // Ensure a clean state for each setup test
         if (file_exists(storage_path('app/setup.lock'))) {
             unlink(storage_path('app/setup.lock'));
         }
-        SetupStatus::query()->delete();
+
+        // Clear setup status - RefreshDatabase will handle table recreation
+        try {
+            SetupStatus::query()->delete();
+        } catch (\Exception $e) {
+            // Ignore if table doesn't exist yet
+        }
     }
 
     protected function tearDown(): void
@@ -272,9 +277,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function database_migration_with_mysql_specific_features(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('This test requires a MySQL database connection.');
-        }
+        $this->skipIfNotMySQL();
 
         // Additional setup for MySQL test
         DB::statement('SET SESSION sql_mode = "TRADITIONAL"');
@@ -291,18 +294,14 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function concurrent_setup_step_execution(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('This test requires a MySQL database connection for transaction testing.');
-        }
+        $this->skipIfNotMySQL();
         $this->markTestIncomplete('This test requires a more advanced setup for concurrency.');
     }
 
     #[Test]
     public function database_integrity_after_setup(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('This test requires a MySQL database connection.');
-        }
+        $this->skipIfNotMySQL();
 
         // Run the entire setup flow
         $this->post('/setup/migrate');
@@ -336,9 +335,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function setup_mysql_transaction_rollback(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('MySQL-specific test for transactions.');
-        }
+        $this->skipIfNotMySQL();
 
         SetupStatus::markCompleted('database_migrated');
 
@@ -356,18 +353,14 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function mysql_large_dataset_performance(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('MySQL-specific performance test.');
-        }
+        $this->skipIfNotMySQL();
         $this->markTestIncomplete('This test requires a large dataset.');
     }
 
     #[Test]
     public function mysql_utf8_encoding_support(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('MySQL-specific encoding test.');
-        }
+        $this->skipIfNotMySQL();
 
         $this->post('/setup/migrate');
         $this->post('/setup/seed');
@@ -389,8 +382,9 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function setup_status_mysql_json_data_storage(): void
     {
-        if (! $this->isMySql() || ! $this->mysqlSupportsJson()) {
-            $this->markTestSkipped('MySQL-specific test for JSON columns.');
+        $this->skipIfNotMySQL();
+        if (! $this->mysqlSupportsJson()) {
+            $this->markTestSkipped('MySQL JSON support required.');
         }
 
         $jsonData = ['key' => 'value', 'nested' => ['a' => 1]];
@@ -403,18 +397,14 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function mysql_setup_table_indexes_performance(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('MySQL-specific performance test for indexes.');
-        }
+        $this->skipIfNotMySQL();
         $this->markTestIncomplete('Index performance testing requires a large dataset.');
     }
 
     #[Test]
     public function mysql_foreign_key_constraints(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('MySQL-specific test for foreign key constraints.');
-        }
+        $this->skipIfNotMySQL();
 
         $this->post('/setup/migrate');
         $this->post('/setup/seed');
@@ -432,18 +422,14 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function setup_mysql_backup_compatibility(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('MySQL-specific backup compatibility test.');
-        }
+        $this->skipIfNotMySQL();
         $this->markTestIncomplete('Backup compatibility testing is complex.');
     }
 
     #[Test]
     public function mysql_storage_engine_compatibility(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('MySQL-specific storage engine test.');
-        }
+        $this->skipIfNotMySQL();
 
         $this->post('/setup/migrate');
         $tableStatus = DB::select("SHOW TABLE STATUS WHERE Name = 'setup_status'");
@@ -453,9 +439,7 @@ class SetupSystemTest extends TestCase
     #[Test]
     public function setup_error_logging_with_mysql(): void
     {
-        if (! $this->isMySql()) {
-            $this->markTestSkipped('MySQL-specific error logging test.');
-        }
+        $this->skipIfNotMySQL();
 
         Log::shouldReceive('error')->once();
         DB::shouldReceive('statement')->andThrow(new \PDOException('MySQL error'));
@@ -465,29 +449,33 @@ class SetupSystemTest extends TestCase
     }
 
     /**
-     * Helper to check if the current database connection is MySQL.
+     * Skip test if database is not MySQL.
      */
-    protected function isMySql(): bool
+    protected function skipIfNotMySQL(): void
     {
-        return DB::connection()->getDriverName() === 'mysql';
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            $this->markTestSkipped('This test requires MySQL');
+        }
     }
 
     /**
-     * Check if MySQL supports JSON data type (MySQL 5.7+)
+     * Check if MySQL supports JSON data type.
      */
     protected function mysqlSupportsJson(): bool
     {
-        if (! $this->isMySql()) {
+        try {
+            $version = DB::selectOne('SELECT VERSION() as version')->version;
+            if (! $version) {
+                return false;
+            }
+            // MariaDB supports JSON from 10.2.7, MySQL from 5.7.8
+            if (str_contains(strtolower($version), 'mariadb')) {
+                return version_compare(preg_replace('/-MariaDB/', '', $version), '10.2.7', '>=');
+            }
+
+            return version_compare($version, '5.7.8', '>=');
+        } catch (\Exception $e) {
             return false;
         }
-
-        $version = DB::select('SELECT VERSION() as version')[0]->version;
-
-        // MariaDB supports JSON from 10.2.7
-        if (str_contains(strtolower($version), 'mariadb')) {
-            return version_compare(preg_replace('/-MariaDB.*/', '', $version), '10.2.7', '>=');
-        }
-
-        return version_compare($version, '5.7.8', '>=');
     }
 }

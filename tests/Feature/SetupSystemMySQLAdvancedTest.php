@@ -111,7 +111,9 @@ class SetupSystemMySQLAdvancedTest extends TestCase
     #[Test]
     public function mysql_transaction_isolation_during_setup(): void
     {
-        $this->markTestSkipped('Transaction isolation test disabled - requires specific MySQL configuration');
+        if (! $this->isMySql()) {
+            $this->markTestSkipped('This test requires MySQL');
+        }
 
         // Test transaction isolation levels during setup
         $version = $this->getMySQLVersion();
@@ -121,9 +123,8 @@ class SetupSystemMySQLAdvancedTest extends TestCase
         $this->assertNotEmpty($currentIsolation);
 
         // Test concurrent setup operations don't interfere
-        DB::beginTransaction();
-
-        try {
+        // Use DB::transaction instead of manual begin/rollback to be compatible with RefreshDatabase
+        DB::transaction(function () {
             SetupStatus::markCompleted('database_migration');
 
             // Simulate another connection trying to read
@@ -132,16 +133,13 @@ class SetupSystemMySQLAdvancedTest extends TestCase
             // Within the same transaction, it should see the change
             $this->assertTrue($stepStatus);
 
-            DB::rollback();
+            // Throw exception to rollback transaction
+            throw new \Exception('Intentional rollback for testing');
+        }, 0);
 
-            // After rollback, change should not be visible
-            $stepStatusAfterRollback = SetupStatus::isCompleted('database_migration');
-            $this->assertFalse($stepStatusAfterRollback);
-
-        } catch (Exception $e) {
-            DB::rollback();
-            throw $e;
-        }
+        // After rollback, change should not be visible
+        $stepStatusAfterRollback = SetupStatus::isCompleted('database_migration');
+        $this->assertFalse($stepStatusAfterRollback);
     }
 
     #[Test]
@@ -264,23 +262,19 @@ class SetupSystemMySQLAdvancedTest extends TestCase
         $response = $this->post('/setup/migrate');
         $response->assertJson(['success' => true]);
 
-        // Simulate potential deadlock scenario
-        DB::beginTransaction();
-
+        // Simulate potential deadlock scenario using DB::transaction
         try {
-            // Lock a row
-            SetupStatus::where('step', 'database_migration')->lockForUpdate()->first();
+            DB::transaction(function () {
+                // Lock a row
+                SetupStatus::where('step', 'database_migration')->lockForUpdate()->first();
 
-            // Try to complete setup step (this should work)
-            SetupStatus::markCompleted('database_migration');
-
-            DB::commit();
+                // Try to complete setup step (this should work)
+                SetupStatus::markCompleted('database_migration');
+            });
 
             $this->assertTrue(SetupStatus::isCompleted('database_migration'));
 
         } catch (Exception $e) {
-            DB::rollback();
-
             // If deadlock occurs, it should be handled gracefully
             $this->assertStringContainsString('deadlock', strtolower($e->getMessage()));
         }

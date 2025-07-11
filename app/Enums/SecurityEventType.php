@@ -169,7 +169,7 @@ enum SecurityEventType: string
             self::IP_BLOCKED, self::AUTH_FAILURE, self::WEBAUTHN_FAILED => 4,
             self::AUTH_ATTEMPT, self::AUTHORIZATION_EVENT, self::WEBAUTHN_LOGIN => 3,
             self::SESSION_EVENT, self::DATA_ACCESS, self::WEBAUTHN_REGISTER, self::WEBAUTHN_REMOVE => 2,
-            self::ACCESS_GRANTED, self::SECURITY_CONFIG_CHANGE => 1,
+            self::ACCESS_GRANTED, self::SECURITY_CONFIG_CHANGE, self::AUTH_SUCCESS, self::TWO_FACTOR_ENABLED, self::TWO_FACTOR_DISABLED, self::TWO_FACTOR_RECOVERY_USED, self::EMERGENCY_ACCESS => 1,
             self::TEST_EVENT => 0,
         };
     }

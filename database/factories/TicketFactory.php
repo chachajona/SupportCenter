@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\TicketPriority;
 use App\Models\TicketStatus;
@@ -26,9 +25,9 @@ final class TicketFactory extends Factory
             'description' => $this->faker->paragraph(),
             'priority_id' => TicketPriority::inRandomOrder()->first()?->id ?? 2,
             'status_id' => TicketStatus::inRandomOrder()->first()?->id ?? 1,
-            'department_id' => Department::inRandomOrder()->first()?->id ?? Department::factory(),
+            'department_id' => null, // Nullable until departments are properly seeded
             'assigned_to' => null,
-            'created_by' => User::inRandomOrder()->first()?->id ?? User::factory(),
+            'created_by' => User::factory(),
             'updated_by' => null,
             'due_at' => $this->faker->optional()->dateTimeBetween('now', '+30 days'),
         ];
@@ -37,7 +36,7 @@ final class TicketFactory extends Factory
     public function assigned(): static
     {
         return $this->state(fn (array $attributes) => [
-            'assigned_to' => User::inRandomOrder()->first()?->id ?? User::factory(),
+            'assigned_to' => User::factory(),
         ]);
     }
 

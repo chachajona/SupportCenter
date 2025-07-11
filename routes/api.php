@@ -7,6 +7,25 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// Customer Portal & Chatbot routes (public for customer self-service)
+Route::prefix('portal')->group(function () {
+    Route::post('/chat/start', [App\Http\Controllers\Api\ChatbotController::class, 'startConversation']);
+    Route::post('/chat/message', [App\Http\Controllers\Api\ChatbotController::class, 'sendMessage']);
+    Route::get('/chat/{sessionId}/history', [App\Http\Controllers\Api\ChatbotController::class, 'getConversationHistory']);
+    Route::post('/chat/escalate', [App\Http\Controllers\Api\ChatbotController::class, 'escalateToHuman']);
+    Route::post('/chat/end', [App\Http\Controllers\Api\ChatbotController::class, 'endConversation']);
+
+    // Customer Portal features
+    Route::get('/suggestions', [App\Http\Controllers\Api\CustomerPortalController::class, 'getSuggestions']);
+    Route::get('/troubleshooting', [App\Http\Controllers\Api\CustomerPortalController::class, 'getTroubleshooting']);
+    Route::post('/tickets/intelligent', [App\Http\Controllers\Api\CustomerPortalController::class, 'createIntelligentTicket']);
+    Route::get('/knowledge/search', [App\Http\Controllers\Api\CustomerPortalController::class, 'searchKnowledgeBase']);
+    Route::get('/knowledge/popular', [App\Http\Controllers\Api\CustomerPortalController::class, 'getPopularArticles']);
+    Route::get('/knowledge/recent', [App\Http\Controllers\Api\CustomerPortalController::class, 'getRecentArticles']);
+    Route::post('/knowledge/feedback', [App\Http\Controllers\Api\CustomerPortalController::class, 'submitArticleFeedback']);
+    Route::get('/tickets/assistance', [App\Http\Controllers\Api\CustomerPortalController::class, 'getTicketCreationAssistance']);
+});
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user/permissions', function (Request $request) {
         $user = $request->user();
@@ -97,4 +116,36 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('performance', [App\Http\Controllers\Api\SystemHealthController::class, 'performance'])->name('system.performance');
         Route::get('metrics', [App\Http\Controllers\Api\SystemHealthController::class, 'metrics'])->name('system.metrics');
     });
+
+    // Workflow Management API routes (Phase 5B)
+    Route::prefix('workflows')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\WorkflowController::class, 'index'])->name('workflows.index');
+        Route::post('/', [App\Http\Controllers\Api\WorkflowController::class, 'store'])->name('workflows.store');
+
+        // Workflow templates (must be before parameterized routes)
+        Route::get('templates', [App\Http\Controllers\Api\WorkflowController::class, 'templates'])->name('workflows.templates');
+        Route::post('templates/{template}/create', [App\Http\Controllers\Api\WorkflowController::class, 'createFromTemplate'])->name('workflows.create-from-template');
+
+        Route::get('{workflow}', [App\Http\Controllers\Api\WorkflowController::class, 'show'])->name('workflows.show');
+        Route::put('{workflow}', [App\Http\Controllers\Api\WorkflowController::class, 'update'])->name('workflows.update');
+        Route::delete('{workflow}', [App\Http\Controllers\Api\WorkflowController::class, 'destroy'])->name('workflows.destroy');
+
+        // Workflow execution
+        Route::post('{workflow}/execute', [App\Http\Controllers\Api\WorkflowController::class, 'execute'])->name('workflows.execute');
+        Route::post('{workflow}/toggle', [App\Http\Controllers\Api\WorkflowController::class, 'toggle'])->name('workflows.toggle');
+        Route::post('{workflow}/test', [App\Http\Controllers\Api\WorkflowController::class, 'test'])->name('workflows.test');
+
+        // Workflow executions
+        Route::get('{workflow}/executions', [App\Http\Controllers\Api\WorkflowController::class, 'executions'])->name('workflows.executions');
+    });
+
+    // Chatbot Analytics (Phase 5C)
+    Route::get('chatbot/analytics', [App\Http\Controllers\Api\ChatbotController::class, 'getAnalytics'])
+        ->middleware('permission:analytics.view_all')
+        ->name('chatbot.analytics');
+
+    // Customer Portal Analytics (Phase 5C)
+    Route::get('portal/analytics', [App\Http\Controllers\Api\CustomerPortalController::class, 'getAnalytics'])
+        ->middleware('permission:analytics.view_all')
+        ->name('portal.analytics');
 });

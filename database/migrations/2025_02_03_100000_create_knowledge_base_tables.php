@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->text('description')->nullable();
-            $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
+            $table->foreignId('department_id')->nullable(); // Will add constraint after departments table exists
             $table->unsignedTinyInteger('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -32,7 +32,7 @@ return new class extends Migration
             $table->text('content');
             $table->text('summary')->nullable();
             $table->foreignId('category_id')->constrained('knowledge_categories')->onDelete('cascade');
-            $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
+            $table->foreignId('department_id')->nullable(); // Will add constraint after departments table exists
             $table->foreignId('author_id')->constrained('users');
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->boolean('is_public')->default(false);

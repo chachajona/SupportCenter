@@ -70,10 +70,9 @@ class CreateAdminRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        return response()->json([
-            'success' => false,
-            'message' => 'Setup has already been completed or admin user already exists.',
-        ], 403);
+        throw new \Illuminate\Auth\Access\AuthorizationException(
+            'Setup has already been completed or admin user already exists.'
+        );
     }
 
     /**

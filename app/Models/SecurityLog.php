@@ -10,6 +10,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
+/**
+ * @property int $id
+ * @property int|null $user_id
+ * @property SecurityEventType $event_type
+ * @property string $ip_address
+ * @property string|null $user_agent
+ * @property array<array-key, mixed>|null $details
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User|null $user
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog whereDetails($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog whereEventType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog whereUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SecurityLog whereUserId($value)
+ *
+ * @mixin \Eloquent
+ */
 class SecurityLog extends Model
 {
     /**

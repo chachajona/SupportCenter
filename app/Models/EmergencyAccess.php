@@ -7,6 +7,45 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property array<array-key, mixed> $permissions
+ * @property string|null $token
+ * @property string $reason
+ * @property int $granted_by
+ * @property \Illuminate\Support\Carbon $granted_at
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property \Illuminate\Support\Carbon|null $used_at
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read string $remaining_time
+ * @property-read \App\Models\User $grantedBy
+ * @property-read \App\Models\User $user
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess expired()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess recent(int $days = 30)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess unused()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereGrantedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereGrantedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess wherePermissions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereUsedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmergencyAccess whereUserId($value)
+ *
+ * @mixin \Eloquent
+ */
 class EmergencyAccess extends Model
 {
     use HasFactory;

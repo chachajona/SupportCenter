@@ -17,6 +17,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Ticket> $tickets
+ * @property-read int|null $tickets_count
+ *
+ * @method static Builder<static>|TicketPriority byLevel(int $level)
+ * @method static Builder<static>|TicketPriority newModelQuery()
+ * @method static Builder<static>|TicketPriority newQuery()
+ * @method static Builder<static>|TicketPriority ordered()
+ * @method static Builder<static>|TicketPriority query()
+ * @method static Builder<static>|TicketPriority whereColor($value)
+ * @method static Builder<static>|TicketPriority whereCreatedAt($value)
+ * @method static Builder<static>|TicketPriority whereId($value)
+ * @method static Builder<static>|TicketPriority whereLevel($value)
+ * @method static Builder<static>|TicketPriority whereName($value)
+ * @method static Builder<static>|TicketPriority whereSortOrder($value)
+ * @method static Builder<static>|TicketPriority whereUpdatedAt($value)
+ *
+ * @mixin \Eloquent
  */
 final class TicketPriority extends Model
 {

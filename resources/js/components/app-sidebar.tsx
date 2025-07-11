@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Activity, AlertTriangle, BarChart, BookOpen, Clock, Folder, LayoutGrid, Shield, Users } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart, BookOpen, BrainIcon, Clock, Folder, LayoutGrid, Shield, Users, WorkflowIcon } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -12,6 +12,16 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'AI Features',
+        href: '/ai-dashboard',
+        icon: BrainIcon,
+    },
+    {
+        title: 'Workflows',
+        href: '/workflows',
+        icon: WorkflowIcon,
     },
     {
         title: 'Analytics',

@@ -17,6 +17,23 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Ticket> $tickets
+ * @property-read int|null $tickets_count
+ *
+ * @method static Builder<static>|TicketStatus closed()
+ * @method static Builder<static>|TicketStatus newModelQuery()
+ * @method static Builder<static>|TicketStatus newQuery()
+ * @method static Builder<static>|TicketStatus open()
+ * @method static Builder<static>|TicketStatus ordered()
+ * @method static Builder<static>|TicketStatus query()
+ * @method static Builder<static>|TicketStatus whereColor($value)
+ * @method static Builder<static>|TicketStatus whereCreatedAt($value)
+ * @method static Builder<static>|TicketStatus whereId($value)
+ * @method static Builder<static>|TicketStatus whereIsClosed($value)
+ * @method static Builder<static>|TicketStatus whereName($value)
+ * @method static Builder<static>|TicketStatus whereSortOrder($value)
+ * @method static Builder<static>|TicketStatus whereUpdatedAt($value)
+ *
+ * @mixin \Eloquent
  */
 final class TicketStatus extends Model
 {

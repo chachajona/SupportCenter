@@ -8,6 +8,47 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string|null $description
+ * @property int|null $parent_id
+ * @property int|null $manager_id
+ * @property string $path
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Department> $activeChildren
+ * @property-read int|null $active_children_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $activeUsers
+ * @property-read int|null $active_users_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Department> $children
+ * @property-read int|null $children_count
+ * @property-read \App\Models\User|null $manager
+ * @property-read Department|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read int|null $tickets_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
+ * @property-read int|null $users_count
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department active()
+ * @method static \Database\Factories\DepartmentFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department roots()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereManagerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereParentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department wherePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereUpdatedAt($value)
+ *
+ * @mixin \Eloquent
+ */
 class Department extends Model
 {
     use HasFactory;

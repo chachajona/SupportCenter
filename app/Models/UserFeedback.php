@@ -6,6 +6,48 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $category
+ * @property string $subject
+ * @property string $description
+ * @property string $priority
+ * @property string $status
+ * @property string|null $feature_area
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read int $age_in_days
+ * @property-read string $category_name
+ * @property-read string $feature_area_name
+ * @property-read string $priority_name
+ * @property-read string $status_name
+ * @property-read \App\Models\User $user
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback byCategory(string $category)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback byFeatureArea(string $area)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback byPriority(string $priority)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback highPriority()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback open()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback recent(int $days = 30)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereCategory($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereFeatureArea($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback wherePriority($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereSubject($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserFeedback whereUserId($value)
+ *
+ * @mixin \Eloquent
+ */
 class UserFeedback extends Model
 {
     use HasFactory;

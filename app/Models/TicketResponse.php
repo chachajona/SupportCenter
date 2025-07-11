@@ -19,6 +19,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\Carbon $updated_at
  * @property-read Ticket $ticket
  * @property-read User|null $user
+ *
+ * @method static Builder<static>|TicketResponse fromEmail()
+ * @method static Builder<static>|TicketResponse internal()
+ * @method static Builder<static>|TicketResponse newModelQuery()
+ * @method static Builder<static>|TicketResponse newQuery()
+ * @method static Builder<static>|TicketResponse public()
+ * @method static Builder<static>|TicketResponse query()
+ * @method static Builder<static>|TicketResponse whereCreatedAt($value)
+ * @method static Builder<static>|TicketResponse whereId($value)
+ * @method static Builder<static>|TicketResponse whereIsEmail($value)
+ * @method static Builder<static>|TicketResponse whereIsInternal($value)
+ * @method static Builder<static>|TicketResponse whereMessage($value)
+ * @method static Builder<static>|TicketResponse whereTicketId($value)
+ * @method static Builder<static>|TicketResponse whereUpdatedAt($value)
+ * @method static Builder<static>|TicketResponse whereUserId($value)
+ *
+ * @mixin \Eloquent
  */
 final class TicketResponse extends Model
 {

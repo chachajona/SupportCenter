@@ -32,6 +32,38 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read TicketStatus $status
  * @property-read TicketPriority $priority
  * @property-read \Illuminate\Database\Eloquent\Collection<int, TicketResponse> $responses
+ * @property-read int|null $responses_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowExecution> $workflowExecutions
+ * @property-read int|null $workflow_executions_count
+ *
+ * @method static Builder<static>|Ticket assigned()
+ * @method static Builder<static>|Ticket byPriority(int $priorityId)
+ * @method static Builder<static>|Ticket closed()
+ * @method static \Database\Factories\TicketFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Ticket forDepartment(int $departmentId)
+ * @method static Builder<static>|Ticket highPriority()
+ * @method static Builder<static>|Ticket newModelQuery()
+ * @method static Builder<static>|Ticket newQuery()
+ * @method static Builder<static>|Ticket open()
+ * @method static Builder<static>|Ticket overdue()
+ * @method static Builder<static>|Ticket query()
+ * @method static Builder<static>|Ticket unassigned()
+ * @method static Builder<static>|Ticket whereAssignedTo($value)
+ * @method static Builder<static>|Ticket whereCreatedAt($value)
+ * @method static Builder<static>|Ticket whereCreatedBy($value)
+ * @method static Builder<static>|Ticket whereDepartmentId($value)
+ * @method static Builder<static>|Ticket whereDescription($value)
+ * @method static Builder<static>|Ticket whereDueAt($value)
+ * @method static Builder<static>|Ticket whereId($value)
+ * @method static Builder<static>|Ticket whereNumber($value)
+ * @method static Builder<static>|Ticket wherePriorityId($value)
+ * @method static Builder<static>|Ticket whereResolvedAt($value)
+ * @method static Builder<static>|Ticket whereStatusId($value)
+ * @method static Builder<static>|Ticket whereSubject($value)
+ * @method static Builder<static>|Ticket whereUpdatedAt($value)
+ * @method static Builder<static>|Ticket whereUpdatedBy($value)
+ *
+ * @mixin \Eloquent
  */
 final class Ticket extends Model
 {
@@ -142,6 +174,17 @@ final class Ticket extends Model
     public function responses(): HasMany
     {
         return $this->hasMany(TicketResponse::class);
+    }
+
+    /**
+     * Get all workflow executions for the ticket.
+     *
+     * @return HasMany<WorkflowExecution>
+     */
+    public function workflowExecutions(): HasMany
+    {
+        return $this->hasMany(WorkflowExecution::class, 'entity_id')
+            ->where('entity_type', 'ticket');
     }
 
     /**

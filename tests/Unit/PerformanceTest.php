@@ -22,7 +22,7 @@ class PerformanceTest extends TestCase
         parent::setUp();
 
         // Skip tests that require cache tagging if not supported
-        if (!Cache::supportsTags()) {
+        if (! Cache::supportsTags()) {
             $this->markTestSkipped('Cache store does not support tagging');
         }
 

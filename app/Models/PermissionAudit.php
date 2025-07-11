@@ -7,6 +7,48 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int|null $permission_id
+ * @property int|null $role_id
+ * @property string $action
+ * @property array<array-key, mixed>|null $old_values
+ * @property array<array-key, mixed>|null $new_values
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property int|null $performed_by
+ * @property string|null $reason
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property-read string $description
+ * @property-read \App\Models\User|null $performedBy
+ * @property-read \App\Models\Permission|null $permission
+ * @property-read \App\Models\Role|null $role
+ * @property-read \App\Models\User $user
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit action($action)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit byPerformer($performerId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit dateRange($startDate, $endDate)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit forUser($userId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit recent($days = 30)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereAction($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereNewValues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereOldValues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit wherePerformedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit wherePermissionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereRoleId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PermissionAudit whereUserId($value)
+ *
+ * @mixin \Eloquent
+ */
 class PermissionAudit extends Model
 {
     use HasFactory;
@@ -204,8 +246,8 @@ class PermissionAudit extends Model
             'action' => $action,
             'old_values' => $oldValues,
             'new_values' => $newValues,
-            'ip_address' => request()?->ip(),
-            'user_agent' => request()?->userAgent(),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
             'performed_by' => $performedBy ?? Auth::id(),
             'reason' => $reason,
             'created_at' => now(),

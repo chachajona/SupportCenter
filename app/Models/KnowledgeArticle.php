@@ -29,6 +29,37 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read KnowledgeCategory $category
  * @property-read Department|null $department
  * @property-read User $author
+ * @property-read \App\Models\KbEmbedding|null $embeddings
+ *
+ * @method static \Database\Factories\KnowledgeArticleFactory factory($count = null, $state = [])
+ * @method static Builder<static>|KnowledgeArticle forDepartment(?int $departmentId)
+ * @method static Builder<static>|KnowledgeArticle fullTextSearch(string $term)
+ * @method static Builder<static>|KnowledgeArticle inCategory(int $categoryId)
+ * @method static Builder<static>|KnowledgeArticle newModelQuery()
+ * @method static Builder<static>|KnowledgeArticle newQuery()
+ * @method static Builder<static>|KnowledgeArticle popular()
+ * @method static Builder<static>|KnowledgeArticle public()
+ * @method static Builder<static>|KnowledgeArticle published()
+ * @method static Builder<static>|KnowledgeArticle query()
+ * @method static Builder<static>|KnowledgeArticle recent()
+ * @method static Builder<static>|KnowledgeArticle search(string $term)
+ * @method static Builder<static>|KnowledgeArticle whereAuthorId($value)
+ * @method static Builder<static>|KnowledgeArticle whereCategoryId($value)
+ * @method static Builder<static>|KnowledgeArticle whereContent($value)
+ * @method static Builder<static>|KnowledgeArticle whereCreatedAt($value)
+ * @method static Builder<static>|KnowledgeArticle whereDepartmentId($value)
+ * @method static Builder<static>|KnowledgeArticle whereId($value)
+ * @method static Builder<static>|KnowledgeArticle whereIsPublic($value)
+ * @method static Builder<static>|KnowledgeArticle wherePublishedAt($value)
+ * @method static Builder<static>|KnowledgeArticle whereStatus($value)
+ * @method static Builder<static>|KnowledgeArticle whereSummary($value)
+ * @method static Builder<static>|KnowledgeArticle whereTags($value)
+ * @method static Builder<static>|KnowledgeArticle whereTitle($value)
+ * @method static Builder<static>|KnowledgeArticle whereUpdatedAt($value)
+ * @method static Builder<static>|KnowledgeArticle whereViewCount($value)
+ * @method static Builder<static>|KnowledgeArticle withTag(string $tag)
+ *
+ * @mixin \Eloquent
  */
 final class KnowledgeArticle extends Model
 {

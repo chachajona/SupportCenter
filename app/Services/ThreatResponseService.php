@@ -212,7 +212,7 @@ final class ThreatResponseService
                 $audit->old_values = json_encode($blockInfo);
                 $audit->new_values = json_encode(['action_type' => 'ip_unblock_manual']);
                 $audit->ip_address = $ipAddress;
-                $audit->user_agent = request()?->userAgent();
+                $audit->user_agent = request()->userAgent();
                 $audit->performed_by = $performedBy;
                 $audit->reason = $reason;
                 $audit->created_at = now();

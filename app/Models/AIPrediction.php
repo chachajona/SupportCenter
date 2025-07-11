@@ -6,6 +6,41 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $ticket_id
+ * @property string $prediction_type
+ * @property array<array-key, mixed> $predicted_value
+ * @property numeric $confidence_score
+ * @property array<array-key, mixed>|null $actual_value
+ * @property int|null $feedback_score
+ * @property string|null $model_version
+ * @property array<array-key, mixed>|null $features_used
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Ticket $ticket
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction highConfidence(float $threshold = '0.8')
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction ofType(string $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction recent(int $days = 30)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction validated()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereActualValue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereConfidenceScore($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereFeaturesUsed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereFeedbackScore($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereModelVersion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction wherePredictedValue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction wherePredictionType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereTicketId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AIPrediction whereUpdatedAt($value)
+ *
+ * @mixin \Eloquent
+ */
 class AIPrediction extends Model
 {
     use HasFactory;
@@ -49,7 +84,7 @@ class AIPrediction extends Model
      */
     public function isValidated(): bool
     {
-        return !is_null($this->actual_value);
+        return ! is_null($this->actual_value);
     }
 
     /**
@@ -57,7 +92,7 @@ class AIPrediction extends Model
      */
     public function calculateAccuracy(): ?float
     {
-        if (!$this->isValidated()) {
+        if (! $this->isValidated()) {
             return null;
         }
 

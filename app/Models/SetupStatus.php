@@ -5,6 +5,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property string $step
+ * @property bool $completed
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property array<array-key, mixed>|null $data
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus whereCompleted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus whereData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus whereStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SetupStatus whereUpdatedAt($value)
+ *
+ * @mixin \Eloquent
+ */
 class SetupStatus extends Model
 {
     use HasFactory;

@@ -46,7 +46,7 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) => $page->component('admin/roles/index')
+            fn ($page) => $page->component('admin/roles/index')
                 ->has('roles')
                 ->has('permissions')
         );
@@ -158,7 +158,7 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) => $page->component('admin/roles/show')
+            fn ($page) => $page->component('admin/roles/show')
                 ->has('role')
                 ->has('recentAudits')
         );
@@ -208,7 +208,7 @@ class RoleManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) => $page->component('admin/roles/matrix')
+            fn ($page) => $page->component('admin/roles/matrix')
                 ->has('roles')
                 ->has('permissions')
                 ->has('matrix')

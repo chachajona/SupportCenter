@@ -23,6 +23,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, KnowledgeArticle> $articles
  * @property-read int $articles_count
  * @property-read int $published_articles_count
+ *
+ * @method static Builder<static>|KnowledgeCategory active()
+ * @method static \Database\Factories\KnowledgeCategoryFactory factory($count = null, $state = [])
+ * @method static Builder<static>|KnowledgeCategory forDepartment(?int $departmentId)
+ * @method static Builder<static>|KnowledgeCategory newModelQuery()
+ * @method static Builder<static>|KnowledgeCategory newQuery()
+ * @method static Builder<static>|KnowledgeCategory ordered()
+ * @method static Builder<static>|KnowledgeCategory query()
+ * @method static Builder<static>|KnowledgeCategory whereCreatedAt($value)
+ * @method static Builder<static>|KnowledgeCategory whereDepartmentId($value)
+ * @method static Builder<static>|KnowledgeCategory whereDescription($value)
+ * @method static Builder<static>|KnowledgeCategory whereId($value)
+ * @method static Builder<static>|KnowledgeCategory whereIsActive($value)
+ * @method static Builder<static>|KnowledgeCategory whereName($value)
+ * @method static Builder<static>|KnowledgeCategory whereSortOrder($value)
+ * @method static Builder<static>|KnowledgeCategory whereUpdatedAt($value)
+ *
+ * @mixin \Eloquent
  */
 final class KnowledgeCategory extends Model
 {

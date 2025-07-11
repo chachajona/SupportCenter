@@ -12,8 +12,7 @@ class AnthropicProvider implements AIProviderInterface
     public function __construct(
         protected ?string $apiKey,
         protected string $baseUrl
-    ) {
-    }
+    ) {}
 
     public function isConfigured(): bool
     {
@@ -62,7 +61,7 @@ class AnthropicProvider implements AIProviderInterface
 
     protected function sendMessage(string $systemPrompt, string $userPrompt, array $options): ?array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return null;
         }
 
@@ -79,7 +78,7 @@ class AnthropicProvider implements AIProviderInterface
                 'x-api-key' => $this->apiKey,
                 'anthropic-version' => '2023-06-01',
             ])->timeout(config('services.anthropic.timeout', 45))
-                ->post($this->baseUrl . '/messages', $payload);
+                ->post($this->baseUrl.'/messages', $payload);
 
             if ($httpResponse->successful()) {
                 return $httpResponse->json();
@@ -95,7 +94,7 @@ class AnthropicProvider implements AIProviderInterface
 
     protected function extractJson(?array $response): ?array
     {
-        if (!$response) {
+        if (! $response) {
             return null;
         }
 

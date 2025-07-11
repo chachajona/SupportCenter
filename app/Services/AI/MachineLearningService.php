@@ -5,12 +5,11 @@ namespace App\Services\AI;
 use App\Models\AIPrediction;
 use App\Models\KnowledgeArticle;
 use App\Models\Ticket;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use App\Services\AI\Providers\AIProviderInterface;
-use App\Services\AI\Providers\GeminiProvider;
 use App\Services\AI\Providers\AnthropicProvider;
+use App\Services\AI\Providers\GeminiProvider;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class MachineLearningService
 {
@@ -50,11 +49,11 @@ class MachineLearningService
         $this->anthropicApiKey = config('services.anthropic.api_key');
         $this->anthropicBaseUrl = config('services.anthropic.base_url');
 
-        if ($this->provider === 'gemini' && !$this->geminiApiKey) {
+        if ($this->provider === 'gemini' && ! $this->geminiApiKey) {
             Log::warning('Gemini API key not configured. AI features will use fallback methods.');
         }
 
-        if ($this->provider === 'anthropic' && !$this->anthropicApiKey) {
+        if ($this->provider === 'anthropic' && ! $this->anthropicApiKey) {
             Log::warning('Anthropic API key not configured. AI features will use fallback methods.');
         }
 
@@ -78,10 +77,10 @@ class MachineLearningService
      */
     public function categorizeTicket(string $subject, string $description): array
     {
-        $cacheKey = 'ai_categorize_' . md5($subject . $description);
+        $cacheKey = 'ai_categorize_'.md5($subject.$description);
 
         return Cache::store('ai_cache')->remember($cacheKey, 3600, function () use ($subject, $description) {
-            if (!$this->providerClient->isConfigured()) {
+            if (! $this->providerClient->isConfigured()) {
                 Log::info('AI provider not configured, using fallback categorization');
 
                 return $this->fallbackCategorization($subject, $description);
@@ -112,10 +111,10 @@ class MachineLearningService
      */
     public function suggestResponses(Ticket $ticket): array
     {
-        $cacheKey = 'ai_responses_' . $ticket->id;
+        $cacheKey = 'ai_responses_'.$ticket->id;
 
         return Cache::store('ai_cache')->remember($cacheKey, 1800, function () use ($ticket) {
-            if (!$this->providerClient->isConfigured()) {
+            if (! $this->providerClient->isConfigured()) {
                 Log::info('AI provider not configured, returning empty suggestions');
 
                 return ['suggestions' => [], 'confidence' => 0.0];
@@ -150,10 +149,10 @@ class MachineLearningService
      */
     public function predictEscalation(Ticket $ticket): float
     {
-        $cacheKey = 'ai_escalation_' . $ticket->id;
+        $cacheKey = 'ai_escalation_'.$ticket->id;
 
         return Cache::store('prediction_cache')->remember($cacheKey, 600, function () use ($ticket) {
-            if (!$this->providerClient->isConfigured()) {
+            if (! $this->providerClient->isConfigured()) {
                 Log::info('AI provider not configured, returning default escalation probability');
 
                 return 0.5;
@@ -191,10 +190,10 @@ class MachineLearningService
      */
     public function generateEmbeddings(string $text): array
     {
-        $cacheKey = 'embeddings_' . md5($text);
+        $cacheKey = 'embeddings_'.md5($text);
 
         return Cache::store('vector_cache')->remember($cacheKey, 86400, function () use ($text) {
-            if (!$this->providerClient->isConfigured()) {
+            if (! $this->providerClient->isConfigured()) {
                 Log::info('AI provider not configured, cannot generate embeddings');
 
                 return [];
@@ -224,7 +223,7 @@ class MachineLearningService
                 'prediction_type' => $type,
                 'predicted_value' => $prediction,
                 'confidence_score' => $confidence,
-                'model_version' => $this->provider . '-' . date('Y-m'),
+                'model_version' => $this->provider.'-'.date('Y-m'),
                 'features_used' => $this->getCurrentFeatures(),
             ]);
         } catch (\Exception $e) {
@@ -260,7 +259,7 @@ Return JSON with:
     protected function buildResponseSuggestionPrompt(Ticket $ticket, $articles): string
     {
         $knowledgeContext = $articles->map(function ($article) {
-            return "Title: {$article->title}\nContent: " . substr($article->content, 0, 300) . '...';
+            return "Title: {$article->title}\nContent: ".substr($article->content, 0, 300).'...';
         })->join("\n\n");
 
         return "Generate helpful response suggestions for this support ticket:
@@ -322,7 +321,7 @@ Provide 2-3 response suggestions that are helpful, professional, and reference t
      */
     protected function fallbackCategorization(string $subject, string $description): array
     {
-        $text = strtolower($subject . ' ' . $description);
+        $text = strtolower($subject.' '.$description);
 
         // Simple keyword-based fallback
         $department = 'general';
@@ -368,7 +367,7 @@ Provide 2-3 response suggestions that are helpful, professional, and reference t
 
         foreach ($lines as $line) {
             $line = trim($line);
-            if (!empty($line) && !str_starts_with($line, '#')) {
+            if (! empty($line) && ! str_starts_with($line, '#')) {
                 $suggestions[] = $line;
             }
         }
@@ -429,7 +428,7 @@ Ticket Details:
 - Department: {$features['department']}
 
 Content Analysis:
-- Has angry language: " . ($features['has_angry_words'] ? 'Yes' : 'No') . "
+- Has angry language: ".($features['has_angry_words'] ? 'Yes' : 'No')."
 - Description length: {$features['description_length']} characters
 
 Return JSON with:

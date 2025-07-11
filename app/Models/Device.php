@@ -20,6 +20,23 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $verified_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read \App\Models\User $user
+ *
+ * @method static Builder<static>|Device newModelQuery()
+ * @method static Builder<static>|Device newQuery()
+ * @method static Builder<static>|Device ofUser(int $userId)
+ * @method static Builder<static>|Device query()
+ * @method static Builder<static>|Device whereCreatedAt($value)
+ * @method static Builder<static>|Device whereDeviceHash($value)
+ * @method static Builder<static>|Device whereId($value)
+ * @method static Builder<static>|Device whereIpAddress($value)
+ * @method static Builder<static>|Device whereLastUsedAt($value)
+ * @method static Builder<static>|Device whereUpdatedAt($value)
+ * @method static Builder<static>|Device whereUserAgent($value)
+ * @method static Builder<static>|Device whereUserId($value)
+ * @method static Builder<static>|Device whereVerifiedAt($value)
+ *
+ * @mixin \Eloquent
  */
 final class Device extends Model
 {

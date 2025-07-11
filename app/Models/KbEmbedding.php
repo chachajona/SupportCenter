@@ -7,6 +7,40 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 
+/**
+ * @property int $id
+ * @property int $article_id
+ * @property string $content_hash
+ * @property array<array-key, mixed> $embedding_vector
+ * @property string $embedding_model
+ * @property int $vector_dimensions
+ * @property string|null $content_excerpt
+ * @property string|null $metadata
+ * @property string $last_updated
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\KnowledgeArticle $article
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding byModel(string $model)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding needsUpdate()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding recent(int $days = 30)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereArticleId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereContentExcerpt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereContentHash($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereEmbeddingModel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereEmbeddingVector($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereLastUpdated($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|KbEmbedding whereVectorDimensions($value)
+ *
+ * @mixin \Eloquent
+ */
 class KbEmbedding extends Model
 {
     use HasFactory;
@@ -97,14 +131,14 @@ class KbEmbedding extends Model
 
                 // Keep the array size in check by trimming to roughly double the limit.
                 if (count($topSimilarities) > $limit * 2) {
-                    usort($topSimilarities, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
+                    usort($topSimilarities, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
                     $topSimilarities = array_slice($topSimilarities, 0, $limit);
                 }
             }
         });
 
         // Final sort and trim to the requested limit.
-        usort($topSimilarities, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
+        usort($topSimilarities, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
 
         return collect($topSimilarities)->take($limit);
     }

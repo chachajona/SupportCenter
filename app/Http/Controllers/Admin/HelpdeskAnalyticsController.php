@@ -132,7 +132,8 @@ final class HelpdeskAnalyticsController extends Controller
         if ($user->hasPermissionTo('analytics.view_all')) {
             return Department::select('id', 'name', 'description')
                 ->orderBy('name')
-                ->get();
+                ->get()
+                ->map(fn ($dept) => ['id' => $dept->id, 'name' => $dept->name, 'description' => $dept->description]);
         }
 
         if ($user->hasPermissionTo('analytics.view_department')) {
@@ -140,7 +141,8 @@ final class HelpdeskAnalyticsController extends Controller
                 ->where('id', $user->department_id)
                 ->orWhereIn('id', $user->getAccessibleDepartmentIds())
                 ->orderBy('name')
-                ->get();
+                ->get()
+                ->map(fn ($dept) => ['id' => $dept->id, 'name' => $dept->name, 'description' => $dept->description]);
         }
 
         return collect();

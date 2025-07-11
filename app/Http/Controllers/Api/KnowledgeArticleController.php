@@ -147,7 +147,7 @@ final class KnowledgeArticleController extends Controller
                 'category' => $article->category?->name,
                 'department' => $article->department?->name,
                 'view_count' => $article->view_count,
-                'published_at' => $article->published_at?->toISOString(),
+                'published_at' => $article->published_at->toISOString(),
             ];
         });
 
@@ -185,7 +185,7 @@ final class KnowledgeArticleController extends Controller
                 'category' => $article->category?->name,
                 'department' => $article->department?->name,
                 'view_count' => $article->view_count,
-                'published_at' => $article->published_at?->toISOString(),
+                'published_at' => $article->published_at->toISOString(),
             ];
         });
 
@@ -221,7 +221,7 @@ final class KnowledgeArticleController extends Controller
                 'category' => $article->category?->name,
                 'department' => $article->department?->name,
                 'view_count' => $article->view_count,
-                'published_at' => $article->published_at?->toISOString(),
+                'published_at' => $article->published_at->toISOString(),
             ];
         });
 

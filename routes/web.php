@@ -46,6 +46,65 @@ Route::middleware(['setup.completed'])->group(function () {
             ]);
         })->name('dashboard');
 
+        // Phase 5A: AI Features Dashboard
+        Route::get('ai-dashboard', function () {
+            /** @var \App\Models\User|null $user */
+            $user = Auth::user();
+            if ($user) {
+                $user->load(['roles.permissions', 'department']);
+            }
+
+            return Inertia::render('ai-dashboard', [
+                'auth' => [
+                    'user' => $user,
+                ],
+            ]);
+        })->name('ai.dashboard');
+
+        // Phase 5B: Workflow Builder
+        Route::get('workflows', function () {
+            /** @var \App\Models\User|null $user */
+            $user = Auth::user();
+            if ($user) {
+                $user->load(['roles.permissions', 'department']);
+            }
+
+            return Inertia::render('workflows/index', [
+                'auth' => [
+                    'user' => $user,
+                ],
+            ]);
+        })->name('workflows.index.web');
+
+        Route::get('workflows/builder', function () {
+            /** @var \App\Models\User|null $user */
+            $user = Auth::user();
+            if ($user) {
+                $user->load(['roles.permissions', 'department']);
+            }
+
+            return Inertia::render('workflows/builder', [
+                'auth' => [
+                    'user' => $user,
+                ],
+            ]);
+        })->name('workflows.builder');
+
+        // Phase 5C: Customer Portal
+        Route::get('portal', function () {
+            /** @var \App\Models\User|null $user */
+            $user = Auth::user();
+            if ($user) {
+                $user->load(['roles.permissions', 'department']);
+            }
+
+            return Inertia::render('customer-portal', [
+                'auth' => [
+                    'user' => $user,
+                ],
+            ]);
+        })->name('customer.portal');
+
         // Two-Factor QR Code route - using standard auth middleware for consistency
         Route::get('/user/two-factor-qr-code', [TwoFactorQrCodeController::class, 'show'])
             ->name('two-factor.qr-code');

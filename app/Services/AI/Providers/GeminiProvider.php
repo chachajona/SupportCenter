@@ -12,8 +12,7 @@ class GeminiProvider implements AIProviderInterface
     public function __construct(
         protected ?string $apiKey,
         protected string $baseUrl
-    ) {
-    }
+    ) {}
 
     public function isConfigured(): bool
     {
@@ -58,14 +57,14 @@ class GeminiProvider implements AIProviderInterface
 
     public function generateEmbeddings(string $text): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return [];
         }
 
         try {
             $httpResponse = Http::withHeaders($this->buildAuthHeaders())
                 ->timeout(30)
-                ->post($this->baseUrl . '/models/' . config('services.gemini.embedding_model') . ':embedContent', [
+                ->post($this->baseUrl.'/models/'.config('services.gemini.embedding_model').':embedContent', [
                     'content' => [
                         'parts' => [
                             ['text' => $text],
@@ -93,18 +92,18 @@ class GeminiProvider implements AIProviderInterface
      */
     protected function sendGenerateContentRequest(string $systemPrompt, string $userPrompt, array $generationConfig): ?array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return null;
         }
 
         try {
             $httpResponse = Http::withHeaders($this->buildAuthHeaders())
                 ->timeout($generationConfig['timeout'] ?? 45)
-                ->post($this->baseUrl . '/models/' . config('services.gemini.default_model') . ':generateContent', [
+                ->post($this->baseUrl.'/models/'.config('services.gemini.default_model').':generateContent', [
                     'contents' => [
                         [
                             'parts' => [
-                                ['text' => $systemPrompt . "\n\n" . $userPrompt],
+                                ['text' => $systemPrompt."\n\n".$userPrompt],
                             ],
                         ],
                     ],
@@ -126,7 +125,7 @@ class GeminiProvider implements AIProviderInterface
 
     protected function extractJson(?array $response): ?array
     {
-        if (!$response) {
+        if (! $response) {
             return null;
         }
 
