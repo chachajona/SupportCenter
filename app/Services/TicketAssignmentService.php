@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\PermissionAudit;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Models\PermissionAudit;
-use App\Services\SlackNotificationService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Service for handling ticket assignment operations.
@@ -19,15 +18,15 @@ final class TicketAssignmentService
 {
     public function __construct(
         private readonly SlackNotificationService $slackService
-    ) {
-    }
+    ) {}
+
     /**
      * Assign a ticket to a user.
      */
     public function assignTicket(Ticket $ticket, User $assignee, ?string $reason = null): bool
     {
         // Validate assignment permissions
-        if (!$this->canAssignToUser($assignee, $ticket)) {
+        if (! $this->canAssignToUser($assignee, $ticket)) {
             return false;
         }
 
@@ -35,22 +34,27 @@ final class TicketAssignmentService
 
         $ticket->update([
             'assigned_to' => $assignee->getKey(),
-            'updated_by' => Auth::id()
+            'updated_by' => Auth::id(),
         ]);
 
-        // Create audit record
+        // Enhanced audit record
         $action = $this->getAuditAction('ticket_assigned');
         PermissionAudit::create([
             'user_id' => $assignee->getKey(),
-            'permission_id' => null,
-            'role_id' => null,
+            'permission_id' => $this->getPermissionId('tickets.assign'),
+            'role_id' => $assignee->roles->first()?->id,
             'action' => $action,
             'old_values' => ['assigned_to' => $oldAssignee],
-            'new_values' => ['assigned_to' => $assignee->getKey(), 'ticket_id' => $ticket->getKey()],
+            'new_values' => [
+                'assigned_to' => $assignee->getKey(),
+                'ticket_id' => $ticket->getKey(),
+                'ticket_subject' => $ticket->subject,
+                'department_id' => $ticket->department_id,
+            ],
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
             'performed_by' => Auth::id(),
-            'reason' => $reason,
+            'reason' => $reason ?? 'Manual assignment',
             'created_at' => now(),
         ]);
 
@@ -70,28 +74,33 @@ final class TicketAssignmentService
     {
         $oldAssignee = $ticket->assigned_to;
 
-        if (!$oldAssignee) {
+        if (! $oldAssignee) {
             return false;
         }
 
         $ticket->update([
             'assigned_to' => null,
-            'updated_by' => Auth::id()
+            'updated_by' => Auth::id(),
         ]);
 
-        // Create audit record
+        // Enhanced audit record
         $action = $this->getAuditAction('ticket_unassigned');
         PermissionAudit::create([
             'user_id' => $oldAssignee,
-            'permission_id' => null,
+            'permission_id' => $this->getPermissionId('tickets.assign'),
             'role_id' => null,
             'action' => $action,
             'old_values' => ['assigned_to' => $oldAssignee],
-            'new_values' => ['assigned_to' => null, 'ticket_id' => $ticket->getKey()],
+            'new_values' => [
+                'assigned_to' => null,
+                'ticket_id' => $ticket->getKey(),
+                'ticket_subject' => $ticket->subject,
+                'department_id' => $ticket->department_id,
+            ],
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
             'performed_by' => Auth::id(),
-            'reason' => $reason,
+            'reason' => $reason ?? 'Manual unassignment',
             'created_at' => now(),
         ]);
 
@@ -104,7 +113,7 @@ final class TicketAssignmentService
     private function canAssignToUser(User $user, Ticket $ticket): bool
     {
         // User must be able to view tickets
-        if (!$user->hasAnyPermission(['tickets.view_own', 'tickets.view_department', 'tickets.view_all'])) {
+        if (! $user->hasAnyPermission(['tickets.view_own', 'tickets.view_department', 'tickets.view_all'])) {
             return false;
         }
 
@@ -122,6 +131,7 @@ final class TicketAssignmentService
         if ($user->hasPermissionTo('tickets.view_own')) {
             /** @var int|null $userDepartmentId */
             $userDepartmentId = $user->getAttribute('department_id');
+
             return $userDepartmentId === $ticket->department_id;
         }
 
@@ -164,10 +174,10 @@ final class TicketAssignmentService
             ->latest()
             ->first();
 
-        if (!$lastAssigned) {
+        if (! $lastAssigned) {
             $assignee = $availableAgents->first();
         } else {
-            $currentIndex = $availableAgents->search(fn($agent) => $agent->getKey() === $lastAssigned->assigned_to);
+            $currentIndex = $availableAgents->search(fn ($agent) => $agent->getKey() === $lastAssigned->assigned_to);
             $nextIndex = ($currentIndex + 1) % $availableAgents->count();
             $assignee = $availableAgents[$nextIndex];
         }
@@ -184,7 +194,7 @@ final class TicketAssignmentService
      */
     public function transferTicket(Ticket $ticket, User $newAssignee, ?string $reason = null): bool
     {
-        if (!$this->canAssignToUser($newAssignee, $ticket)) {
+        if (! $this->canAssignToUser($newAssignee, $ticket)) {
             return false;
         }
 
@@ -192,22 +202,28 @@ final class TicketAssignmentService
 
         $ticket->update([
             'assigned_to' => $newAssignee->getKey(),
-            'updated_by' => Auth::id()
+            'updated_by' => Auth::id(),
         ]);
 
-        // Create audit record for transfer
+        // Enhanced audit record for transfer
         $action = $this->getAuditAction('ticket_transferred');
         PermissionAudit::create([
             'user_id' => $newAssignee->getKey(),
-            'permission_id' => null,
-            'role_id' => null,
+            'permission_id' => $this->getPermissionId('tickets.transfer'),
+            'role_id' => $newAssignee->roles->first()?->id,
             'action' => $action,
             'old_values' => ['assigned_to' => $oldAssignee],
-            'new_values' => ['assigned_to' => $newAssignee->getKey(), 'ticket_id' => $ticket->getKey()],
+            'new_values' => [
+                'assigned_to' => $newAssignee->getKey(),
+                'ticket_id' => $ticket->getKey(),
+                'ticket_subject' => $ticket->subject,
+                'department_id' => $ticket->department_id,
+                'transfer_from' => $oldAssignee,
+            ],
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
             'performed_by' => Auth::id(),
-            'reason' => $reason,
+            'reason' => $reason ?? 'Manual transfer',
             'created_at' => now(),
         ]);
 
@@ -257,5 +273,15 @@ final class TicketAssignmentService
 
         // For MySQL (production), use the actual ticket action values
         return $ticketAction;
+    }
+
+    /**
+     * Get permission ID by name for audit logging.
+     */
+    private function getPermissionId(string $permissionName): ?int
+    {
+        return \Spatie\Permission\Models\Permission::where('name', $permissionName)
+            ->where('is_active', true)
+            ->first()?->id;
     }
 }

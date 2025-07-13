@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Role;
-use App\Models\Permission;
 use App\Models\Department;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\SetupStatus;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class RolePermissionSeeder extends Seeder
@@ -53,7 +52,7 @@ class RolePermissionSeeder extends Seeder
     private function createPermissions(): void
     {
         $permissions = [
-            // Ticket Management
+            // Phase 3: Ticket Management
             'tickets' => [
                 'create',
                 'view_own',
@@ -68,7 +67,9 @@ class RolePermissionSeeder extends Seeder
                 'assign',
                 'transfer',
                 'close',
-                'reopen'
+                'reopen',
+                'view_internal_responses',
+                'create_internal_responses',
             ],
 
             // User Management
@@ -82,7 +83,7 @@ class RolePermissionSeeder extends Seeder
                 'edit_all',
                 'delete',
                 'manage_roles',
-                'impersonate'
+                'impersonate',
             ],
 
             // Role Management
@@ -99,7 +100,7 @@ class RolePermissionSeeder extends Seeder
                 'approve_temporal',
                 'deny_temporal',
                 'view_matrix',
-                'edit_matrix'
+                'edit_matrix',
             ],
 
             // Department Management
@@ -109,7 +110,7 @@ class RolePermissionSeeder extends Seeder
                 'create',
                 'edit',
                 'delete',
-                'manage_hierarchy'
+                'manage_hierarchy',
             ],
 
             // System Administration
@@ -119,7 +120,7 @@ class RolePermissionSeeder extends Seeder
                 'backup',
                 'logs_view',
                 'plugins_manage',
-                'manage'
+                'manage',
             ],
 
             // Audit and Compliance
@@ -127,16 +128,18 @@ class RolePermissionSeeder extends Seeder
                 'view_logs',
                 'export_data',
                 'compliance_reports',
-                'view'
+                'view',
             ],
 
-            // Knowledge Management
+            // Phase 3: Knowledge Base
             'knowledge' => [
+                'view_articles',
                 'create_articles',
                 'edit_articles',
+                'delete_articles',
                 'approve_articles',
                 'manage_categories',
-                'version_control'
+                'view_analytics',
             ],
 
             // SLA Management
@@ -145,7 +148,7 @@ class RolePermissionSeeder extends Seeder
                 'create',
                 'edit',
                 'enforce',
-                'escalate'
+                'escalate',
             ],
 
             // Reports and Analytics
@@ -155,31 +158,21 @@ class RolePermissionSeeder extends Seeder
                 'view_all',
                 'create_custom',
                 'export',
-                'schedule'
+                'schedule',
             ],
 
-            // Analytics (RBAC Dashboard)
+            // Phase 3: Analytics & Reporting
             'analytics' => [
-                'view',
-                'view_own',
-                'view_department',
-                'view_all',
-                'export'
-            ],
-
-            // Helpdesk Analytics
-            'helpdesk_analytics' => [
-                'view',
-                'view_own',
-                'view_department',
-                'view_all',
-                'export'
+                'view_department_analytics',
+                'view_all_analytics',
+                'export_reports',
+                'schedule_reports',
             ],
 
             // Monitoring
             'monitoring' => [
                 'view',
-                'export'
+                'export',
             ],
 
             // Emergency Access Management
@@ -188,7 +181,7 @@ class RolePermissionSeeder extends Seeder
                 'grant',
                 'revoke',
                 'manage',
-                'recover'
+                'recover',
             ],
 
             // Permissions
@@ -196,8 +189,8 @@ class RolePermissionSeeder extends Seeder
                 'view',
                 'create',
                 'edit',
-                'delete'
-            ]
+                'delete',
+            ],
         ];
 
         foreach ($permissions as $resource => $actions) {
@@ -250,7 +243,7 @@ class RolePermissionSeeder extends Seeder
                 'display_name' => 'Knowledge Curator',
                 'description' => 'Manages knowledge base and content',
                 'hierarchy_level' => 2,
-            ]
+            ],
         ];
 
         foreach ($roles as $roleName => $roleData) {
@@ -282,8 +275,9 @@ class RolePermissionSeeder extends Seeder
                 'users.view_own',
                 'users.edit_own',
                 'departments.view_own',
+                'knowledge.view_articles',
                 'knowledge.create_articles',
-                'reports.view_own'
+                'reports.view_own',
             ],
 
             'department_manager' => [
@@ -292,6 +286,8 @@ class RolePermissionSeeder extends Seeder
                 'tickets.edit_department',
                 'tickets.delete_department',
                 'tickets.reopen',
+                'tickets.view_internal_responses',
+                'tickets.create_internal_responses',
                 'users.view_department',
                 'users.edit_department',
                 'users.create',
@@ -305,15 +301,14 @@ class RolePermissionSeeder extends Seeder
                 'reports.create_custom',
                 'knowledge.edit_articles',
                 'knowledge.approve_articles',
-                // NEW: Analytics
-                'analytics.view_department',
-                'helpdesk_analytics.view_department'
+                'analytics.view_department_analytics',
             ],
 
             'regional_manager' => [
                 // Inherits department_manager permissions plus:
                 'tickets.view_all',
                 'tickets.edit_all',
+                'tickets.delete_all',
                 'users.view_all',
                 'users.edit_all',
                 'departments.create',
@@ -323,11 +318,10 @@ class RolePermissionSeeder extends Seeder
                 'reports.view_all',
                 'reports.export',
                 'reports.schedule',
-                // NEW: Analytics
-                'analytics.view_all',
-                'analytics.export',
-                'helpdesk_analytics.view_all',
-                'helpdesk_analytics.export'
+                'knowledge.delete_articles',
+                'knowledge.view_analytics',
+                'analytics.view_all_analytics',
+                'analytics.export_reports',
             ],
 
             'system_administrator' => [
@@ -336,6 +330,7 @@ class RolePermissionSeeder extends Seeder
 
             'compliance_auditor' => [
                 'tickets.view_all',
+                'tickets.view_internal_responses',
                 'users.view_all',
                 'departments.view_all',
                 'roles.view',
@@ -343,25 +338,31 @@ class RolePermissionSeeder extends Seeder
                 'audit.export_data',
                 'audit.compliance_reports',
                 'reports.view_all',
-                'reports.export'
+                'reports.export',
+                'knowledge.view_articles',
+                'knowledge.view_analytics',
+                'analytics.view_all_analytics',
+                'analytics.export_reports',
             ],
 
             'knowledge_curator' => [
                 'tickets.view_department',
                 'users.view_department',
+                'knowledge.view_articles',
                 'knowledge.create_articles',
                 'knowledge.edit_articles',
                 'knowledge.approve_articles',
                 'knowledge.manage_categories',
-                'knowledge.version_control',
-                'reports.view_department'
-            ]
+                'knowledge.view_analytics',
+                'reports.view_department',
+            ],
         ];
 
         foreach ($rolePermissions as $roleName => $permissions) {
             $role = Role::where('name', $roleName)->first();
-            if (!$role)
+            if (! $role) {
                 continue;
+            }
 
             // Handle system administrator special case
             if ($roleName === 'system_administrator') {

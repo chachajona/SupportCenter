@@ -18,7 +18,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         $permissions = $user->getAllPermissions()->pluck('name')->unique()->values();
 
         return response()->json([
-            'roles' => $user->roles->map(fn($r) => [
+            'roles' => $user->roles->map(fn ($r) => [
                 'id' => $r->id,
                 'name' => $r->name,
                 'display_name' => $r->display_name,
@@ -34,13 +34,23 @@ Route::middleware(['auth:sanctum'])->group(function () {
                     'parent_id' => $user->department->parent_id,
                     'path' => $user->department->path,
                     'is_active' => $user->department->is_active,
-                ]
+                ],
             ] : [],
         ]);
     });
+});
 
+// Protected API routes requiring two-factor authentication
+Route::middleware(['auth:sanctum', 'two-factor.confirmed'])->group(function () {
     // Ticket API routes
-    Route::apiResource('tickets', App\Http\Controllers\Api\TicketController::class);
+    Route::apiResource('tickets', App\Http\Controllers\Api\TicketController::class)
+        ->names([
+            'index' => 'api.tickets.index',
+            'store' => 'api.tickets.store',
+            'show' => 'api.tickets.show',
+            'update' => 'api.tickets.update',
+            'destroy' => 'api.tickets.destroy',
+        ]);
     Route::post('tickets/{ticket}/assign', [App\Http\Controllers\Api\TicketController::class, 'assign'])
         ->name('api.tickets.assign');
     Route::post('tickets/{ticket}/responses', [App\Http\Controllers\Api\TicketController::class, 'addResponse'])

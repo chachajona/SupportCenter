@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Models\KnowledgeArticle;
 use App\Models\User;
+use App\Models\PermissionAudit;
 
 final class KnowledgeArticlePolicy
 {
@@ -15,10 +16,10 @@ final class KnowledgeArticlePolicy
     public function viewAny(User $user): bool
     {
         return $user->hasAnyPermission([
-            'knowledge.view',
+            'knowledge.view_articles',
             'knowledge.create_articles',
             'knowledge.edit_articles',
-            'knowledge.approve_articles'
+            'knowledge.approve_articles',
         ]);
     }
 
@@ -27,15 +28,22 @@ final class KnowledgeArticlePolicy
      */
     public function view(User $user, KnowledgeArticle $article): bool
     {
-        // Public articles are viewable by anyone with knowledge.view permission
-        if ($article->is_public && $user->hasPermissionTo('knowledge.view')) {
+        // Check emergency access first
+        if ($user->hasEmergencyAccess()) {
+            $this->auditEmergencyAccess($user, 'knowledge_view', $article);
+
+            return true;
+        }
+
+        // Public articles are viewable by anyone with knowledge.view_articles permission
+        if ($article->is_public && $user->hasPermissionTo('knowledge.view_articles')) {
             return true;
         }
 
         // Department-specific articles
         if ($article->department_id !== null) {
             // Must have department access and knowledge permission
-            if (!$user->hasPermissionTo('knowledge.view')) {
+            if (!$user->hasPermissionTo('knowledge.view_articles')) {
                 return false;
             }
 
@@ -56,6 +64,14 @@ final class KnowledgeArticlePolicy
      */
     public function create(User $user): bool
     {
+        // Check emergency access first
+        if ($user->hasEmergencyAccess()) {
+            // Audit emergency access without creating a temporary article instance
+            $this->auditEmergencyAccess($user, 'knowledge_create', null);
+
+            return true;
+        }
+
         return $user->hasPermissionTo('knowledge.create_articles');
     }
 
@@ -72,6 +88,13 @@ final class KnowledgeArticlePolicy
      */
     public function edit(User $user, KnowledgeArticle $article): bool
     {
+        // Check emergency access first
+        if ($user->hasEmergencyAccess()) {
+            $this->auditEmergencyAccess($user, 'knowledge_edit', $article);
+
+            return true;
+        }
+
         // System administrators can edit all
         if (
             $user->hasPermissionTo('knowledge.edit_articles') &&
@@ -105,8 +128,15 @@ final class KnowledgeArticlePolicy
      */
     public function delete(User $user, KnowledgeArticle $article): bool
     {
-        // Only users with approval permissions can delete
-        if (!$user->hasPermissionTo('knowledge.approve_articles')) {
+        // Check emergency access first
+        if ($user->hasEmergencyAccess()) {
+            $this->auditEmergencyAccess($user, 'knowledge_delete', $article);
+
+            return true;
+        }
+
+        // Must have delete permission
+        if (!$user->hasPermissionTo('knowledge.delete_articles')) {
             return false;
         }
 
@@ -159,24 +189,63 @@ final class KnowledgeArticlePolicy
      */
     public function viewMetrics(User $user, KnowledgeArticle $article): bool
     {
+        // Check emergency access first
+        if ($user->hasEmergencyAccess()) {
+            $this->auditEmergencyAccess($user, 'knowledge_view_analytics', $article);
+
+            return true;
+        }
+
+        // Users with analytics permission can view metrics
+        if (!$user->hasPermissionTo('knowledge.view_analytics')) {
+            return false;
+        }
+
         // Authors can view metrics for their own articles
         if ($article->author_id === $user->id) {
             return true;
         }
 
-        // Users with approval permissions can view metrics
-        if ($user->hasPermissionTo('knowledge.approve_articles')) {
-            // System administrators can view all metrics
-            if ($user->hasRole('system_administrator')) {
-                return true;
-            }
+        // System administrators can view all metrics
+        if ($user->hasRole('system_administrator')) {
+            return true;
+        }
 
-            // Department managers can view metrics for their department articles
-            if ($article->department_id !== null) {
-                return $user->hasDepartmentAccess($article->department_id);
-            }
+        // Department managers can view metrics for their department articles
+        if ($article->department_id !== null) {
+            return $user->hasDepartmentAccess($article->department_id);
         }
 
         return false;
+    }
+
+    /**
+     * Audit emergency access usage.
+     */
+    private function auditEmergencyAccess(User $user, string $action, ?KnowledgeArticle $article = null): void
+    {
+        // Resolve emergency access ID gracefully (null if none active)
+        $emergencyAccessId = $user->getActiveEmergencyAccess()?->getKey();
+
+        // Treat articles with an ID of 0 (or null) as temporary placeholders
+        $isRealArticle = $article && $article->getKey() !== 0;
+
+        PermissionAudit::create([
+            'user_id' => $user->getKey(),
+            'action' => 'emergency_access_used',
+            'old_values' => null,
+            'new_values' => [
+                'action' => $action,
+                'article_id' => $isRealArticle ? $article->getKey() : null,
+                'article_title' => $isRealArticle ? $article->title : null,
+                'department_id' => $isRealArticle ? $article->department_id : null,
+                'emergency_access_id' => $emergencyAccessId,
+            ],
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'performed_by' => $user->getKey(),
+            'reason' => 'Emergency access used for knowledge article operation',
+            'created_at' => now(),
+        ]);
     }
 }

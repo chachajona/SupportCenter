@@ -3,10 +3,13 @@
 namespace App\Providers;
 
 use App\Models\Department;
+use App\Models\KnowledgeArticle;
 use App\Models\Role;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Policies\AnalyticsPolicy;
 use App\Policies\DepartmentPolicy;
+use App\Policies\KnowledgeArticlePolicy;
 use App\Policies\RolePolicy;
 use App\Policies\TicketPolicy;
 use App\Policies\UserPolicy;
@@ -24,6 +27,8 @@ class AuthServiceProvider extends ServiceProvider
         Role::class => RolePolicy::class,
         Department::class => DepartmentPolicy::class,
         Ticket::class => TicketPolicy::class,
+        KnowledgeArticle::class => KnowledgeArticlePolicy::class,
+        'Analytics' => AnalyticsPolicy::class,
     ];
 
     /**

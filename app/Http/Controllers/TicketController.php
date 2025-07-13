@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\TicketPriority;
@@ -24,6 +23,16 @@ use Inertia\Response;
 final class TicketController extends Controller
 {
     /**
+     * Constructor to apply authentication middleware.
+     */
+    public function __construct()
+    {
+        $this->middleware(['auth', 'verified', 'two-factor.confirmed']);
+        $this->middleware('device.register')->only(['create', 'store', 'update']);
+        $this->middleware('geo.restrict')->except(['index', 'show']);
+    }
+
+    /**
      * Display a listing of tickets.
      */
     public function index(Request $request): Response
@@ -36,7 +45,7 @@ final class TicketController extends Controller
             'assignedTo:id,name,email',
             'createdBy:id,name,email',
             'status:id,name,color,is_closed',
-            'priority:id,name,color,level'
+            'priority:id,name,color,level',
         ])
             ->select([
                 'id',
@@ -49,12 +58,12 @@ final class TicketController extends Controller
                 'created_by',
                 'due_at',
                 'created_at',
-                'updated_at'
+                'updated_at',
             ]);
 
         // Apply user-based scoping based on permissions
         $user = Auth::user();
-        if ($user && !$user->hasPermissionTo('tickets.view_all')) {
+        if ($user && ! $user->hasPermissionTo('tickets.view_all')) {
             if ($user->hasPermissionTo('tickets.view_department')) {
                 $query->where('department_id', $user->getAttribute('department_id'));
             } elseif ($user->hasPermissionTo('tickets.view_own')) {
@@ -99,7 +108,7 @@ final class TicketController extends Controller
             'departments' => Department::select('id', 'name')->get(),
             'statuses' => TicketStatus::select('id', 'name', 'color')->get(),
             'priorities' => TicketPriority::select('id', 'name', 'color', 'level')->get(),
-            'users' => User::select('id', 'name')->get()
+            'users' => User::select('id', 'name')->get(),
         ]);
     }
 
@@ -112,7 +121,7 @@ final class TicketController extends Controller
 
         return Inertia::render('Tickets/Create', [
             'statuses' => TicketStatus::select('id', 'name', 'color')->get(),
-            'priorities' => TicketPriority::select('id', 'name', 'color', 'level')->get()
+            'priorities' => TicketPriority::select('id', 'name', 'color', 'level')->get(),
         ]);
     }
 
@@ -124,19 +133,19 @@ final class TicketController extends Controller
         $this->authorize('create', Ticket::class);
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             abort(401, 'User must be authenticated');
         }
 
         $userDepartmentId = $user->getAttribute('department_id');
-        if (!$userDepartmentId) {
+        if (! $userDepartmentId) {
             return redirect()->back()->withErrors(['department' => 'You must be assigned to a department to create tickets.']);
         }
 
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
-            'priority_id' => 'required|exists:ticket_priorities,id'
+            'priority_id' => 'required|exists:ticket_priorities,id',
         ]);
 
         $ticket = Ticket::create([
@@ -164,14 +173,14 @@ final class TicketController extends Controller
             'updatedBy:id,name,email',
             'status:id,name,color,is_closed',
             'priority:id,name,color,level',
-            'responses.user:id,name,email'
+            'responses.user:id,name,email',
         ]);
 
         return Inertia::render('Tickets/Show', [
             'ticket' => $ticket,
             'departments' => Department::select('id', 'name')->get(),
             'priorities' => TicketPriority::select('id', 'name', 'color', 'level')->get(),
-            'statuses' => TicketStatus::select('id', 'name', 'color', 'is_closed')->get()
+            'statuses' => TicketStatus::select('id', 'name', 'color', 'is_closed')->get(),
         ]);
     }
 
@@ -185,7 +194,7 @@ final class TicketController extends Controller
         $ticket->load(['department', 'status', 'priority']);
 
         return Inertia::render('Tickets/Edit', [
-            'ticket' => $ticket
+            'ticket' => $ticket,
         ]);
     }
 
@@ -201,13 +210,13 @@ final class TicketController extends Controller
             'description' => 'sometimes|required|string',
             'priority_id' => 'sometimes|required|exists:ticket_priorities,id',
             'status_id' => 'sometimes|required|exists:ticket_statuses,id',
-            'due_at' => 'sometimes|nullable|date|after:now'
+            'due_at' => 'sometimes|nullable|date|after:now',
         ]);
 
         // Check if status is being changed to closed and set resolved_at
         if (isset($validated['status_id'])) {
             $newStatus = TicketStatus::find($validated['status_id']);
-            if ($newStatus && $newStatus->is_closed && !$ticket->resolved_at) {
+            if ($newStatus && $newStatus->is_closed && ! $ticket->resolved_at) {
                 $validated['resolved_at'] = now();
             }
         }
@@ -243,7 +252,7 @@ final class TicketController extends Controller
 
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'reason' => 'nullable|string|max:255'
+            'reason' => 'nullable|string|max:255',
         ]);
 
         $assignee = User::findOrFail($validated['user_id']);
@@ -270,7 +279,7 @@ final class TicketController extends Controller
 
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'reason' => 'nullable|string|max:255'
+            'reason' => 'nullable|string|max:255',
         ]);
 
         $newAssignee = User::findOrFail($validated['user_id']);
@@ -297,7 +306,7 @@ final class TicketController extends Controller
 
         $validated = $request->validate([
             'message' => 'required|string',
-            'is_internal' => 'boolean'
+            'is_internal' => 'boolean',
         ]);
 
         $user = Auth::user();
@@ -307,7 +316,7 @@ final class TicketController extends Controller
             'user_id' => $user?->getKey(),
             'message' => $validated['message'],
             'is_internal' => $validated['is_internal'] ?? false,
-            'is_email' => false
+            'is_email' => false,
         ]);
 
         return redirect()->route('tickets.show', $ticket)

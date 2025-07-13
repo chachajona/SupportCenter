@@ -66,4 +66,16 @@ return [
         'blocked_ip_prefix' => 'blocked_ip:',
         'notification_rate_limit_prefix' => 'security_notification:',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Two-Factor Authentication Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configure the validity period (in seconds) for a completed two-factor
+    | authentication challenge. Once this period elapses, users will be
+    | prompted to re-authenticate. The default is three hours (10 800 seconds).
+    |
+    */
+    'two_factor_confirmation_ttl' => env('TWO_FACTOR_CONFIRMATION_TTL', 10_800),
 ];
