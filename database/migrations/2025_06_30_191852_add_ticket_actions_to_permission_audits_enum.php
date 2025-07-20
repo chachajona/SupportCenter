@@ -10,10 +10,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        // Check if we're using SQLite (typically in tests)
-        if (DB::connection()->getDriverName() === 'sqlite') {
-            // SQLite doesn't support ENUM or MODIFY COLUMN, so we'll use a different approach
-            // For SQLite, we'll just add a check constraint (if needed) but for now,
+        // Check if we're using SQLite or PostgreSQL (typically in tests or PostgreSQL)
+        if (in_array(DB::connection()->getDriverName(), ['sqlite', 'pgsql'])) {
+            // SQLite and PostgreSQL don't support ENUM or MODIFY COLUMN, so we'll use a different approach
+            // For SQLite and PostgreSQL, we'll just add a check constraint (if needed) but for now,
             // we'll rely on application-level validation
             return;
         }
@@ -41,8 +41,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        // Check if we're using SQLite (typically in tests)
-        if (DB::connection()->getDriverName() === 'sqlite') {
+        // Check if we're using SQLite or PostgreSQL (typically in tests or PostgreSQL)
+        if (in_array(DB::connection()->getDriverName(), ['sqlite', 'pgsql'])) {
             return;
         }
 

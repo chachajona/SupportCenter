@@ -89,6 +89,22 @@ class Department extends Model
     }
 
     /**
+     * Get knowledge articles belonging to this department.
+     */
+    public function knowledgeArticles(): HasMany
+    {
+        return $this->hasMany(KnowledgeArticle::class);
+    }
+
+    /**
+     * Get knowledge categories belonging to this department.
+     */
+    public function knowledgeCategories(): HasMany
+    {
+        return $this->hasMany(KnowledgeCategory::class);
+    }
+
+    /**
      * Get all ancestor departments using materialized path.
      */
     public function getAncestors(): Collection

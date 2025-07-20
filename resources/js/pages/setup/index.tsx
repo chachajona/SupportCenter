@@ -91,6 +91,17 @@ export default function SetupIndex({ steps, currentStep, data = {} }: SetupProps
         password_confirmation: '',
     });
 
+    // Password validation state
+    const [passwordValidation, setPasswordValidation] = useState({
+        length: false,
+        uppercase: false,
+        lowercase: false,
+        number: false,
+        special: false,
+        confirmed: false,
+        noName: false,
+    });
+
     const stepperSteps = createSetupSteps(steps);
 
     const updateDbForm = (field: string, value: string) => {
@@ -99,6 +110,23 @@ export default function SetupIndex({ steps, currentStep, data = {} }: SetupProps
 
     const updateAdminForm = (field: string, value: string) => {
         setAdminForm((prev) => ({ ...prev, [field]: value }));
+
+        // Update password validation when password or name changes
+        if (field === 'password' || field === 'name' || field === 'password_confirmation') {
+            const newPassword = field === 'password' ? value : adminForm.password;
+            const newName = field === 'name' ? value : adminForm.name;
+            const newConfirmation = field === 'password_confirmation' ? value : adminForm.password_confirmation;
+
+            setPasswordValidation({
+                length: newPassword.length >= 12,
+                uppercase: /[A-Z]/.test(newPassword),
+                lowercase: /[a-z]/.test(newPassword),
+                number: /\d/.test(newPassword),
+                special: /[@$!%*?&]/.test(newPassword),
+                confirmed: newPassword === newConfirmation && newPassword.length > 0,
+                noName: newName && newPassword ? !newPassword.toLowerCase().includes(newName.toLowerCase()) : true,
+            });
+        }
     };
 
     const getStepTitle = (step: string) => {
@@ -558,6 +586,10 @@ export default function SetupIndex({ steps, currentStep, data = {} }: SetupProps
                                             </li>
                                             <li className="flex items-start gap-2">
                                                 <Shield className="mt-0.5 h-4 w-4 text-blue-500" />
+                                                Email will be automatically verified during setup
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <Shield className="mt-0.5 h-4 w-4 text-blue-500" />
                                                 Additional users can be created after setup
                                             </li>
                                         </ul>
@@ -600,8 +632,77 @@ export default function SetupIndex({ steps, currentStep, data = {} }: SetupProps
                                                 value={adminForm.password}
                                                 onChange={(e) => updateAdminForm('password', e.target.value)}
                                                 placeholder="Secure password (12+ chars)"
-                                                className="mt-1"
+                                                className={`mt-1 ${
+                                                    adminForm.password && !passwordValidation.length ? 'border-red-300 focus:border-red-500' : ''
+                                                }`}
                                             />
+                                            {adminForm.password && (
+                                                <div className="mt-2 space-y-1">
+                                                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Password Requirements:</div>
+                                                    <div className="grid gap-1 text-xs">
+                                                        <div
+                                                            className={`flex items-center gap-1 ${passwordValidation.length ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            {passwordValidation.length ? (
+                                                                <CheckCircle className="h-3 w-3" />
+                                                            ) : (
+                                                                <div className="h-3 w-3 rounded-full border border-red-600" />
+                                                            )}
+                                                            At least 12 characters
+                                                        </div>
+                                                        <div
+                                                            className={`flex items-center gap-1 ${passwordValidation.uppercase ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            {passwordValidation.uppercase ? (
+                                                                <CheckCircle className="h-3 w-3" />
+                                                            ) : (
+                                                                <div className="h-3 w-3 rounded-full border border-red-600" />
+                                                            )}
+                                                            One uppercase letter
+                                                        </div>
+                                                        <div
+                                                            className={`flex items-center gap-1 ${passwordValidation.lowercase ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            {passwordValidation.lowercase ? (
+                                                                <CheckCircle className="h-3 w-3" />
+                                                            ) : (
+                                                                <div className="h-3 w-3 rounded-full border border-red-600" />
+                                                            )}
+                                                            One lowercase letter
+                                                        </div>
+                                                        <div
+                                                            className={`flex items-center gap-1 ${passwordValidation.number ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            {passwordValidation.number ? (
+                                                                <CheckCircle className="h-3 w-3" />
+                                                            ) : (
+                                                                <div className="h-3 w-3 rounded-full border border-red-600" />
+                                                            )}
+                                                            One number
+                                                        </div>
+                                                        <div
+                                                            className={`flex items-center gap-1 ${passwordValidation.special ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            {passwordValidation.special ? (
+                                                                <CheckCircle className="h-3 w-3" />
+                                                            ) : (
+                                                                <div className="h-3 w-3 rounded-full border border-red-600" />
+                                                            )}
+                                                            One special character (@$!%*?&)
+                                                        </div>
+                                                        <div
+                                                            className={`flex items-center gap-1 ${passwordValidation.noName ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            {passwordValidation.noName ? (
+                                                                <CheckCircle className="h-3 w-3" />
+                                                            ) : (
+                                                                <div className="h-3 w-3 rounded-full border border-red-600" />
+                                                            )}
+                                                            Does not contain your name
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                         <div>
                                             <Label
@@ -616,8 +717,26 @@ export default function SetupIndex({ steps, currentStep, data = {} }: SetupProps
                                                 value={adminForm.password_confirmation}
                                                 onChange={(e) => updateAdminForm('password_confirmation', e.target.value)}
                                                 placeholder="Confirm password"
-                                                className="mt-1"
+                                                className={`mt-1 ${
+                                                    adminForm.password_confirmation && !passwordValidation.confirmed
+                                                        ? 'border-red-300 focus:border-red-500'
+                                                        : ''
+                                                }`}
                                             />
+                                            {adminForm.password_confirmation && (
+                                                <div className="mt-2">
+                                                    <div
+                                                        className={`flex items-center gap-1 text-xs ${passwordValidation.confirmed ? 'text-green-600' : 'text-red-600'}`}
+                                                    >
+                                                        {passwordValidation.confirmed ? (
+                                                            <CheckCircle className="h-3 w-3" />
+                                                        ) : (
+                                                            <div className="h-3 w-3 rounded-full border border-red-600" />
+                                                        )}
+                                                        Passwords match
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -633,8 +752,7 @@ export default function SetupIndex({ steps, currentStep, data = {} }: SetupProps
                                 !adminForm.name ||
                                 !adminForm.email ||
                                 !adminForm.password ||
-                                adminForm.password !== adminForm.password_confirmation ||
-                                adminForm.password.length < 12
+                                !Object.values(passwordValidation).every(Boolean)
                             }
                             className="w-full"
                             size="lg"

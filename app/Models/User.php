@@ -79,12 +79,12 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
             'user_id',
             'role_id'
         )->withPivot([
-            'granted_by',
-            'granted_at',
-            'expires_at',
-            'is_active',
-            'delegation_reason',
-        ])->withTimestamps();
+                    'granted_by',
+                    'granted_at',
+                    'expires_at',
+                    'is_active',
+                    'delegation_reason',
+                ])->withTimestamps();
     }
 
     /**
@@ -174,11 +174,27 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
     }
 
     /**
+     * Get ticket responses created by this user.
+     */
+    public function ticketResponses(): HasMany
+    {
+        return $this->hasMany(TicketResponse::class);
+    }
+
+    /**
+     * Get knowledge articles authored by this user.
+     */
+    public function knowledgeArticles(): HasMany
+    {
+        return $this->hasMany(KnowledgeArticle::class, 'author_id');
+    }
+
+    /**
      * Check if user has department-scoped access to a resource.
      */
     public function hasDepartmentAccess(int $resourceDepartmentId): bool
     {
-        if (! $this->department_id) {
+        if (!$this->department_id) {
             return false;
         }
 
@@ -201,7 +217,7 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
      */
     public function getAccessibleDepartmentIds(): array
     {
-        if (! $this->department) {
+        if (!$this->department) {
             return [];
         }
 
@@ -213,7 +229,7 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
      */
     public function canManageUser(User $otherUser): bool
     {
-        if (! $this->department || ! $otherUser->department) {
+        if (!$this->department || !$otherUser->department) {
             return false;
         }
 
@@ -228,7 +244,7 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
      */
     public function getTwoFactorEnabledAttribute()
     {
-        return ! is_null($this->two_factor_confirmed_at);
+        return !is_null($this->two_factor_confirmed_at);
     }
 
     /**
@@ -245,7 +261,7 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
         try {
             return json_decode(decrypt($this->two_factor_recovery_codes), true) ?? [];
         } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-            Log::error('Failed to decrypt two_factor_recovery_codes for user: '.$this->id.' - '.$e->getMessage());
+            Log::error('Failed to decrypt two_factor_recovery_codes for user: ' . $this->id . ' - ' . $e->getMessage());
 
             return [];
         }
@@ -314,7 +330,7 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
     {
         $emergencyAccess = $this->getActiveEmergencyAccess();
 
-        if (! $emergencyAccess) {
+        if (!$emergencyAccess) {
             return false;
         }
 
@@ -336,7 +352,7 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
                 ->first();
         }
 
-        if (! $permission || ! $permission->is_active) {
+        if (!$permission || !$permission->is_active) {
             return false;
         }
 
@@ -399,7 +415,7 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
 
         if (is_array($roles)) {
             foreach ($roles as $role) {
-                if (! $this->hasAnyRole([$role], $guard)) {
+                if (!$this->hasAnyRole([$role], $guard)) {
                     return false;
                 }
             }
@@ -408,5 +424,29 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
         }
 
         return false;
+    }
+
+    /**
+     * Override hasVerifiedEmail to allow setup-created users to bypass verification.
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        // If email_verified_at is set, consider it verified
+        if ($this->email_verified_at) {
+            return true;
+        }
+
+        // Check if this user was created during setup
+        $setupStatus = \App\Models\SetupStatus::where('step', 'admin_created')
+            ->whereJsonContains('data->admin_id', $this->id)
+            ->first();
+
+        // If user was created during setup, consider them verified
+        if ($setupStatus) {
+            return true;
+        }
+
+        // For all other users, use the standard verification check
+        return parent::hasVerifiedEmail();
     }
 }

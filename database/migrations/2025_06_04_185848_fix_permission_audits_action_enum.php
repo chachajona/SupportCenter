@@ -11,12 +11,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        // For SQLite, we need to recreate the table with the new enum values
-        if (DB::connection()->getDriverName() === 'sqlite') {
-            // SQLite doesn't support ALTER COLUMN for enum, so we need to recreate the table
+        // For SQLite and PostgreSQL, we need to recreate the table with the new enum values
+        if (in_array(DB::connection()->getDriverName(), ['sqlite', 'pgsql'])) {
+            // SQLite and PostgreSQL don't support ALTER COLUMN for enum, so we need to recreate the table
             $this->recreateTableForSQLite();
         } else {
-            // For MySQL/PostgreSQL, we can alter the enum
+            // For MySQL, we can alter the enum
             DB::statement("ALTER TABLE permission_audits MODIFY COLUMN action ENUM('granted', 'revoked', 'modified', 'unauthorized_access_attempt') NOT NULL");
         }
     }
@@ -26,11 +26,11 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        // For SQLite, we need to recreate the table with the original enum values
-        if (DB::connection()->getDriverName() === 'sqlite') {
+        // For SQLite and PostgreSQL, we need to recreate the table with the original enum values
+        if (in_array(DB::connection()->getDriverName(), ['sqlite', 'pgsql'])) {
             $this->recreateTableForSQLiteDown();
         } else {
-            // For MySQL/PostgreSQL, we can alter the enum back
+            // For MySQL, we can alter the enum back
             DB::statement("ALTER TABLE permission_audits MODIFY COLUMN action ENUM('granted', 'revoked', 'modified') NOT NULL");
         }
     }
@@ -40,40 +40,68 @@ return new class extends Migration {
      */
     private function recreateTableForSQLite(): void
     {
-        // Get existing data
-        $existingData = DB::table('permission_audits')->get();
+        // Check if table exists before trying to get data
+        if (Schema::hasTable('permission_audits')) {
+            // Get existing data
+            $existingData = DB::table('permission_audits')->get();
 
-        // Drop the table
-        Schema::drop('permission_audits');
+            // Drop the table
+            Schema::drop('permission_audits');
 
-        // Recreate with new enum values
-        Schema::create('permission_audits', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('permission_id')->nullable();
-            $table->unsignedBigInteger('role_id')->nullable();
-            $table->enum('action', ['granted', 'revoked', 'modified', 'unauthorized_access_attempt']);
-            $table->json('old_values')->nullable();
-            $table->json('new_values')->nullable();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->unsignedBigInteger('performed_by')->nullable();
-            $table->text('reason')->nullable();
-            $table->timestamp('created_at')->useCurrent();
+            // Recreate with new enum values
+            Schema::create('permission_audits', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('permission_id')->nullable();
+                $table->unsignedBigInteger('role_id')->nullable();
+                $table->enum('action', ['granted', 'revoked', 'modified', 'unauthorized_access_attempt']);
+                $table->json('old_values')->nullable();
+                $table->json('new_values')->nullable();
+                $table->string('ip_address', 45)->nullable();
+                $table->text('user_agent')->nullable();
+                $table->unsignedBigInteger('performed_by')->nullable();
+                $table->text('reason')->nullable();
+                $table->timestamp('created_at')->useCurrent();
 
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('set null');
-            $table->foreign('role_id')->references('id')->on('roles')->onDelete('set null');
-            $table->foreign('performed_by')->references('id')->on('users')->onDelete('set null');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('set null');
+                $table->foreign('role_id')->references('id')->on('roles')->onDelete('set null');
+                $table->foreign('performed_by')->references('id')->on('users')->onDelete('set null');
 
-            $table->index('user_id', 'idx_audit_user');
-            $table->index('performed_by', 'idx_audit_performed_by');
-            $table->index('created_at', 'idx_audit_created');
-        });
+                $table->index('user_id', 'idx_audit_user');
+                $table->index('performed_by', 'idx_audit_performed_by');
+                $table->index('created_at', 'idx_audit_created');
+            });
 
-        // Restore existing data
-        foreach ($existingData as $record) {
-            DB::table('permission_audits')->insert((array) $record);
+            // Restore existing data
+            foreach ($existingData as $record) {
+                DB::table('permission_audits')->insert((array) $record);
+            }
+        } else {
+            // Table doesn't exist, create it with new enum values
+            Schema::create('permission_audits', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('permission_id')->nullable();
+                $table->unsignedBigInteger('role_id')->nullable();
+                $table->enum('action', ['granted', 'revoked', 'modified', 'unauthorized_access_attempt']);
+                $table->json('old_values')->nullable();
+                $table->json('new_values')->nullable();
+                $table->string('ip_address', 45)->nullable();
+                $table->text('user_agent')->nullable();
+                $table->unsignedBigInteger('performed_by')->nullable();
+                $table->text('reason')->nullable();
+                $table->timestamp('created_at')->useCurrent();
+
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('set null');
+                $table->foreign('role_id')->references('id')->on('roles')->onDelete('set null');
+                $table->foreign('performed_by')->references('id')->on('users')->onDelete('set null');
+
+                $table->index('user_id', 'idx_audit_user');
+                $table->index('performed_by', 'idx_audit_performed_by');
+                $table->index('created_at', 'idx_audit_created');
+            });
         }
     }
 

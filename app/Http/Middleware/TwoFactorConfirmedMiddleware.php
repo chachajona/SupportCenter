@@ -22,7 +22,7 @@ class TwoFactorConfirmedMiddleware
         $user = Auth::user();
 
         // If user is not authenticated, let auth middleware handle it
-        if (! $user) {
+        if (!$user) {
             return $next($request);
         }
 
@@ -39,7 +39,7 @@ class TwoFactorConfirmedMiddleware
         };
 
         // Check if user has 2FA enabled (either TOTP or WebAuthn)
-        if (! $user->two_factor_enabled && ! $user->hasWebAuthnCredentials()) {
+        if (!$user->two_factor_enabled && !$user->hasWebAuthnCredentials()) {
             return $respond($request, 'Two-factor authentication is required for this action.', 'two-factor.enable');
         }
 
@@ -51,7 +51,7 @@ class TwoFactorConfirmedMiddleware
         $ttlSeconds = (int) config('security.two_factor_confirmation_ttl', 10_800);
 
         // If not confirmed or expired, force re-authentication
-        if (! $timestamp) {
+        if (!$timestamp) {
             return $respond($request, 'Please complete two-factor authentication.', 'two-factor.login');
         }
 

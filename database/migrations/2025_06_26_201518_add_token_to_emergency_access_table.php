@@ -10,10 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('emergency_access', function (Blueprint $table) {
-            $table->uuid('token')->after('permissions')->unique()->nullable();
-            $table->index(['token', 'expires_at']);
-        });
+        // Only proceed if the emergency_access table exists
+        if (Schema::hasTable('emergency_access')) {
+            Schema::table('emergency_access', function (Blueprint $table) {
+                $table->uuid('token')->after('permissions')->unique()->nullable();
+                $table->index(['token', 'expires_at']);
+            });
+        }
     }
 
     /**

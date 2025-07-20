@@ -75,28 +75,8 @@ return new class extends Migration {
             }
         }
 
-        // Ensure model_has_roles exists for other models if needed
-        if (!Schema::hasTable('model_has_roles')) {
-            try {
-                Schema::create('model_has_roles', function (Blueprint $table) {
-                    $table->unsignedBigInteger('role_id');
-                    $table->string('model_type');
-                    $table->unsignedBigInteger('model_id');
-
-                    $table->foreign('role_id')->references('id')->on('roles')->onDelete('cascade');
-                    $table->primary(['role_id', 'model_id', 'model_type'], 'model_has_roles_role_model_type_primary');
-                });
-
-                // Add index separately to avoid conflicts
-                try {
-                    DB::statement('CREATE INDEX IF NOT EXISTS model_has_roles_model_id_model_type_index ON model_has_roles (model_id, model_type)');
-                } catch (\Exception $e) {
-                    // Index might already exist
-                }
-            } catch (\Exception $e) {
-                // Table might already exist or roles table might not exist
-            }
-        }
+        // Note: model_has_roles table is created in a separate migration
+        // This migration only handles role_user table structure
     }
 
     /**

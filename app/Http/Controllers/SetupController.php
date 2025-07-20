@@ -56,14 +56,15 @@ class SetupController extends Controller
             return redirect()->route('setup.index');
         }
 
+        $connection = config('database.default');
         return Inertia::render('setup/index', [
             'currentStep' => 'database',
             'steps' => $this->getStepsStatus(),
             'data' => [
-                'db_host' => config('database.connections.mysql.host'),
-                'db_port' => config('database.connections.mysql.port'),
-                'db_database' => config('database.connections.mysql.database'),
-                'db_username' => config('database.connections.mysql.username'),
+                'db_host' => config("database.connections.{$connection}.host"),
+                'db_port' => config("database.connections.{$connection}.port"),
+                'db_database' => config("database.connections.{$connection}.database"),
+                'db_username' => config("database.connections.{$connection}.username"),
             ]
         ]);
     }
@@ -92,15 +93,17 @@ class SetupController extends Controller
         if (app()->environment('production')) {
             $this->envManager->saveDatabaseCredentials($credentials);
         } else {
+            $connection = config('database.default');
             foreach ($credentials as $k => $v) {
-                Config::set('database.connections.mysql.' . strtolower($k), $v);
+                Config::set("database.connections.{$connection}." . strtolower($k), $v);
             }
         }
 
         // Test the connection
         try {
-            DB::reconnect('mysql');
-            DB::connection('mysql')->getPdo();
+            $connection = config('database.default');
+            DB::reconnect($connection);
+            DB::connection($connection)->getPdo();
 
             SetupStatus::markCompleted('database_configured');
 

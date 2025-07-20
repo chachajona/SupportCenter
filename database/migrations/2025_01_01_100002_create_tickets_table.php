@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->text('description');
             $table->unsignedTinyInteger('priority_id')->default(2);
             $table->unsignedTinyInteger('status_id')->default(1);
-            $table->foreignId('department_id')->constrained('departments');
+            $table->foreignId('department_id')->nullable();
             $table->foreignId('assigned_to')->nullable()->constrained('users');
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
